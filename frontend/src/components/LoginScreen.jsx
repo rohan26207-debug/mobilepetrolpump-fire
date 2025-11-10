@@ -1,8 +1,7 @@
 import React, { useState } from 'react';
-import { signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut } from 'firebase/auth';
-import { auth, db } from '../services/firebase';
-import { doc, setDoc, getDoc, serverTimestamp } from 'firebase/firestore';
-import { Eye, EyeOff, Lock, Mail, AlertCircle, Clock } from 'lucide-react';
+import { signInWithEmailAndPassword, createUserWithEmailAndPassword } from 'firebase/auth';
+import { auth } from '../services/firebase';
+import { Eye, EyeOff, Lock, Mail, AlertCircle } from 'lucide-react';
 import { Button } from './ui/button';
 import { Input } from './ui/input';
 import { Label } from './ui/label';
@@ -15,38 +14,14 @@ const LoginScreen = ({ isDarkMode }) => {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
   const [isSignUp, setIsSignUp] = useState(false);
-  const [pendingApproval, setPendingApproval] = useState(false);
 
   const handleLogin = async (e) => {
     e.preventDefault();
     setIsLoading(true);
     setError('');
-    setPendingApproval(false);
 
     try {
-      const userCredential = await signInWithEmailAndPassword(auth, email, password);
-      const user = userCredential.user;
-      
-      // Check if user is approved in Firestore
-      const userDocRef = doc(db, 'users', user.uid);
-      const userDoc = await getDoc(userDocRef);
-      
-      if (userDoc.exists()) {
-        const userData = userDoc.data();
-        if (!userData.approved) {
-          // User not approved - sign them out and show pending message
-          await signOut(auth);
-          setPendingApproval(true);
-          setError('Your account is pending approval. You will be notified once approved.');
-          return;
-        }
-      } else {
-        // User document doesn't exist - this shouldn't happen but handle it
-        await signOut(auth);
-        setError('Account setup incomplete. Please contact support.');
-        return;
-      }
-      
+      await signInWithEmailAndPassword(auth, email, password);
       // Login successful - user will be redirected by AuthContext
     } catch (error) {
       console.error('Login error:', error);
@@ -83,7 +58,6 @@ const LoginScreen = ({ isDarkMode }) => {
     e.preventDefault();
     setIsLoading(true);
     setError('');
-    setPendingApproval(false);
 
     // Validate password
     if (password.length < 6) {
@@ -93,36 +67,8 @@ const LoginScreen = ({ isDarkMode }) => {
     }
 
     try {
-      const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-      const user = userCredential.user;
-      
-      // Create user document in Firestore with approval status
-      await setDoc(doc(db, 'users', user.uid), {
-        uid: user.uid,
-        email: user.email,
-        approved: false,
-        createdAt: serverTimestamp(),
-        approvedAt: null,
-        approvedBy: null
-      });
-      
-      // Create a notification document for admin (this triggers Firebase Extension email)
-      await setDoc(doc(db, 'notifications', user.uid), {
-        type: 'new_signup',
-        userEmail: user.email,
-        userId: user.uid,
-        createdAt: serverTimestamp(),
-        adminEmail: 'rohan.26207@gmail.com',
-        status: 'pending'
-      });
-      
-      // Sign out the user immediately since they need approval
-      await signOut(auth);
-      
-      // Show pending approval message
-      setPendingApproval(true);
-      setError('');
-      
+      await createUserWithEmailAndPassword(auth, email, password);
+      // Sign up successful - user will be logged in automatically
     } catch (error) {
       console.error('Sign up error:', error);
       
@@ -243,25 +189,6 @@ const LoginScreen = ({ isDarkMode }) => {
                 </p>
               )}
             </div>
-
-            {/* Pending Approval Success Message */}
-            {pendingApproval && !error && (
-              <div className={`p-3 rounded-lg flex items-start gap-2 ${
-                isDarkMode 
-                  ? 'bg-yellow-900/20 border border-yellow-800' 
-                  : 'bg-yellow-50 border border-yellow-200'
-              }`}>
-                <Clock className="w-5 h-5 text-yellow-500 flex-shrink-0 mt-0.5" />
-                <div>
-                  <p className={`text-sm font-medium ${isDarkMode ? 'text-yellow-400' : 'text-yellow-700'}`}>
-                    Account Pending Approval
-                  </p>
-                  <p className={`text-xs mt-1 ${isDarkMode ? 'text-yellow-300' : 'text-yellow-600'}`}>
-                    Your account has been created successfully. An administrator will review and approve your account shortly. You will be able to login once approved.
-                  </p>
-                </div>
-              </div>
-            )}
 
             {/* Error Message */}
             {error && (

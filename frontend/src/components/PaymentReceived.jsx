@@ -891,47 +891,47 @@ const PaymentReceived = ({
                 />
               </div>
 
-              {/* Amount */}
-              <div>
-                <Label htmlFor="amount" className={isDarkMode ? 'text-gray-300' : 'text-slate-700'}>
-                  Amount Received
-                </Label>
-                <Input
-                  id="amount"
-                  type="number"
-                  step="0.01"
-                  value={amount}
-                  onChange={(e) => setAmount(e.target.value)}
-                  placeholder="Enter amount"
-                  className={`mt-1 ${isDarkMode ? 'bg-gray-700 border-gray-600 text-white' : ''}`}
-                />
-              </div>
-
-              {/* Payment Type */}
-              <div>
-                <Label className={isDarkMode ? 'text-gray-300' : 'text-slate-700'}>
-                  Payment Type
-                </Label>
-                <Select
-                  value={paymentType}
-                  onValueChange={(value) => {
-                    setPaymentType(value);
-                    if (value !== 'Settlement') setSettlementType('');
-                  }}
-                >
-                  <SelectTrigger data-testid="payment-type-select" className={`mt-1 ${isDarkMode ? 'bg-gray-700 border-gray-600 text-white' : ''}`}>
-                    <SelectValue placeholder="Select payment type..." />
-                  </SelectTrigger>
-                  <SelectContent className={isDarkMode ? 'bg-gray-700 border-gray-600' : ''}>
-                    <SelectGroup>
-                      <SelectItem value="Cash" className={isDarkMode ? 'text-white hover:bg-gray-600' : ''}>Cash</SelectItem>
-                      <SelectItem value="NEFT" className={isDarkMode ? 'text-white hover:bg-gray-600' : ''}>NEFT</SelectItem>
-                      <SelectItem value="RTGS" className={isDarkMode ? 'text-white hover:bg-gray-600' : ''}>RTGS</SelectItem>
-                      <SelectItem value="Cheque" className={isDarkMode ? 'text-white hover:bg-gray-600' : ''}>Cheque</SelectItem>
-                      <SelectItem value="Settlement" className={isDarkMode ? 'text-white hover:bg-gray-600' : ''}>Settlement</SelectItem>
-                    </SelectGroup>
-                  </SelectContent>
-                </Select>
+              {/* Amount and Payment Type in same row */}
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <Label htmlFor="amount" className={isDarkMode ? 'text-gray-300' : 'text-slate-700'}>
+                    Amount Received
+                  </Label>
+                  <Input
+                    id="amount"
+                    type="number"
+                    step="0.01"
+                    value={amount}
+                    onChange={(e) => setAmount(e.target.value)}
+                    placeholder="Enter amount"
+                    className={`mt-1 ${isDarkMode ? 'bg-gray-700 border-gray-600 text-white' : ''}`}
+                  />
+                </div>
+                <div>
+                  <Label className={isDarkMode ? 'text-gray-300' : 'text-slate-700'}>
+                    Payment Type
+                  </Label>
+                  <Select
+                    value={paymentType}
+                    onValueChange={(value) => {
+                      setPaymentType(value);
+                      if (value !== 'Settlement') setSettlementType('');
+                    }}
+                  >
+                    <SelectTrigger data-testid="payment-type-select" className={`mt-1 ${isDarkMode ? 'bg-gray-700 border-gray-600 text-white' : ''}`}>
+                      <SelectValue placeholder="Select payment type..." />
+                    </SelectTrigger>
+                    <SelectContent className={isDarkMode ? 'bg-gray-700 border-gray-600' : ''}>
+                      <SelectGroup>
+                        <SelectItem value="Cash" className={isDarkMode ? 'text-white hover:bg-gray-600' : ''}>Cash</SelectItem>
+                        <SelectItem value="NEFT" className={isDarkMode ? 'text-white hover:bg-gray-600' : ''}>NEFT</SelectItem>
+                        <SelectItem value="RTGS" className={isDarkMode ? 'text-white hover:bg-gray-600' : ''}>RTGS</SelectItem>
+                        <SelectItem value="Cheque" className={isDarkMode ? 'text-white hover:bg-gray-600' : ''}>Cheque</SelectItem>
+                        <SelectItem value="Settlement" className={isDarkMode ? 'text-white hover:bg-gray-600' : ''}>Settlement</SelectItem>
+                      </SelectGroup>
+                    </SelectContent>
+                  </Select>
+                </div>
               </div>
 
               {/* Settlement Type - only shown when Payment Type is Settlement */}
@@ -1095,47 +1095,47 @@ const PaymentReceived = ({
               />
             </div>
 
-            {/* Amount */}
-            <div>
-              <Label htmlFor="editAmount" className={isDarkMode ? 'text-gray-300' : 'text-slate-700'}>
-                Amount
-              </Label>
-              <Input
-                id="editAmount"
-                type="number"
-                step="0.01"
-                value={editAmount}
-                onChange={(e) => setEditAmount(e.target.value)}
-                placeholder="Enter amount"
-                className={isDarkMode ? 'bg-gray-700 border-gray-600 text-white' : ''}
-              />
-            </div>
-
-            {/* Payment Type */}
-            <div>
-              <Label className={isDarkMode ? 'text-gray-300' : 'text-slate-700'}>
-                Payment Type
-              </Label>
-              <Select
-                value={editPaymentType}
-                onValueChange={(value) => {
-                  setEditPaymentType(value);
-                  if (value !== 'Settlement') setEditSettlementType('');
-                }}
-              >
-                <SelectTrigger className={isDarkMode ? 'bg-gray-700 border-gray-600 text-white' : ''}>
-                  <SelectValue placeholder="Select payment type..." />
-                </SelectTrigger>
-                <SelectContent className={isDarkMode ? 'bg-gray-700 border-gray-600' : ''}>
-                  <SelectGroup>
-                    <SelectItem value="Cash" className={isDarkMode ? 'text-white hover:bg-gray-600' : ''}>Cash</SelectItem>
-                    <SelectItem value="NEFT" className={isDarkMode ? 'text-white hover:bg-gray-600' : ''}>NEFT</SelectItem>
-                    <SelectItem value="RTGS" className={isDarkMode ? 'text-white hover:bg-gray-600' : ''}>RTGS</SelectItem>
-                    <SelectItem value="Cheque" className={isDarkMode ? 'text-white hover:bg-gray-600' : ''}>Cheque</SelectItem>
-                    <SelectItem value="Settlement" className={isDarkMode ? 'text-white hover:bg-gray-600' : ''}>Settlement</SelectItem>
-                  </SelectGroup>
-                </SelectContent>
-              </Select>
+            {/* Amount and Payment Type in same row */}
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <Label htmlFor="editAmount" className={isDarkMode ? 'text-gray-300' : 'text-slate-700'}>
+                  Amount
+                </Label>
+                <Input
+                  id="editAmount"
+                  type="number"
+                  step="0.01"
+                  value={editAmount}
+                  onChange={(e) => setEditAmount(e.target.value)}
+                  placeholder="Enter amount"
+                  className={isDarkMode ? 'bg-gray-700 border-gray-600 text-white' : ''}
+                />
+              </div>
+              <div>
+                <Label className={isDarkMode ? 'text-gray-300' : 'text-slate-700'}>
+                  Payment Type
+                </Label>
+                <Select
+                  value={editPaymentType}
+                  onValueChange={(value) => {
+                    setEditPaymentType(value);
+                    if (value !== 'Settlement') setEditSettlementType('');
+                  }}
+                >
+                  <SelectTrigger className={isDarkMode ? 'bg-gray-700 border-gray-600 text-white' : ''}>
+                    <SelectValue placeholder="Select payment type..." />
+                  </SelectTrigger>
+                  <SelectContent className={isDarkMode ? 'bg-gray-700 border-gray-600' : ''}>
+                    <SelectGroup>
+                      <SelectItem value="Cash" className={isDarkMode ? 'text-white hover:bg-gray-600' : ''}>Cash</SelectItem>
+                      <SelectItem value="NEFT" className={isDarkMode ? 'text-white hover:bg-gray-600' : ''}>NEFT</SelectItem>
+                      <SelectItem value="RTGS" className={isDarkMode ? 'text-white hover:bg-gray-600' : ''}>RTGS</SelectItem>
+                      <SelectItem value="Cheque" className={isDarkMode ? 'text-white hover:bg-gray-600' : ''}>Cheque</SelectItem>
+                      <SelectItem value="Settlement" className={isDarkMode ? 'text-white hover:bg-gray-600' : ''}>Settlement</SelectItem>
+                    </SelectGroup>
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
 
             {/* Settlement Type - only when Payment Type is Settlement */}

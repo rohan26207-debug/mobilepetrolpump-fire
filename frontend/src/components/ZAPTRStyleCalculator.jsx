@@ -1386,6 +1386,35 @@ const ZAPTRStyleCalculator = () => {
         yPos = doc.lastAutoTable.finalY + 10;
       }
 
+      // FUEL SALES BREAKDOWN
+      if (pdfSettings.includeSummary && fuelSettings) {
+        doc.setFontSize(12);
+        doc.setFont('helvetica', 'bold');
+        doc.text('FUEL SALES', 14, yPos);
+        yPos += 5;
+
+        const fuelSalesData = Object.keys(fuelSettings).map(fuelType => {
+          const fuelData = filteredStats.fuelSalesByType ? (filteredStats.fuelSalesByType[fuelType] || { liters: 0, amount: 0 }) : { liters: 0, amount: 0 };
+          return [fuelType, fuelData.liters.toFixed(2), `₹${fuelData.amount.toFixed(2)}`];
+        });
+
+        doc.autoTable({
+          startY: yPos,
+          head: [['Fuel Type', 'Litres', 'Amount']],
+          body: fuelSalesData,
+          theme: 'grid',
+          styles: { fontSize: 7, cellPadding: 1.5 },
+          headStyles: { fillColor: [240, 240, 240], textColor: [0, 0, 0], fontStyle: 'bold', fontSize: 7 },
+          columnStyles: {
+            0: { cellWidth: 55 },
+            1: { halign: 'right', cellWidth: 30 },
+            2: { halign: 'right', cellWidth: 40 }
+          }
+        });
+
+        yPos = doc.lastAutoTable.finalY + 10;
+      }
+
       // READING SALES (if enabled and has data)
       if (pdfSettings.includeSales && filteredSales.length > 0) {
         doc.setFontSize(12);
@@ -1801,6 +1830,15 @@ STOCK: ${fuelSettings ? Object.keys(fuelSettings).map(fuelType => {
 <tr class="t"><td><b>Cash in Hand</b><td class="r"><b>-</b><td class="r"><b>₹${stats.cashInHand.toFixed(2)}</b></tr>
 </table>
 
+<div class="s">FUEL SALES</div>
+<table>
+<tr><th>Fuel Type<th>Litres<th>Amount</tr>
+${fuelSettings ? Object.keys(fuelSettings).map(fuelType => {
+  const fuelData = stats.fuelSalesByType[fuelType] || { liters: 0, amount: 0 };
+  return `<tr><td>${fuelType}<td class="r">${fuelData.liters.toFixed(2)}<td class="r">₹${fuelData.amount.toFixed(2)}</tr>`;
+}).join('') : ''}
+</table>
+
 ${todaySales.length > 0 ? `
 <div class="s">SALES RECORDS</div>
 <table>
@@ -2083,6 +2121,34 @@ window.onload = function() {
       });
 
       yPos = doc.lastAutoTable.finalY + 10;
+
+      // FUEL SALES BREAKDOWN
+      if (fuelSettings) {
+        doc.setFontSize(14);
+        doc.text('FUEL SALES', 14, yPos);
+        yPos += 5;
+
+        const fuelSalesData = Object.keys(fuelSettings).map(fuelType => {
+          const fuelData = currentStats.fuelSalesByType ? (currentStats.fuelSalesByType[fuelType] || { liters: 0, amount: 0 }) : { liters: 0, amount: 0 };
+          return [fuelType, fuelData.liters.toFixed(2), `₹${fuelData.amount.toFixed(2)}`];
+        });
+
+        doc.autoTable({
+          startY: yPos,
+          head: [['Fuel Type', 'Litres', 'Amount']],
+          body: fuelSalesData,
+          theme: 'grid',
+          styles: { fontSize: 9 },
+          headStyles: { fillColor: [240, 240, 240], textColor: [0, 0, 0] },
+          columnStyles: {
+            0: { cellWidth: 55 },
+            1: { halign: 'right', cellWidth: 30 },
+            2: { halign: 'right', cellWidth: 40 }
+          }
+        });
+
+        yPos = doc.lastAutoTable.finalY + 10;
+      }
 
       // Sales Records
       if (todaySales.length > 0 && yPos < 250) {
@@ -2910,7 +2976,7 @@ window.onload = function() {
                 <h2 className={`text-lg sm:text-2xl font-bold mb-2 ${
                   isDarkMode ? 'text-white' : 'text-slate-800'
                 }`}>
-                  Fuel Litres
+                  Fuel Sales
                 </h2>
                 {fuelSettings && Object.keys(fuelSettings).map((fuelType, index) => {
                   const fuelData = stats.fuelSalesByType[fuelType] || { liters: 0, amount: 0 };

@@ -1252,530 +1252,164 @@ const ZAPTRStyleCalculator = () => {
     };
   };
   
-  // Direct PDF generation (works in AppsGeyser/WebView)
+  // Direct PDF generation - uses browser print for small file size
   const generateDirectPDF = () => {
     try {
-      // Filter data based on date settings
-      let filteredSales, filteredCredits, filteredIncome, filteredExpenses;
-      
-      if (pdfSettings.dateRange === 'single') {
-        filteredSales = salesData.filter(sale => sale.date === pdfSettings.startDate);
-        filteredCredits = creditData.filter(credit => credit.date === pdfSettings.startDate);
-        filteredIncome = incomeData.filter(income => income.date === pdfSettings.startDate);
-        filteredExpenses = expenseData.filter(expense => expense.date === pdfSettings.startDate);
-      } else {
-        // Date range filter
-        filteredSales = salesData.filter(sale => sale.date >= pdfSettings.startDate && sale.date <= pdfSettings.endDate);
-        filteredCredits = creditData.filter(credit => credit.date >= pdfSettings.startDate && credit.date <= pdfSettings.endDate);
-        filteredIncome = incomeData.filter(income => income.date >= pdfSettings.startDate && income.date <= pdfSettings.endDate);
-        filteredExpenses = expenseData.filter(expense => expense.date >= pdfSettings.startDate && expense.date <= pdfSettings.endDate);
+      // Check if running in Android WebView - use jsPDF for Android
+      const isAndroid = typeof window.MPumpCalcAndroid !== 'undefined';
+      if (isAndroid) {
+        generatePDFForAndroid();
+        return;
       }
+
+      // Filter data based on date settings
+      let filteredSales, filteredCredits, filteredIncome, filteredExpenses, filteredSettlements, filteredReceipts;
+      const dateFilter = pdfSettings.dateRange === 'single'
+        ? (item) => item.date === pdfSettings.startDate
+        : (item) => item.date >= pdfSettings.startDate && item.date <= pdfSettings.endDate;
+
+      filteredSales = pdfSettings.includeSales ? salesData.filter(dateFilter) : [];
+      filteredCredits = pdfSettings.includeCredit ? creditData.filter(dateFilter) : [];
+      filteredIncome = pdfSettings.includeIncome ? incomeData.filter(dateFilter) : [];
+      filteredExpenses = pdfSettings.includeExpense ? expenseData.filter(dateFilter) : [];
+      filteredSettlements = settlementData.filter(dateFilter);
+      filteredReceipts = payments.filter(dateFilter);
 
       // Calculate stats for filtered data
-      // Calculate stats including MPP data
-      const filteredSettlements = pdfSettings.dateRange === 'single'
-        ? settlementData.filter(s => s.date === pdfSettings.startDate)
-        : settlementData.filter(s => s.date >= pdfSettings.startDate && s.date <= pdfSettings.endDate);
-        
-      const filteredStats = calculateStatsWithMPP(filteredSales, filteredCredits, filteredIncome, filteredExpenses, filteredSettlements);
+      const filteredStats = calculateStats(filteredSales, filteredCredits, filteredIncome, filteredExpenses);
 
-      // Create PDF with settings
-      const doc = new jsPDF({
-        orientation: pdfSettings.orientation,
-        unit: 'mm',
-        format: pdfSettings.pageSize,
-        compress: true,
-        putOnlyUsedFonts: true
-      });
-
-      // Minimal table styling defaults
-      const tableDefaults = { lineWidth: 0.1, lineColor: [0, 0, 0], cellPadding: 1 };
-
-      // Set font
-      doc.setFontSize(16);
-      doc.setFont('helvetica', 'bold');
-      doc.text('M.Pump Calc Daily Report', doc.internal.pageSize.getWidth() / 2, 15, { align: 'center' });
-      
-      doc.setFontSize(10);
-      doc.setFont('helvetica', 'normal');
-      const dateText = pdfSettings.dateRange === 'single' 
-        ? pdfSettings.startDate 
+      const dateText = pdfSettings.dateRange === 'single'
+        ? pdfSettings.startDate
         : `${pdfSettings.startDate} to ${pdfSettings.endDate}`;
-      doc.text(dateText, doc.internal.pageSize.getWidth() / 2, 22, { align: 'center' });
 
-      let yPos = 30;
+      const htmlContent = `
+<!DOCTYPE html>
+<html>
+<head>
+<title>Report - ${dateText}</title>
+<style>
+body{font-family:Arial,sans-serif;margin:10px;line-height:1.2;color:#000}
+h1{font-size:28px;margin:0;text-align:center}
+p{font-size:18px;margin:2px 0;text-align:center}
+.s{margin:15px 0 5px 0;font-size:18px;font-weight:bold}
+table{width:100%;border-collapse:collapse;font-size:14px;margin:5px 0}
+th{border:1px solid #000;padding:4px;text-align:center;font-weight:bold;font-size:15px}
+td{border:1px solid #000;padding:3px;font-size:14px}
+.r{text-align:right}
+.c{text-align:center}
+.t{font-weight:bold}
+.print-btn{background:#000;color:white;border:none;padding:10px 20px;font-size:16px;cursor:pointer;border-radius:5px;margin:10px auto;display:block}
+.no-print{display:block}
+@media print{body{margin:8mm}.no-print{display:none}}
+</style>
+</head>
+<body>
+<h1>M.Pump Calc Daily Report</h1>
+<p>Date: ${dateText}</p>
 
-      // SUMMARY TABLE (if enabled)
-      if (pdfSettings.includeSummary) {
-        // FUEL SALES single line above summary
-        if (fuelSettings) {
-          doc.setFontSize(10);
-          doc.setFont('helvetica', 'bold');
-          doc.setTextColor(0, 0, 0);
-          const fuelSalesLine = 'FUEL SALES: ' + Object.keys(fuelSettings).map(fuelType => {
-            const fuelData = filteredStats.fuelSalesByType ? (filteredStats.fuelSalesByType[fuelType] || { liters: 0, amount: 0 }) : { liters: 0, amount: 0 };
-            return `${fuelType}-${fuelData.liters.toFixed(0)} L`;
-          }).join(', ');
-          doc.text(fuelSalesLine, 14, yPos);
-          doc.setTextColor(0, 0, 0);
-          yPos += 8;
-        }
+${pdfSettings.includeSummary ? `
+<div class="s">SUMMARY</div>
+<table>
+<tr><th>Category<th>Litres<th>Amount</tr>
+${Object.entries(filteredStats.fuelSalesByType).map(([fuelType, data]) =>
+  `<tr><td>${fuelType} Sales<td class="r">${data.liters.toFixed(2)}<td class="r">${data.amount.toFixed(2)}</tr>`
+).join('')}
+${Object.keys(filteredStats.fuelSalesByType).length > 1 ? `<tr><td>Total Reading Sales<td class="r">${filteredStats.totalLiters.toFixed(2)}<td class="r">${filteredStats.fuelCashSales.toFixed(2)}</tr>` : ''}
+<tr><td>Credit Sales<td class="r">${filteredStats.creditLiters.toFixed(2)}<td class="r">${filteredStats.creditAmount.toFixed(2)}</tr>
+<tr><td>Income<td class="r">-<td class="r">${filteredStats.otherIncome.toFixed(2)}</tr>
+<tr><td>Expenses<td class="r">-<td class="r">${filteredStats.totalExpenses.toFixed(2)}</tr>
+<tr class="t"><td><b>Cash in Hand</b><td class="r"><b>-</b><td class="r"><b>${filteredStats.adjustedCashSales.toFixed(2)}</b></tr>
+</table>` : ''}
 
-        doc.setFontSize(12);
-        doc.setFont('helvetica', 'bold');
-        doc.text('SUMMARY', 14, yPos);
-        yPos += 5;
+${filteredSales.length > 0 ? `
+<div class="s">SALES RECORDS</div>
+<table>
+<tr><th>Sr.No<th>Description<th>Start<th>End<th>Testing<th>Rate<th>Litres<th>Amount</tr>
+${filteredSales.map((sale, index) =>
+  `<tr><td class="c">${index + 1}<td>${sale.nozzle} - ${sale.fuelType}<td class="r">${sale.startReading}<td class="r">${sale.endReading}<td class="r">${sale.testing || 0}<td class="r">${sale.rate}<td class="r">${sale.liters}<td class="r">${sale.amount.toFixed(2)}</tr>`
+).join('')}
+<tr class="t"><td colspan="6" class="r"><b>Total:</b><td class="r"><b>${filteredStats.totalLiters.toFixed(2)}</b><td class="r"><b>${filteredStats.fuelCashSales.toFixed(2)}</b></tr>
+</table>` : ''}
 
-        // 3-column layout: Category | Litres | Amount
-        const summaryData = [];
-        let rowNum = 1;
-        
-        // Fuel Sales (all combined)
-        summaryData.push([
-          `${rowNum}. Fuel Sales`,
-          filteredStats.fuelLitersNoMPP !== undefined ? 
-            (filteredStats.fuelLitersNoMPP + (filteredStats.fuelLitersMPP || 0)).toFixed(2) : '0.00',
-          `${filteredStats.fuelSalesNoMPP !== undefined ? 
-            (filteredStats.fuelSalesNoMPP + (filteredStats.fuelSalesMPP || 0)).toFixed(2) : '0.00'}`
-        ]);
-        rowNum++;
+${filteredCredits.length > 0 ? `
+<div class="s">CREDIT RECORDS</div>
+<table>
+<tr><th>Sr.No<th>Customer<th>Rate<th>Litres<th>Amount</tr>
+${filteredCredits.map((credit, index) =>
+  `<tr><td class="c">${index + 1}<td>${credit.customerName}<td class="r">${credit.rate}<td class="r">${credit.liters}<td class="r">${credit.amount.toFixed(2)}</tr>`
+).join('')}
+<tr class="t"><td colspan="3" class="r"><b>Total:</b><td class="r"><b>${filteredStats.creditLiters.toFixed(2)}</b><td class="r"><b>${filteredStats.creditAmount.toFixed(2)}</b></tr>
+</table>` : ''}
 
-        // Credit Sales
-        if (pdfSettings.includeCredit) {
-          const creditLiters = (filteredStats.creditLitersNoMPP || 0) + (filteredStats.creditLitersMPP || 0);
-          const creditAmount = (filteredStats.creditTotalAmountNoMPP || filteredStats.creditAmountNoMPP || 0) + (filteredStats.creditAmountMPP || 0);
-          summaryData.push([
-            `${rowNum}. Credit Sales`,
-            creditLiters.toFixed(2),
-            `${creditAmount.toFixed(2)}`
-          ]);
-          rowNum++;
-        }
+${filteredSettlements.length > 0 ? `
+<div class="s">SETTLEMENT RECORDS</div>
+<table>
+<tr><th>Sr.No<th>Description<th>Amount</tr>
+${filteredSettlements.map((s, index) =>
+  `<tr><td class="c">${index + 1}<td>${s.description || 'Settlement'}<td class="r">${s.amount.toFixed(2)}</tr>`
+).join('')}
+<tr class="t"><td colspan="2" class="r"><b>Total:</b><td class="r"><b>${filteredSettlements.reduce((sum, s) => sum + s.amount, 0).toFixed(2)}</b></tr>
+</table>` : ''}
 
-        // Settlement
-        const totalSettlement = (filteredStats.settlementNoMPP || 0) + (filteredStats.settlementMPP || 0);
-        summaryData.push([
-          `${rowNum}. Settlement`,
-          '-',
-          `${totalSettlement.toFixed(2)}`
-        ]);
-        rowNum++;
+${filteredIncome.length > 0 ? `
+<div class="s">INCOME RECORDS</div>
+<table>
+<tr><th>Sr.No<th>Description<th>Amount</tr>
+${filteredIncome.map((income, index) =>
+  `<tr><td class="c">${index + 1}<td>${income.description}<td class="r">${income.amount.toFixed(2)}</tr>`
+).join('')}
+<tr class="t"><td colspan="2" class="r"><b>Total:</b><td class="r"><b>${filteredIncome.reduce((sum, i) => sum + i.amount, 0).toFixed(2)}</b></tr>
+</table>` : ''}
 
-        // Income
-        if (pdfSettings.includeIncome) {
-          const totalIncome = (filteredStats.otherIncomeNoMPP || 0) + (filteredStats.otherIncomeMPP || 0);
-          summaryData.push([
-            `${rowNum}. Income`,
-            '-',
-            `${totalIncome.toFixed(2)}`
-          ]);
-          rowNum++;
-        }
+${filteredExpenses.length > 0 ? `
+<div class="s">EXPENSE RECORDS</div>
+<table>
+<tr><th>Sr.No<th>Description<th>Amount</tr>
+${filteredExpenses.map((expense, index) =>
+  `<tr><td class="c">${index + 1}<td>${expense.description}<td class="r">${expense.amount.toFixed(2)}</tr>`
+).join('')}
+<tr class="t"><td colspan="2" class="r"><b>Total:</b><td class="r"><b>${filteredExpenses.reduce((sum, e) => sum + e.amount, 0).toFixed(2)}</b></tr>
+</table>` : ''}
 
-        // Expenses
-        if (pdfSettings.includeExpense) {
-          const totalExp = (filteredStats.totalExpensesNoMPP || 0) + (filteredStats.totalExpensesMPP || 0);
-          summaryData.push([
-            `${rowNum}. Expenses`,
-            '-',
-            `${totalExp.toFixed(2)}`
-          ]);
-          rowNum++;
-        }
+${filteredReceipts.length > 0 ? `
+<div class="s">RECEIPT RECORDS</div>
+<table>
+<tr><th>Sr.No<th>Customer<th>Payment Type<th>Amount</tr>
+${filteredReceipts.map((p, index) =>
+  `<tr><td class="c">${index + 1}<td>${p.customerName || 'Unknown'}<td class="c">${p.paymentType || p.mode || 'N/A'}<td class="r">${p.amount.toFixed(2)}</tr>`
+).join('')}
+<tr class="t"><td colspan="3" class="r"><b>Total:</b><td class="r"><b>${filteredReceipts.reduce((sum, p) => sum + p.amount, 0).toFixed(2)}</b></tr>
+</table>` : ''}
 
-        // Cash in Hand
-        summaryData.push([
-          { content: 'Cash in Hand', styles: { fontStyle: 'bold' } },
-          '-',
-          { content: `${filteredStats.cashInHand.toFixed(2)}`, styles: { fontStyle: 'bold' } }
-        ]);
+<div style="margin-top:15px;text-align:center;font-size:10px;border-top:1px solid #000;padding-top:5px">
+Generated on: ${new Date().toLocaleString()}
+</div>
 
-        doc.autoTable({
-          startY: yPos,
-          head: [[
-            'Category',
-            { content: 'Litres', styles: { halign: 'center' } },
-            { content: 'Amount', styles: { halign: 'center' } }
-          ]],
-          body: summaryData,
-          theme: 'grid',
-          styles: { ...tableDefaults, fontSize: 7 },
-          headStyles: { fillColor: false, textColor: [0, 0, 0], fontStyle: 'bold', fontSize: 7 },
-          columnStyles: {
-            0: { cellWidth: 55 },
-            1: { halign: 'right', cellWidth: 30 },
-            2: { halign: 'right', cellWidth: 40 }
-          }
-        });
+<div class="no-print" style="text-align:center;margin:20px 0">
+<button class="print-btn" onclick="window.print()">Print / Save as PDF</button>
+</div>
 
-        yPos = doc.lastAutoTable.finalY + 10;
+<script>
+window.onload = function() {
+  setTimeout(() => { window.print(); }, 500);
+};
+</script>
+</body>
+</html>`;
+
+      const printWindow = window.open('', '_blank', 'width=800,height=600');
+      if (!printWindow) {
+        alert('Please allow pop-ups for this site to enable PDF export.');
+        return;
       }
+      printWindow.document.write(htmlContent);
+      printWindow.document.close();
+      printWindow.focus();
 
-      // READING SALES (if enabled and has data)
-      if (pdfSettings.includeSales && filteredSales.length > 0) {
-        doc.setFontSize(12);
-        doc.setFont('helvetica', 'bold');
-        doc.text('READING SALES', 14, yPos);
-        yPos += 5;
-
-        const salesTableData = filteredSales.map(sale => [
-          sale.nozzle,
-          sale.fuelType,
-          sale.startReading,
-          sale.endReading,
-          sale.testing || 0,
-          sale.liters.toFixed(2),
-          `${sale.rate.toFixed(2)}`,
-          `${sale.amount.toFixed(2)}`
-        ]);
-
-        salesTableData.push([
-          { content: 'Total Reading Sales', colSpan: 5, styles: { fontStyle: 'bold' } },
-          filteredStats.totalLiters.toFixed(2),
-          '-',
-          `${filteredStats.fuelCashSales.toFixed(2)}`
-        ]);
-
-        doc.autoTable({
-          startY: yPos,
-          head: [['Nozzle', 'Fuel', 'Start', 'End', 'Testing', 'Liters', 'Rate', 'Amount']],
-          body: salesTableData,
-          theme: 'grid',
-          styles: { ...tableDefaults, fontSize: 7 },
-          headStyles: { fillColor: false, textColor: [0, 0, 0], fontStyle: 'bold' },
-          columnStyles: {
-            0: { halign: 'center', cellWidth: 14 },
-            1: { cellWidth: 16 },
-            2: { halign: 'right', cellWidth: 18 },
-            3: { halign: 'right', cellWidth: 18 },
-            4: { halign: 'right', cellWidth: 14 },
-            5: { halign: 'right' },
-            6: { halign: 'right' },
-            7: { halign: 'right', fontStyle: 'bold' }
-          }
-        });
-
-        yPos = doc.lastAutoTable.finalY + 10;
-      }
-
-      // CREDIT SALES (if enabled and has data)
-      if (pdfSettings.includeCredit && filteredCredits.length > 0 && yPos < 250) {
-        if (yPos > 220) {
-          doc.addPage();
-          yPos = 20;
-        }
-
-        doc.setFontSize(12);
-        doc.setFont('helvetica', 'bold');
-        doc.text('CREDIT SALES', 14, yPos);
-        yPos += 5;
-
-        const creditTableData = filteredCredits.map(credit => [
-          credit.customerName,
-          credit.vehicleNumber || 'N/A',
-          credit.fuelType || 'N/A',
-          credit.liters ? credit.liters.toFixed(2) : 'N/A',
-          credit.rate ? `${credit.rate.toFixed(2)}` : 'N/A',
-          `${credit.amount.toFixed(2)}`
-        ]);
-
-        creditTableData.push([
-          { content: 'Total Credit Sales', colSpan: 5, styles: { fontStyle: 'bold' } },
-          `${filteredStats.creditAmount.toFixed(2)}`
-        ]);
-
-        doc.autoTable({
-          startY: yPos,
-          head: [['Customer', 'Vehicle', 'Fuel Type', 'Liters', 'Rate', 'Amount']],
-          body: creditTableData,
-          theme: 'grid',
-          styles: { ...tableDefaults, fontSize: 7 },
-          headStyles: { fillColor: false, textColor: [0, 0, 0], fontStyle: 'bold' },
-          columnStyles: {
-            1: { halign: 'center' },
-            3: { halign: 'right' },
-            4: { halign: 'right' },
-            5: { halign: 'right', fontStyle: 'bold' }
-          }
-        });
-
-        yPos = doc.lastAutoTable.finalY + 10;
-      }
-
-      // SETTLEMENT RECORDS (moved here after credit sales)
-      if (filteredSettlements.length > 0 && yPos < 250) {
-        if (yPos > 220) {
-          doc.addPage();
-          yPos = 20;
-        }
-
-        doc.setFontSize(12);
-        doc.setFont('helvetica', 'bold');
-        doc.text('SETTLEMENT RECORDS', 14, yPos);
-        yPos += 5;
-
-        const settlementTableData = filteredSettlements.map((settlement, index) => [
-          index + 1,
-          settlement.date,
-          settlement.description || 'Settlement',
-          `${settlement.amount.toFixed(2)}`,
-          settlement.mpp ? 'Yes' : 'No'
-        ]);
-
-        // Add total row
-        const totalSettlement = filteredSettlements.reduce((sum, s) => sum + s.amount, 0);
-        settlementTableData.push([
-          { content: 'Total', colSpan: 3, styles: { fontStyle: 'bold' } },
-          { content: `${totalSettlement.toFixed(2)}`, styles: { fontStyle: 'bold', halign: 'right' } },
-          ''
-        ]);
-
-        doc.autoTable({
-          startY: yPos,
-          head: [['#', 'Date', 'Description', 'Amount', 'MPP']],
-          body: settlementTableData,
-          theme: 'grid',
-          styles: { fontSize: 8, cellPadding: 2 },
-          headStyles: { fillColor: false, textColor: [0, 0, 0], fontStyle: 'bold' },
-          columnStyles: {
-            0: { cellWidth: 10 },
-            1: { cellWidth: 25 },
-            3: { halign: 'right' },
-            4: { halign: 'center' }
-          }
-        });
-
-        yPos = doc.lastAutoTable.finalY + 10;
-      }
-
-      // INCOME & EXPENSES (if enabled and has data)
-      const showIncome = pdfSettings.includeIncome && filteredIncome.length > 0;
-      const showExpense = pdfSettings.includeExpense && filteredExpenses.length > 0;
-      
-      if ((showIncome || showExpense) && yPos < 250) {
-        if (yPos > 220) {
-          doc.addPage();
-          yPos = 20;
-        }
-
-        doc.setFontSize(12);
-        doc.setFont('helvetica', 'bold');
-        doc.text('INCOME & EXPENSES', 14, yPos);
-        yPos += 5;
-
-        const incomeExpenseData = [];
-        if (showIncome) {
-          filteredIncome.forEach(income => {
-            incomeExpenseData.push(['Income', income.description, `${income.amount.toFixed(2)}`]);
-          });
-        }
-        if (showExpense) {
-          filteredExpenses.forEach(expense => {
-            incomeExpenseData.push(['Expense', expense.description, `${expense.amount.toFixed(2)}`]);
-          });
-        }
-
-        doc.autoTable({
-          startY: yPos,
-          head: [['Type', 'Description', 'Amount']],
-          body: incomeExpenseData,
-          theme: 'grid',
-          styles: { fontSize: 8, cellPadding: 2 },
-          headStyles: { fillColor: false, textColor: [0, 0, 0], fontStyle: 'bold' },
-          columnStyles: {
-            2: { halign: 'right' }
-          }
-        });
-
-        yPos = doc.lastAutoTable.finalY + 10;
-      }
-
-      // RECEIPT RECORDS
-      const receiptDateFilter = pdfSettings.dateRange === 'single' 
-        ? (item) => item.date === pdfSettings.startDate
-        : (item) => item.date >= pdfSettings.startDate && item.date <= pdfSettings.endDate;
-      const filteredReceipts = payments.filter(receiptDateFilter);
-      
-      if (filteredReceipts.length > 0) {
-        if (yPos > 220) { doc.addPage(); yPos = 20; }
-        
-        doc.setFontSize(12);
-        doc.setFont('helvetica', 'bold');
-        doc.text('RECEIPT RECORDS', 14, yPos);
-        yPos += 5;
-
-        const receiptTableData = filteredReceipts.map(p => [
-          p.customerName || 'Unknown',
-          p.paymentType || p.mode || 'N/A',
-          p.paymentType === 'Settlement' ? (p.settlementType || '') : '-',
-          `${p.amount.toFixed(2)}`
-        ]);
-
-        const totalReceipts = filteredReceipts.reduce((sum, p) => sum + p.amount, 0);
-        receiptTableData.push([
-          { content: 'Total Receipts', colSpan: 3, styles: { fontStyle: 'bold' } },
-          { content: `${totalReceipts.toFixed(2)}`, styles: { fontStyle: 'bold' } }
-        ]);
-
-        doc.autoTable({
-          startY: yPos,
-          head: [['Customer', 'Payment Type', 'Settlement Type', 'Amount']],
-          body: receiptTableData,
-          theme: 'grid',
-          styles: { ...tableDefaults, fontSize: 7 },
-          headStyles: { fillColor: false, textColor: [0, 0, 0], fontStyle: 'bold' },
-          columnStyles: {
-            0: { cellWidth: 40 },
-            1: { halign: 'center', cellWidth: 25 },
-            2: { halign: 'center', cellWidth: 30 },
-            3: { halign: 'right', cellWidth: 25 }
-          }
-        });
-
-        yPos = doc.lastAutoTable.finalY + 10;
-      }
-
-      // BANK SETTLEMENT REPORT (moved to end)
-      const dateFilter = pdfSettings.dateRange === 'single' 
-        ? (item) => item.date === pdfSettings.startDate
-        : (item) => item.date >= pdfSettings.startDate && item.date <= pdfSettings.endDate;
-      
-      const relevantSettlements = settlementData.filter(dateFilter);
-      const relevantPayments = payments.filter(dateFilter);
-      
-      // Helper: check if a receipt matches a category
-      const matchReceipt = (p, keyword) => {
-        const st = (p.settlementType || '').toLowerCase();
-        const mode = (p.mode || '').toLowerCase();
-        const pt = (p.paymentType || '').toLowerCase();
-        return st.includes(keyword) || mode.includes(keyword) || (pt === keyword);
-      };
-
-      const finalCashTotal = relevantSettlements
-        .filter(s => s.description && s.description.toLowerCase().includes('cash'))
-        .reduce((sum, s) => sum + (s.amount || 0), 0)
-        + relevantPayments.filter(p => matchReceipt(p, 'cash'))
-        .reduce((sum, p) => sum + (p.amount || 0), 0);
-      
-      const cardTotal = relevantSettlements
-        .filter(s => s.description && s.description.toLowerCase().includes('card'))
-        .reduce((sum, s) => sum + (s.amount || 0), 0)
-        + relevantPayments.filter(p => matchReceipt(p, 'card'))
-        .reduce((sum, p) => sum + (p.amount || 0), 0);
-      
-      const paytmTotal = relevantSettlements
-        .filter(s => s.description && s.description.toLowerCase().includes('paytm'))
-        .reduce((sum, s) => sum + (s.amount || 0), 0)
-        + relevantPayments.filter(p => matchReceipt(p, 'paytm'))
-        .reduce((sum, p) => sum + (p.amount || 0), 0);
-      
-      const phonepeTotal = relevantSettlements
-        .filter(s => s.description && s.description.toLowerCase().includes('phonepe'))
-        .reduce((sum, s) => sum + (s.amount || 0), 0)
-        + relevantPayments.filter(p => matchReceipt(p, 'phonepe'))
-        .reduce((sum, p) => sum + (p.amount || 0), 0);
-      
-      const dtpTotal = relevantSettlements
-        .filter(s => s.description && s.description.toLowerCase().includes('dtp'))
-        .reduce((sum, s) => sum + (s.amount || 0), 0)
-        + relevantPayments.filter(p => matchReceipt(p, 'dtp'))
-        .reduce((sum, p) => sum + (p.amount || 0), 0);
-      
-      if (yPos > 220) {
-        doc.addPage();
-        yPos = 20;
-      }
-
-      doc.setFontSize(12);
-      doc.setFont('helvetica', 'bold');
-      doc.text('BANK SETTLEMENT REPORT', 14, yPos);
-      yPos += 5;
-
-      const bankSettlementData = [
-        ['Cash', `${finalCashTotal.toFixed(2)}`],
-        ['Card', `${cardTotal.toFixed(2)}`],
-        ['Paytm', `${paytmTotal.toFixed(2)}`],
-        ['PhonePe', `${phonepeTotal.toFixed(2)}`],
-        ['DTP', `${dtpTotal.toFixed(2)}`]
-      ];
-      
-      const grandTotal = finalCashTotal + cardTotal + paytmTotal + phonepeTotal + dtpTotal;
-      bankSettlementData.push([
-        { content: 'Total', styles: { fontStyle: 'bold' } },
-        { content: `${grandTotal.toFixed(2)}`, styles: { fontStyle: 'bold', halign: 'right' } }
-      ]);
-
-      doc.autoTable({
-        startY: yPos,
-        head: [['Payment Mode', 'Amount']],
-        body: bankSettlementData,
-        theme: 'plain',
-        styles: { ...tableDefaults, fontSize: 10 },
-        headStyles: { textColor: [0, 0, 0], fontStyle: 'bold' },
-        columnStyles: {
-          0: { cellWidth: 80 },
-          1: { halign: 'right', cellWidth: 80 }
-        }
+      toast({
+        title: "PDF Ready",
+        description: "Use Print dialog to save as PDF",
       });
-
-      yPos = doc.lastAutoTable.finalY + 10;
-
-      // Footer
-      const pageCount = doc.internal.getNumberOfPages();
-      for (let i = 1; i <= pageCount; i++) {
-        doc.setPage(i);
-        doc.setFontSize(8);
-        doc.setFont('helvetica', 'normal');
-        doc.text(
-          `Generated on: ${new Date().toLocaleString()}`,
-          105,
-          287,
-          { align: 'center' }
-        );
-      }
-
-      // Generate filename
-      const fileName = pdfSettings.dateRange === 'single' 
-        ? `mpump-report-${pdfSettings.startDate}.pdf`
-        : `mpump-report-${pdfSettings.startDate}-to-${pdfSettings.endDate}.pdf`;
-
-      // Check if running in Android WebView
-      const isAndroid = /Android/i.test(navigator.userAgent);
-      const isWebView = /wv/.test(navigator.userAgent) || window.MPumpCalcAndroid;
-
-      if (isAndroid && isWebView && window.MPumpCalcAndroid) {
-        // Android WebView - Save to Downloads and open with viewer
-        try {
-          const pdfBlob = doc.output('blob');
-          const reader = new FileReader();
-          
-          reader.onloadend = function() {
-            const base64data = reader.result.split(',')[1];
-            // Save PDF to Downloads/MPumpCalc folder and open with viewer
-            window.MPumpCalcAndroid.openPdfWithViewer(base64data, fileName);
-          };
-          
-          reader.readAsDataURL(pdfBlob);
-          
-          toast({
-            title: "PDF Generated",
-            description: "Saving PDF to Downloads folder...",
-          });
-        } catch (error) {
-          console.error('Android PDF error:', error);
-          // Fallback to download
-          doc.save(fileName);
-        }
-      } else {
-        // Browser - Normal download
-        doc.save(fileName);
-        
-        toast({
-          title: "PDF Generated",
-          description: `${fileName} has been downloaded`,
-        });
-      }
-
     } catch (error) {
       console.error('Error generating PDF:', error);
       toast({

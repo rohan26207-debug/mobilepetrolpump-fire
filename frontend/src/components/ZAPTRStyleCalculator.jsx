@@ -1301,104 +1301,85 @@ const ZAPTRStyleCalculator = () => {
         doc.text('SUMMARY', 14, yPos);
         yPos += 5;
 
-        // 5-column layout: Category | Non-MPP Litres | Non-MPP Amount | MPP Litres | MPP Amount
+        // 3-column layout: Category | Litres | Amount
         const summaryData = [];
         let rowNum = 1;
         
-        // Fuel Sales by Type (separate rows for each fuel type)
-        const allFuelTypes = new Set([
-          ...Object.keys(filteredStats.fuelSalesByTypeNoMPP || {}),
-          ...Object.keys(filteredStats.fuelSalesByTypeMPP || {})
+        // Fuel Sales (all combined)
+        summaryData.push([
+          `${rowNum}. Fuel Sales`,
+          filteredStats.fuelLitersNoMPP !== undefined ? 
+            (filteredStats.fuelLitersNoMPP + (filteredStats.fuelLitersMPP || 0)).toFixed(2) : '0.00',
+          `₹${filteredStats.fuelSalesNoMPP !== undefined ? 
+            (filteredStats.fuelSalesNoMPP + (filteredStats.fuelSalesMPP || 0)).toFixed(2) : '0.00'}`
         ]);
-        
-        allFuelTypes.forEach(fuelType => {
-          const noMPPData = filteredStats.fuelSalesByTypeNoMPP[fuelType] || { liters: 0, amount: 0 };
-          const mppData = filteredStats.fuelSalesByTypeMPP[fuelType] || { liters: 0, amount: 0 };
-          
-          summaryData.push([
-            `${rowNum}. ${fuelType} Sales`,
-            noMPPData.liters.toFixed(2),
-            `₹${noMPPData.amount.toFixed(2)}`,
-            mppData.liters.toFixed(2),
-            `₹${mppData.amount.toFixed(2)}`
-          ]);
-          rowNum++;
-        });
+        rowNum++;
 
         // Credit Sales
         if (pdfSettings.includeCredit) {
+          const creditLiters = (filteredStats.creditLitersNoMPP || 0) + (filteredStats.creditLitersMPP || 0);
+          const creditAmount = (filteredStats.creditTotalAmountNoMPP || filteredStats.creditAmountNoMPP || 0) + (filteredStats.creditAmountMPP || 0);
           summaryData.push([
             `${rowNum}. Credit Sales`,
-            filteredStats.creditLitersNoMPP.toFixed(2),
-            `₹${filteredStats.creditAmountNoMPP.toFixed(2)}`,
-            filteredStats.creditLitersMPP.toFixed(2),
-            `₹${filteredStats.creditAmountMPP.toFixed(2)}`
+            creditLiters.toFixed(2),
+            `₹${creditAmount.toFixed(2)}`
           ]);
           rowNum++;
         }
 
-        // Settlement (moved here, after credit sales)
+        // Settlement
+        const totalSettlement = (filteredStats.settlementNoMPP || 0) + (filteredStats.settlementMPP || 0);
         summaryData.push([
           `${rowNum}. Settlement`,
           '-',
-          `₹${filteredStats.settlementNoMPP.toFixed(2)}`,
-          '-',
-          `₹${filteredStats.settlementMPP.toFixed(2)}`
+          `₹${totalSettlement.toFixed(2)}`
         ]);
         rowNum++;
 
         // Income
         if (pdfSettings.includeIncome) {
+          const totalIncome = (filteredStats.otherIncomeNoMPP || 0) + (filteredStats.otherIncomeMPP || 0);
           summaryData.push([
             `${rowNum}. Income`,
             '-',
-            `₹${filteredStats.otherIncomeNoMPP.toFixed(2)}`,
-            '-',
-            `₹${filteredStats.otherIncomeMPP.toFixed(2)}`
+            `₹${totalIncome.toFixed(2)}`
           ]);
           rowNum++;
         }
 
         // Expenses
         if (pdfSettings.includeExpense) {
+          const totalExp = (filteredStats.totalExpensesNoMPP || 0) + (filteredStats.totalExpensesMPP || 0);
           summaryData.push([
             `${rowNum}. Expenses`,
             '-',
-            `₹${filteredStats.totalExpensesNoMPP.toFixed(2)}`,
-            '-',
-            `₹${filteredStats.totalExpensesMPP.toFixed(2)}`
+            `₹${totalExp.toFixed(2)}`
           ]);
           rowNum++;
         }
 
-        // Cash in Hand / MPP Cash
+        // Cash in Hand
         summaryData.push([
-          { content: 'Cash in Hand / MPP Cash', styles: { fontStyle: 'bold', fillColor: [240, 240, 240] } },
+          { content: 'Cash in Hand', styles: { fontStyle: 'bold', fillColor: [240, 240, 240] } },
           '-',
-          { content: `₹${filteredStats.cashInHand.toFixed(2)}`, styles: { fontStyle: 'bold' } },
-          '-',
-          { content: `₹${filteredStats.mppCash.toFixed(2)}`, styles: { fontStyle: 'bold' } }
+          { content: `₹${filteredStats.cashInHand.toFixed(2)}`, styles: { fontStyle: 'bold' } }
         ]);
 
         doc.autoTable({
           startY: yPos,
           head: [[
             'Category',
-            { content: 'Non-MPP\nLitres', styles: { halign: 'center' } },
-            { content: 'Non-MPP\nAmount', styles: { halign: 'center' } },
-            { content: 'MPP\nLitres', styles: { halign: 'center' } },
-            { content: 'MPP\nAmount', styles: { halign: 'center' } }
+            { content: 'Litres', styles: { halign: 'center' } },
+            { content: 'Amount', styles: { halign: 'center' } }
           ]],
           body: summaryData,
           theme: 'grid',
           styles: { fontSize: 7, cellPadding: 1.5 },
           headStyles: { fillColor: [240, 240, 240], textColor: [0, 0, 0], fontStyle: 'bold', fontSize: 7 },
           columnStyles: {
-            0: { cellWidth: 45 },
-            1: { halign: 'right', cellWidth: 22 },
-            2: { halign: 'right', cellWidth: 30 },
-            3: { halign: 'right', cellWidth: 22 },
-            4: { halign: 'right', cellWidth: 30 }
+            0: { cellWidth: 55 },
+            1: { halign: 'right', cellWidth: 30 },
+            2: { halign: 'right', cellWidth: 40 }
           }
         });
 
@@ -1589,8 +1570,8 @@ const ZAPTRStyleCalculator = () => {
       const relevantSettlements = settlementData.filter(dateFilter);
       const relevantPayments = payments.filter(dateFilter);
       
-      // Cash = Cash in Hand + MPP Cash + Home Cash + Cash Mode Payments
-      const cashTotal = filteredStats.cashInHand + filteredStats.mppCash;
+      // Cash = Cash in Hand + Home Cash + Cash Mode Payments
+      const cashTotal = filteredStats.cashInHand;
       
       // Add Home Cash (settlements with "home" in description)
       const homeCashFromSettlements = relevantSettlements
@@ -1797,35 +1778,27 @@ td{border:1px solid #000;padding:3px;font-size:14px}
 <p style="font-size:16px;margin:8px 0;font-weight:bold;color:#7c3aed">
 STOCK: ${fuelSettings ? Object.keys(fuelSettings).map(fuelType => {
   const storageKey = fuelType.toLowerCase() + 'StockData';
-  const savedData = localStorage.getItem(storageKey);
+  const savedData = localStorageService.getItem(storageKey);
   let startStock = 0;
   if (savedData) {
-    const allStockData = JSON.parse(savedData);
-    const dateData = allStockData[selectedDate];
+    const dateData = savedData[selectedDate];
     if (dateData) {
       startStock = dateData.startStock || 0;
     }
   }
-  return fuelType + '=' + startStock.toFixed(0) + ' L';
-}).join(' ') : 'N/A'}
+  return fuelType + '-' + startStock.toFixed(0) + ' L';
+}).join(', ') : 'N/A'}
 </p>
 
 <div class="s">SUMMARY</div>
 <table>
-<tr><th>Category<th>Non-MPP<br>Litres<th>Non-MPP<br>Amount<th>MPP<br>Litres<th>MPP<br>Amount</tr>
-${Object.keys(stats.fuelSalesByType).map((fuelType, idx) => {
-  const noMPPData = stats.fuelSalesByType[fuelType] || { liters: 0, amount: 0 };
-  // Try to find MPP data for this fuel type from current day's sales
-  const mppSales = todaySales.filter(s => s.fuelType === fuelType && (s.mpp === true || s.mpp === 'true'));
-  const mppLiters = mppSales.reduce((sum, s) => sum + s.liters, 0);
-  const mppAmount = mppSales.reduce((sum, s) => sum + s.amount, 0);
-  return `<tr><td>${idx + 1}. ${fuelType} Sales<td class="r">${noMPPData.liters.toFixed(2)}<td class="r">₹${noMPPData.amount.toFixed(2)}<td class="r">${mppLiters.toFixed(2)}<td class="r">₹${mppAmount.toFixed(2)}</tr>`;
-}).join('')}
-<tr><td>${Object.keys(stats.fuelSalesByType).length + 1}. Credit Sales<td class="r">${stats.creditLitersNoMPP.toFixed(2)}<td class="r">₹${stats.creditAmountNoMPP.toFixed(2)}<td class="r">${stats.creditLitersMPP.toFixed(2)}<td class="r">₹${stats.creditAmountMPP.toFixed(2)}</tr>
-<tr><td>${Object.keys(stats.fuelSalesByType).length + 2}. Settlement<td class="r">-<td class="r">₹${stats.settlementNoMPP.toFixed(2)}<td class="r">-<td class="r">₹${stats.settlementMPP.toFixed(2)}</tr>
-<tr><td>${Object.keys(stats.fuelSalesByType).length + 3}. Income<td class="r">-<td class="r">₹${stats.otherIncomeNoMPP.toFixed(2)}<td class="r">-<td class="r">₹${stats.otherIncomeMPP.toFixed(2)}</tr>
-<tr><td>${Object.keys(stats.fuelSalesByType).length + 4}. Expenses<td class="r">-<td class="r">₹${stats.totalExpensesNoMPP.toFixed(2)}<td class="r">-<td class="r">₹${stats.totalExpensesMPP.toFixed(2)}</tr>
-<tr class="t"><td><b>Cash in Hand / MPP Cash</b><td class="r"><b>-</b><td class="r"><b>₹${stats.cashInHand.toFixed(2)}</b><td class="r"><b>-</b><td class="r"><b>₹${stats.mppCash.toFixed(2)}</b></tr>
+<tr><th>Category<th>Litres<th>Amount</tr>
+<tr><td>1. Fuel Sales<td class="r">${stats.totalLiters.toFixed(2)}<td class="r">₹${stats.totalFuelAmount.toFixed(2)}</tr>
+<tr><td>2. Credit Sales<td class="r">${stats.creditLiters.toFixed(2)}<td class="r">₹${stats.creditAmount.toFixed(2)}</tr>
+<tr><td>3. Settlement<td class="r">-<td class="r">₹${stats.totalSettlement.toFixed(2)}</tr>
+<tr><td>4. Income<td class="r">-<td class="r">₹${stats.otherIncome.toFixed(2)}</tr>
+<tr><td>5. Expenses<td class="r">-<td class="r">₹${stats.totalExpenses.toFixed(2)}</tr>
+<tr class="t"><td><b>Cash in Hand</b><td class="r"><b>-</b><td class="r"><b>₹${stats.cashInHand.toFixed(2)}</b></tr>
 </table>
 
 ${todaySales.length > 0 ? `
@@ -1851,11 +1824,11 @@ ${todayCredits.map((credit, index) =>
 ${settlementData.filter(s => s.date === selectedDate).length > 0 ? `
 <div class="s">SETTLEMENT RECORDS</div>
 <table>
-<tr><th width="10%">Sr.No<th width="50%">Description<th width="20%">Amount<th width="20%">MPP</tr>
+<tr><th width="10%">Sr.No<th width="60%">Description<th width="30%">Amount</tr>
 ${settlementData.filter(s => s.date === selectedDate).map((settlement, index) => 
-  `<tr><td class="c">${index + 1}<td>${settlement.description || 'Settlement'}<td class="r">${settlement.amount.toFixed(2)}<td class="c">${settlement.mpp ? 'Yes' : 'No'}</tr>`
+  `<tr><td class="c">${index + 1}<td>${settlement.description || 'Settlement'}<td class="r">${settlement.amount.toFixed(2)}</tr>`
 ).join('')}
-<tr class="t"><td colspan="2" class="r"><b>Total Settlements:</b><td class="r"><b>${settlementData.filter(s => s.date === selectedDate).reduce((sum, s) => sum + parseFloat(s.amount), 0).toFixed(2)}</b><td></tr>
+<tr class="t"><td colspan="2" class="r"><b>Total Settlements:</b><td class="r"><b>${settlementData.filter(s => s.date === selectedDate).reduce((sum, s) => sum + parseFloat(s.amount), 0).toFixed(2)}</b></tr>
 </table>` : ''}
 
 ${todayIncome.length > 0 ? `
@@ -1886,7 +1859,7 @@ ${(() => {
   const todayPayments = payments.filter(p => p.date === selectedDate);
   
   // Cash = Cash in Hand + MPP Cash + Home Cash + Cash Mode Payments
-  const cashFromSummary = stats.cashInHand + stats.mppCash;
+  const cashFromSummary = stats.cashInHand;
   
   // Add Home Cash (settlements with "home" in description)
   const homeCashFromSettlements = todaySettlements
@@ -2022,17 +1995,16 @@ window.onload = function() {
       doc.setTextColor(124, 58, 237); // Purple color
       const stockSummaryText = fuelSettings ? Object.keys(fuelSettings).map(fuelType => {
         const storageKey = `${fuelType.toLowerCase()}StockData`;
-        const savedData = localStorage.getItem(storageKey);
+        const savedData = localStorageService.getItem(storageKey);
         let startStock = 0;
         if (savedData) {
-          const allStockData = JSON.parse(savedData);
-          const dateData = allStockData[selectedDate];
+          const dateData = savedData[selectedDate];
           if (dateData) {
             startStock = dateData.startStock || 0;
           }
         }
-        return `${fuelType}=${startStock.toFixed(0)} L`;
-      }).join(' ') : 'N/A';
+        return `${fuelType}-${startStock.toFixed(0)} L`;
+      }).join(', ') : 'N/A';
       doc.text(`STOCK: ${stockSummaryText}`, 105, yPos, { align: 'center' });
       doc.setTextColor(0, 0, 0); // Reset to black
       yPos += 15;
@@ -2045,40 +2017,27 @@ window.onload = function() {
       const summaryData = [];
       let rowNum = 1;
       
-      // Fuel Sales by Type (separate rows)
-      Object.entries(currentStats.fuelSalesByType).forEach(([fuelType, data]) => {
-        // Calculate MPP data for this fuel type
-        const mppSales = todaySales.filter(s => s.fuelType === fuelType && (s.mpp === true || s.mpp === 'true'));
-        const mppLiters = mppSales.reduce((sum, s) => sum + s.liters, 0);
-        const mppAmount = mppSales.reduce((sum, s) => sum + s.amount, 0);
-        
-        summaryData.push([
-          `${rowNum}. ${fuelType} Sales`,
-          data.liters.toFixed(2),
-          `₹${data.amount.toFixed(2)}`,
-          mppLiters.toFixed(2),
-          `₹${mppAmount.toFixed(2)}`
-        ]);
-        rowNum++;
-      });
+      // Fuel Sales (all combined)
+      summaryData.push([
+        `${rowNum}. Fuel Sales`,
+        currentStats.totalLiters.toFixed(2),
+        `₹${currentStats.totalFuelAmount.toFixed(2)}`
+      ]);
+      rowNum++;
 
       // Credit Sales
       summaryData.push([
         `${rowNum}. Credit Sales`,
-        currentStats.creditLitersNoMPP.toFixed(2),
-        `₹${currentStats.creditAmountNoMPP.toFixed(2)}`,
-        currentStats.creditLitersMPP.toFixed(2),
-        `₹${currentStats.creditAmountMPP.toFixed(2)}`
+        currentStats.creditLiters.toFixed(2),
+        `₹${currentStats.creditAmount.toFixed(2)}`
       ]);
       rowNum++;
 
-      // Settlement (moved here, after credit sales)
+      // Settlement
       summaryData.push([
         `${rowNum}. Settlement`,
         '-',
-        `₹${currentStats.settlementNoMPP.toFixed(2)}`,
-        '-',
-        `₹${currentStats.settlementMPP.toFixed(2)}`
+        `₹${currentStats.totalSettlement.toFixed(2)}`
       ]);
       rowNum++;
 
@@ -2086,9 +2045,7 @@ window.onload = function() {
       summaryData.push([
         `${rowNum}. Income`,
         '-',
-        `₹${currentStats.otherIncomeNoMPP.toFixed(2)}`,
-        '-',
-        `₹${currentStats.otherIncomeMPP.toFixed(2)}`
+        `₹${currentStats.otherIncome.toFixed(2)}`
       ]);
       rowNum++;
 
@@ -2096,40 +2053,32 @@ window.onload = function() {
       summaryData.push([
         `${rowNum}. Expenses`,
         '-',
-        `₹${currentStats.totalExpensesNoMPP.toFixed(2)}`,
-        '-',
-        `₹${currentStats.totalExpensesMPP.toFixed(2)}`
+        `₹${currentStats.totalExpenses.toFixed(2)}`
       ]);
       rowNum++;
 
-      // Cash in Hand / MPP Cash
+      // Cash in Hand
       summaryData.push([
-        { content: 'Cash in Hand / MPP Cash', styles: { fontStyle: 'bold', fillColor: [240, 240, 240] } },
+        { content: 'Cash in Hand', styles: { fontStyle: 'bold', fillColor: [240, 240, 240] } },
         '-',
-        { content: `₹${currentStats.cashInHand.toFixed(2)}`, styles: { fontStyle: 'bold' } },
-        '-',
-        { content: `₹${currentStats.mppCash.toFixed(2)}`, styles: { fontStyle: 'bold' } }
+        { content: `₹${currentStats.cashInHand.toFixed(2)}`, styles: { fontStyle: 'bold' } }
       ]);
 
       doc.autoTable({
         startY: yPos,
         head: [[
           'Category',
-          { content: 'Non-MPP\nLitres', styles: { halign: 'center' } },
-          { content: 'Non-MPP\nAmount', styles: { halign: 'center' } },
-          { content: 'MPP\nLitres', styles: { halign: 'center' } },
-          { content: 'MPP\nAmount', styles: { halign: 'center' } }
+          { content: 'Litres', styles: { halign: 'center' } },
+          { content: 'Amount', styles: { halign: 'center' } }
         ]],
         body: summaryData,
         theme: 'grid',
         styles: { fontSize: 7, cellPadding: 1.5 },
         headStyles: { fillColor: [240, 240, 240], textColor: [0, 0, 0], fontStyle: 'bold', fontSize: 7 },
         columnStyles: {
-          0: { cellWidth: 45 },
-          1: { halign: 'right', cellWidth: 22 },
-          2: { halign: 'right', cellWidth: 30 },
-          3: { halign: 'right', cellWidth: 22 },
-          4: { halign: 'right', cellWidth: 30 }
+          0: { cellWidth: 55 },
+          1: { halign: 'right', cellWidth: 30 },
+          2: { halign: 'right', cellWidth: 40 }
         }
       });
 

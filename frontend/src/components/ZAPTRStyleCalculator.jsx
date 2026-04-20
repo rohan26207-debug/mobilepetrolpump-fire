@@ -1585,6 +1585,51 @@ const ZAPTRStyleCalculator = () => {
         yPos = doc.lastAutoTable.finalY + 10;
       }
 
+      // RECEIPT RECORDS
+      const receiptDateFilter = pdfSettings.dateRange === 'single' 
+        ? (item) => item.date === pdfSettings.startDate
+        : (item) => item.date >= pdfSettings.startDate && item.date <= pdfSettings.endDate;
+      const filteredReceipts = payments.filter(receiptDateFilter);
+      
+      if (filteredReceipts.length > 0) {
+        if (yPos > 220) { doc.addPage(); yPos = 20; }
+        
+        doc.setFontSize(12);
+        doc.setFont('helvetica', 'bold');
+        doc.text('RECEIPT RECORDS', 14, yPos);
+        yPos += 5;
+
+        const receiptTableData = filteredReceipts.map(p => [
+          p.customerName || 'Unknown',
+          p.paymentType || p.mode || 'N/A',
+          p.paymentType === 'Settlement' ? (p.settlementType || '') : '-',
+          `₹${p.amount.toFixed(2)}`
+        ]);
+
+        const totalReceipts = filteredReceipts.reduce((sum, p) => sum + p.amount, 0);
+        receiptTableData.push([
+          { content: 'Total Receipts', colSpan: 3, styles: { fontStyle: 'bold' } },
+          { content: `₹${totalReceipts.toFixed(2)}`, styles: { fontStyle: 'bold' } }
+        ]);
+
+        doc.autoTable({
+          startY: yPos,
+          head: [['Customer', 'Payment Type', 'Settlement Type', 'Amount']],
+          body: receiptTableData,
+          theme: 'grid',
+          styles: { fontSize: 7, cellPadding: 1.5 },
+          headStyles: { fillColor: [240, 240, 240], textColor: [0, 0, 0], fontStyle: 'bold' },
+          columnStyles: {
+            0: { cellWidth: 40 },
+            1: { halign: 'center', cellWidth: 25 },
+            2: { halign: 'center', cellWidth: 30 },
+            3: { halign: 'right', cellWidth: 25 }
+          }
+        });
+
+        yPos = doc.lastAutoTable.finalY + 10;
+      }
+
       // BANK SETTLEMENT REPORT (moved to end)
       const dateFilter = pdfSettings.dateRange === 'single' 
         ? (item) => item.date === pdfSettings.startDate
@@ -1880,6 +1925,21 @@ ${todayExpenses.map((expense, index) =>
 ).join('')}
 <tr class="t"><td colspan="2" class="r"><b>Total Expenses:</b><td class="r"><b>${todayExpenses.reduce((sum, expense) => sum + parseFloat(expense.amount), 0).toFixed(2)}</b></tr>
 </table>` : ''}
+
+${(() => {
+  const todayReceipts = payments.filter(p => p.date === selectedDate);
+  if (todayReceipts.length === 0) return '';
+  const totalReceipts = todayReceipts.reduce((sum, p) => sum + parseFloat(p.amount), 0);
+  return `
+<div class="s">RECEIPT RECORDS</div>
+<table>
+<tr><th width="8%">Sr.No<th width="32%">Customer<th width="20%">Payment Type<th width="20%">Settlement Type<th width="20%">Amount</tr>
+${todayReceipts.map((p, index) => 
+  `<tr><td class="c">${index + 1}<td>${p.customerName || 'Unknown'}<td class="c">${p.paymentType || p.mode || 'N/A'}<td class="c">${p.paymentType === 'Settlement' ? (p.settlementType || p.mode || '') : '-'}<td class="r">${p.amount.toFixed(2)}</tr>`
+).join('')}
+<tr class="t"><td colspan="4" class="r"><b>Total Receipts:</b><td class="r"><b>${totalReceipts.toFixed(2)}</b></tr>
+</table>`;
+})()}
 
 <div class="s">BANK SETTLEMENT REPORT</div>
 <table>
@@ -2274,6 +2334,35 @@ window.onload = function() {
           startY: yPos,
           head: [['#', 'Description', 'Amount']],
           body: expenseTableData,
+          theme: 'grid',
+          headStyles: { fillColor: [240, 240, 240], textColor: [0, 0, 0] },
+          styles: { fontSize: 9 }
+        });
+
+        yPos = doc.lastAutoTable.finalY + 10;
+      }
+
+      // RECEIPT RECORDS
+      const todayReceipts = payments.filter(p => p.date === selectedDate);
+      if (todayReceipts.length > 0) {
+        if (yPos > 250) { doc.addPage(); yPos = 20; }
+
+        doc.setFontSize(14);
+        doc.text('RECEIPT RECORDS', 14, yPos);
+        yPos += 5;
+
+        const receiptTableData = todayReceipts.map((p, index) => [
+          index + 1,
+          p.customerName || 'Unknown',
+          p.paymentType || p.mode || 'N/A',
+          p.paymentType === 'Settlement' ? (p.settlementType || '') : '-',
+          p.amount.toFixed(2)
+        ]);
+
+        doc.autoTable({
+          startY: yPos,
+          head: [['#', 'Customer', 'Payment Type', 'Settlement Type', 'Amount']],
+          body: receiptTableData,
           theme: 'grid',
           headStyles: { fillColor: [240, 240, 240], textColor: [0, 0, 0] },
           styles: { fontSize: 9 }

@@ -28,9 +28,9 @@ const MPPStock = ({ isDarkMode, selectedDate, salesData, fuelSettings, onClose, 
     const calculateFuelSales = () => {
       if (!salesData || salesData.length === 0) return 0;
       
-      // Filter sales for selected fuel type on selected date
+      // Filter sales for selected fuel type on selected date, excluding MPP-tagged sales
       const fuelSales = salesData
-        .filter(sale => sale.date === selectedDate && sale.fuelType === selectedFuelType)
+        .filter(sale => sale.date === selectedDate && sale.fuelType === selectedFuelType && !sale.mpp)
         .reduce((total, sale) => total + (parseFloat(sale.liters) || 0), 0);
       
       return fuelSales;

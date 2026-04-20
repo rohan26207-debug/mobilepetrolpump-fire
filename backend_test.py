@@ -11,7 +11,7 @@ import time
 import sys
 
 # Base URL from frontend/.env
-BASE_URL = "https://petrolsync-app.preview.emergentagent.com/api"
+BASE_URL = "https://data-management-hub-3.preview.emergentagent.com/api"
 
 # Test results storage
 test_results = []

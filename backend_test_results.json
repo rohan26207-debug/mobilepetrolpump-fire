@@ -1,6 +1,6 @@
 {
   "timestamp": "2025-11-07T21:02:40.037269",
-  "base_url": "https://petrolsync-app.preview.emergentagent.com/api",
+  "base_url": "https://data-management-hub-3.preview.emergentagent.com/api",
   "cors_header": "Not present",
   "total_tests": 14,
   "passed": 14,

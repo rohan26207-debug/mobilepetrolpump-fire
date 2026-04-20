@@ -32,10 +32,8 @@ const SalesTracker = ({ isDarkMode, salesData, addSaleRecord, updateSaleRecord, 
   const [editingId, setEditingId] = useState(null);
   const { toast } = useToast();
   
-  // Check if MPP checkbox should be visible based on customers
-  const isMPPVisible = React.useMemo(() => {
-    return customers && customers.some(c => c.isMPP === true);
-  }, [customers]);
+  // MPP checkbox is always visible
+  const isMPPVisible = true;
 
   // Pre-fill form when editingRecord is provided
   useEffect(() => {

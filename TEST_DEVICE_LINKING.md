@@ -7,7 +7,7 @@
 Before testing, ensure:
 1. ✅ Firestore security rules are updated (see `/app/FIRESTORE_RULES_UPDATE_REQUIRED.md`)
 2. ✅ Anonymous auth is enabled in Firebase Console
-3. ✅ App is running at https://petrolsync-app.preview.emergentagent.com
+3. ✅ App is running at https://data-management-hub-3.preview.emergentagent.com
 
 ---
 

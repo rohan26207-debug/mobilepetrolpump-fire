@@ -1418,13 +1418,14 @@ const ZAPTRStyleCalculator = () => {
           sale.fuelType,
           sale.startReading,
           sale.endReading,
+          sale.testing || 0,
           sale.liters.toFixed(2),
           `₹${sale.rate.toFixed(2)}`,
           `₹${sale.amount.toFixed(2)}`
         ]);
 
         salesTableData.push([
-          { content: 'Total Reading Sales', colSpan: 4, styles: { fontStyle: 'bold' } },
+          { content: 'Total Reading Sales', colSpan: 5, styles: { fontStyle: 'bold' } },
           filteredStats.totalLiters.toFixed(2),
           '-',
           `₹${filteredStats.fuelCashSales.toFixed(2)}`
@@ -1432,18 +1433,20 @@ const ZAPTRStyleCalculator = () => {
 
         doc.autoTable({
           startY: yPos,
-          head: [['Nozzle', 'Fuel Type', 'Start', 'End', 'Liters', 'Rate', 'Amount']],
+          head: [['Nozzle', 'Fuel', 'Start', 'End', 'Testing', 'Liters', 'Rate', 'Amount']],
           body: salesTableData,
           theme: 'grid',
           styles: { fontSize: 7, cellPadding: 1.5 },
           headStyles: { fillColor: [240, 240, 240], textColor: [0, 0, 0], fontStyle: 'bold' },
           columnStyles: {
-            0: { halign: 'center', cellWidth: 15 },
-            2: { halign: 'right', cellWidth: 20 },
-            3: { halign: 'right', cellWidth: 20 },
-            4: { halign: 'right' },
+            0: { halign: 'center', cellWidth: 14 },
+            1: { cellWidth: 16 },
+            2: { halign: 'right', cellWidth: 18 },
+            3: { halign: 'right', cellWidth: 18 },
+            4: { halign: 'right', cellWidth: 14 },
             5: { halign: 'right' },
-            6: { halign: 'right', fontStyle: 'bold' }
+            6: { halign: 'right' },
+            7: { halign: 'right', fontStyle: 'bold' }
           }
         });
 
@@ -1831,11 +1834,11 @@ FUEL SALES: ${fuelSettings ? Object.keys(fuelSettings).map(fuelType => {
 ${todaySales.length > 0 ? `
 <div class="s">SALES RECORDS</div>
 <table>
-<tr><th width="8%">Sr.No<th width="22%">Description<th width="12%">Start<th width="12%">End<th width="12%">Rate<th width="12%">Litres<th width="12%">Amount</tr>
+<tr><th width="8%">Sr.No<th width="18%">Description<th width="11%">Start<th width="11%">End<th width="9%">Testing<th width="11%">Rate<th width="11%">Litres<th width="11%">Amount</tr>
 ${todaySales.map((sale, index) => 
-  `<tr><td class="c">${index + 1}<td>${sale.nozzle} - ${sale.fuelType}<td class="r">${sale.startReading}<td class="r">${sale.endReading}<td class="r">${sale.rate}<td class="r">${sale.liters}<td class="r">${sale.amount.toFixed(2)}</tr>`
+  `<tr><td class="c">${index + 1}<td>${sale.nozzle} - ${sale.fuelType}<td class="r">${sale.startReading}<td class="r">${sale.endReading}<td class="r">${sale.testing || 0}<td class="r">${sale.rate}<td class="r">${sale.liters}<td class="r">${sale.amount.toFixed(2)}</tr>`
 ).join('')}
-<tr class="t"><td colspan="5" class="r"><b>Total:</b><td class="r"><b>${todaySales.reduce((sum, sale) => sum + parseFloat(sale.liters), 0).toFixed(2)}</b><td class="r"><b>${todaySales.reduce((sum, sale) => sum + parseFloat(sale.amount), 0).toFixed(2)}</b></tr>
+<tr class="t"><td colspan="6" class="r"><b>Total:</b><td class="r"><b>${todaySales.reduce((sum, sale) => sum + parseFloat(sale.liters), 0).toFixed(2)}</b><td class="r"><b>${todaySales.reduce((sum, sale) => sum + parseFloat(sale.amount), 0).toFixed(2)}</b></tr>
 </table>` : ''}
 
 ${todayCredits.length > 0 ? `
@@ -2136,6 +2139,7 @@ window.onload = function() {
           `${sale.nozzle} - ${sale.fuelType}`,
           sale.startReading,
           sale.endReading,
+          sale.testing || 0,
           sale.rate,
           sale.liters,
           sale.amount.toFixed(2)
@@ -2143,7 +2147,7 @@ window.onload = function() {
 
         doc.autoTable({
           startY: yPos,
-          head: [['#', 'Description', 'Start', 'End', 'Rate', 'Litres', 'Amount']],
+          head: [['#', 'Description', 'Start', 'End', 'Testing', 'Rate', 'Litres', 'Amount']],
           body: salesTableData,
           theme: 'grid',
           headStyles: { fillColor: [240, 240, 240], textColor: [0, 0, 0] },

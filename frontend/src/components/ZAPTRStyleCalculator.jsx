@@ -1468,11 +1468,9 @@ const ZAPTRStyleCalculator = () => {
           }
         }
       } else {
-        // Desktop browser: download small file + open print dialog for "Save as PDF"
+        // Desktop browser: download the exact same jsPDF file (no second print dialog)
         doc.save(fileName);
         toast({ title: "PDF Downloaded", description: fileName });
-        // Also open print window like Balance tab
-        exportToPDF();
       }
     } catch (error) {
       console.error('PDF error:', error);

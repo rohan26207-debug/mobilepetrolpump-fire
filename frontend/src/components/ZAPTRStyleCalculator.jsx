@@ -1256,47 +1256,6 @@ const ZAPTRStyleCalculator = () => {
   // Direct PDF using jsPDF with built-in Helvetica (0 font embedding = small files)
   const generateDirectPDF = (mode = 'open') => {
     try {
-      const doc = new jsPDF({ compress: true, putOnlyUsedFonts: true });
-      const pw = doc.internal.pageSize.getWidth();
-      const ph = doc.internal.pageSize.getHeight();
-      let y = 15;
-
-      // Header
-      doc.setFillColor(60, 60, 60);
-      doc.rect(0, 0, pw, 12, 'F');
-      doc.setFont('helvetica', 'bold');
-      doc.setFontSize(12);
-      doc.setTextColor(255, 255, 255);
-      doc.text('Manager Pump', 14, 8);
-      doc.setFontSize(9);
-      doc.text('Date: ' + selectedDate + '  Time: ' + new Date().toLocaleTimeString(), pw - 14, 8, { align: 'right' });
-      doc.setTextColor(0, 0, 0);
-      y = 18;
-
-      // Stock line
-      if (fuelSettings) {
-        doc.setFontSize(11);
-        doc.setFont('helvetica', 'normal');
-        const stockLine = 'STOCK: ' + Object.keys(fuelSettings).map(ft => {
-          const sd = localStorageService.getItem(ft.toLowerCase() + 'StockData');
-          let ss = 0;
-          if (sd && sd[selectedDate]) ss = sd[selectedDate].startStock || 0;
-          return ft + '-' + ss.toFixed(0) + ' L';
-        }).join(', ');
-        doc.text(stockLine, 14, y);
-        y += 5;
-      }
-
-      // Fuel Sales line
-      if (fuelSettings) {
-        const fsLine = 'FUEL SALES: ' + Object.keys(fuelSettings).map(ft => {
-          const fd = stats.fuelSalesByType[ft] || { liters: 0 };
-          return ft + '-' + fd.liters.toFixed(0) + ' L';
-        }).join(', ');
-        doc.text(fsLine, 14, y);
-        y += 7;
-      }
-
       const todaySales = salesData.filter(s => s.date === selectedDate);
       const todayCredits = creditData.filter(c => c.date === selectedDate);
       const todaySettlements = settlementData.filter(s => s.date === selectedDate);
@@ -1304,124 +1263,158 @@ const ZAPTRStyleCalculator = () => {
       const todayExpenses = expenseData.filter(e => e.date === selectedDate);
       const todayReceipts = payments.filter(p => p.date === selectedDate);
 
-      const tbl = { theme: 'grid', styles: { font: 'helvetica', fontSize: 11, cellPadding: 2.2, lineWidth: 0.1, lineColor: [0,0,0], textColor: [0,0,0] }, headStyles: { fillColor: false, textColor: [0,0,0], fontStyle: 'bold', fontSize: 11 } };
+      // Renders the report at a given scale (1.0 = full, <1 = compressed)
+      const renderReport = (scale) => {
+        const doc = new jsPDF({ compress: true, putOnlyUsedFonts: true });
+        const pw = doc.internal.pageSize.getWidth();
+        const ph = doc.internal.pageSize.getHeight();
+        const fs = (n) => Math.max(3, n * scale);         // font size floor 3pt (extreme compression)
+        const sp = (n) => Math.max(0.2, n * scale);       // spacing floor 0.2mm
+        let y = 15;
 
-      // Summary
-      doc.setFont('helvetica', 'bold');
-      doc.setFontSize(11);
-      doc.text('Summary', 14, y);
-      y += 5;
-      doc.autoTable({ startY: y, ...tbl, head: [['Category', 'Litres', 'Amount']], body: [
-        ['Fuel Sales', stats.totalLiters.toFixed(2), stats.totalFuelAmount.toFixed(2)],
-        ['Credit Sales', stats.creditLiters.toFixed(2), stats.creditAmount.toFixed(2)],
-        ['Settlement', '-', stats.totalSettlement.toFixed(2)],
-        ['Income', '-', stats.otherIncome.toFixed(2)],
-        ['Expenses', '-', stats.totalExpenses.toFixed(2)],
-        ['Cash in Hand', '-', stats.cashInHand.toFixed(2)]
-      ], columnStyles: { 1: { halign: 'right' }, 2: { halign: 'right' } } });
-      y = doc.lastAutoTable.finalY + 6;
-
-      // Sales Records
-      if (todaySales.length > 0) {
-        if (y > ph - 40) { doc.addPage(); y = 15; }
+        // Header (fixed, always readable)
+        doc.setFillColor(60, 60, 60);
+        doc.rect(0, 0, pw, 12, 'F');
         doc.setFont('helvetica', 'bold');
-        doc.setFontSize(11);
-        doc.text('Sales Records', 14, y);
-        y += 5;
-        const salesBody = todaySales.map((s, i) => [i+1, s.nozzle + ' - ' + s.fuelType, s.startReading, s.endReading, s.testing || 0, s.rate, s.liters.toFixed(2), s.amount.toFixed(2)]);
-        salesBody.push([{content: 'Total', colSpan: 6, styles: {fontStyle: 'bold'}}, stats.totalLiters.toFixed(2), stats.totalFuelAmount.toFixed(2)]);
-        doc.autoTable({ startY: y, ...tbl, head: [['#', 'Description', 'Start', 'End', 'Test', 'Rate', 'Litres', 'Amount']], body: salesBody, columnStyles: { 0: {halign:'center', cellWidth: 8}, 2: {halign:'right'}, 3: {halign:'right'}, 4: {halign:'right'}, 5: {halign:'right'}, 6: {halign:'right'}, 7: {halign:'right'} } });
-        y = doc.lastAutoTable.finalY + 6;
-      }
+        doc.setFontSize(12);
+        doc.setTextColor(255, 255, 255);
+        doc.text('Manager Pump', 14, 8);
+        doc.setFontSize(9);
+        doc.text('Date: ' + selectedDate + '  Time: ' + new Date().toLocaleTimeString(), pw - 14, 8, { align: 'right' });
+        doc.setTextColor(0, 0, 0);
+        y = 18;
 
-      // Credit Records
-      if (todayCredits.length > 0) {
-        if (y > ph - 40) { doc.addPage(); y = 15; }
-        doc.setFont('helvetica', 'bold');
-        doc.setFontSize(11);
-        doc.text('Credit Records', 14, y);
-        y += 5;
-        const creditBody = todayCredits.map((c, i) => [i+1, c.customerName, c.rate || '-', c.liters ? c.liters.toFixed(2) : '-', c.amount.toFixed(2)]);
-        creditBody.push([{content: 'Total', colSpan: 3, styles: {fontStyle: 'bold'}}, stats.creditLiters.toFixed(2), stats.creditAmount.toFixed(2)]);
-        doc.autoTable({ startY: y, ...tbl, head: [['#', 'Customer', 'Rate', 'Litres', 'Amount']], body: creditBody, columnStyles: { 0: {halign:'center', cellWidth: 8}, 2: {halign:'right'}, 3: {halign:'right'}, 4: {halign:'right'} } });
-        y = doc.lastAutoTable.finalY + 6;
-      }
+        // Stock line
+        if (fuelSettings) {
+          doc.setFontSize(fs(11));
+          doc.setFont('helvetica', 'normal');
+          const stockLine = 'STOCK: ' + Object.keys(fuelSettings).map(ft => {
+            const sd = localStorageService.getItem(ft.toLowerCase() + 'StockData');
+            let ss = 0;
+            if (sd && sd[selectedDate]) ss = sd[selectedDate].startStock || 0;
+            return ft + '-' + ss.toFixed(0) + ' L';
+          }).join(', ');
+          doc.text(stockLine, 14, y);
+          y += sp(5);
+        }
 
-      // Settlement Records
-      if (todaySettlements.length > 0) {
-        if (y > ph - 40) { doc.addPage(); y = 15; }
-        doc.setFont('helvetica', 'bold');
-        doc.setFontSize(16);
-        doc.text('Settlement Records', 14, y);
-        y += 6;
-        const settBody = todaySettlements.map((s, i) => [i+1, s.description || 'Settlement', s.amount.toFixed(2)]);
-        settBody.push([{content: 'Total', colSpan: 2, styles: {fontStyle: 'bold'}}, todaySettlements.reduce((sum, s) => sum + s.amount, 0).toFixed(2)]);
-        doc.autoTable({ startY: y, ...tbl, head: [['#', 'Description', 'Amount']], body: settBody, columnStyles: { 0: {halign:'center', cellWidth: 8}, 2: {halign:'right'} } });
-        y = doc.lastAutoTable.finalY + 6;
-      }
+        // Fuel Sales line
+        if (fuelSettings) {
+          const fsLine = 'FUEL SALES: ' + Object.keys(fuelSettings).map(ft => {
+            const fd = stats.fuelSalesByType[ft] || { liters: 0 };
+            return ft + '-' + fd.liters.toFixed(0) + ' L';
+          }).join(', ');
+          doc.text(fsLine, 14, y);
+          y += sp(7);
+        }
 
-      // Income Records
-      if (todayIncome.length > 0) {
-        if (y > ph - 40) { doc.addPage(); y = 15; }
-        doc.setFont('helvetica', 'bold');
-        doc.setFontSize(11);
-        doc.text('Income Records', 14, y);
-        y += 5;
-        const incBody = todayIncome.map((inc, i) => [i+1, inc.description, inc.amount.toFixed(2)]);
-        incBody.push([{content: 'Total', colSpan: 2, styles: {fontStyle: 'bold'}}, todayIncome.reduce((sum, i) => sum + i.amount, 0).toFixed(2)]);
-        doc.autoTable({ startY: y, ...tbl, head: [['#', 'Description', 'Amount']], body: incBody, columnStyles: { 0: {halign:'center', cellWidth: 8}, 2: {halign:'right'} } });
-        y = doc.lastAutoTable.finalY + 6;
-      }
+        const tbl = { theme: 'grid', styles: { font: 'helvetica', fontSize: fs(11), cellPadding: sp(2.2), minCellHeight: sp(4), lineWidth: 0.1, lineColor: [0,0,0], textColor: [0,0,0] }, headStyles: { fillColor: false, textColor: [0,0,0], fontStyle: 'bold', fontSize: fs(11), minCellHeight: sp(4) } };
+        const sectionHeading = (label) => {
+          if (y > ph - 30) { doc.addPage(); y = 15; }
+          doc.setFont('helvetica', 'bold');
+          doc.setFontSize(fs(11));
+          doc.text(label, 14, y);
+          y += sp(5);
+        };
 
-      // Expense Records
-      if (todayExpenses.length > 0) {
-        if (y > ph - 40) { doc.addPage(); y = 15; }
-        doc.setFont('helvetica', 'bold');
-        doc.setFontSize(11);
-        doc.text('Expense Records', 14, y);
-        y += 5;
-        const expBody = todayExpenses.map((exp, i) => [i+1, exp.description, exp.amount.toFixed(2)]);
-        expBody.push([{content: 'Total', colSpan: 2, styles: {fontStyle: 'bold'}}, todayExpenses.reduce((sum, e) => sum + e.amount, 0).toFixed(2)]);
-        doc.autoTable({ startY: y, ...tbl, head: [['#', 'Description', 'Amount']], body: expBody, columnStyles: { 0: {halign:'center', cellWidth: 8}, 2: {halign:'right'} } });
-        y = doc.lastAutoTable.finalY + 6;
-      }
+        // Summary
+        sectionHeading('Summary');
+        doc.autoTable({ startY: y, ...tbl, head: [['Category', 'Litres', 'Amount']], body: [
+          ['Fuel Sales', stats.totalLiters.toFixed(2), stats.totalFuelAmount.toFixed(2)],
+          ['Credit Sales', stats.creditLiters.toFixed(2), stats.creditAmount.toFixed(2)],
+          ['Settlement', '-', stats.totalSettlement.toFixed(2)],
+          ['Income', '-', stats.otherIncome.toFixed(2)],
+          ['Expenses', '-', stats.totalExpenses.toFixed(2)],
+          ['Cash in Hand', '-', stats.cashInHand.toFixed(2)]
+        ], columnStyles: { 1: { halign: 'right' }, 2: { halign: 'right' } } });
+        y = doc.lastAutoTable.finalY + sp(6);
 
-      // Receipt Records
-      if (todayReceipts.length > 0) {
-        if (y > ph - 40) { doc.addPage(); y = 15; }
-        doc.setFont('helvetica', 'bold');
-        doc.setFontSize(11);
-        doc.text('Receipt Records', 14, y);
-        y += 5;
-        const recBody = todayReceipts.map((p, i) => [i+1, p.customerName || 'Unknown', p.paymentType || p.mode || '-', p.amount.toFixed(2)]);
-        recBody.push([{content: 'Total', colSpan: 3, styles: {fontStyle: 'bold'}}, todayReceipts.reduce((sum, p) => sum + p.amount, 0).toFixed(2)]);
-        doc.autoTable({ startY: y, ...tbl, head: [['#', 'Customer', 'Payment Type', 'Amount']], body: recBody, columnStyles: { 0: {halign:'center', cellWidth: 8}, 3: {halign:'right'} } });
-        y = doc.lastAutoTable.finalY + 6;
-      }
+        // Sales Records
+        if (todaySales.length > 0) {
+          sectionHeading('Sales Records');
+          const salesBody = todaySales.map((s, i) => [i+1, s.nozzle + ' - ' + s.fuelType, s.startReading, s.endReading, s.testing || 0, s.rate, s.liters.toFixed(2), s.amount.toFixed(2)]);
+          salesBody.push([{content: 'Total', colSpan: 6, styles: {fontStyle: 'bold'}}, stats.totalLiters.toFixed(2), stats.totalFuelAmount.toFixed(2)]);
+          doc.autoTable({ startY: y, ...tbl, head: [['#', 'Description', 'Start', 'End', 'Test', 'Rate', 'Litres', 'Amount']], body: salesBody, columnStyles: { 0: {halign:'center', cellWidth: 8}, 2: {halign:'right'}, 3: {halign:'right'}, 4: {halign:'right'}, 5: {halign:'right'}, 6: {halign:'right'}, 7: {halign:'right'} } });
+          y = doc.lastAutoTable.finalY + sp(6);
+        }
 
-      // Bank Settlement Report
-      if (y > ph - 40) { doc.addPage(); y = 15; }
-      doc.setFont('helvetica', 'bold');
-      doc.setFontSize(11);
-      doc.text('Bank Settlement Report', 14, y);
-      y += 5;
-      const matchR = (p, kw) => { const st=(p.settlementType||'').toLowerCase(); const m=(p.mode||'').toLowerCase(); const pt=(p.paymentType||'').toLowerCase(); return st.includes(kw)||m.includes(kw)||(pt===kw); };
-      const cashT = todaySettlements.filter(s=>s.description&&s.description.toLowerCase().includes('cash')).reduce((s,v)=>s+v.amount,0) + todayReceipts.filter(p=>matchR(p,'cash')).reduce((s,p)=>s+p.amount,0);
-      const cardT = todaySettlements.filter(s=>s.description&&s.description.toLowerCase().includes('card')).reduce((s,v)=>s+v.amount,0) + todayReceipts.filter(p=>matchR(p,'card')).reduce((s,p)=>s+p.amount,0);
-      const paytmT = todaySettlements.filter(s=>s.description&&s.description.toLowerCase().includes('paytm')).reduce((s,v)=>s+v.amount,0) + todayReceipts.filter(p=>matchR(p,'paytm')).reduce((s,p)=>s+p.amount,0);
-      const phonepeT = todaySettlements.filter(s=>s.description&&s.description.toLowerCase().includes('phonepe')).reduce((s,v)=>s+v.amount,0) + todayReceipts.filter(p=>matchR(p,'phonepe')).reduce((s,p)=>s+p.amount,0);
-      const dtpT = todaySettlements.filter(s=>s.description&&s.description.toLowerCase().includes('dtp')).reduce((s,v)=>s+v.amount,0) + todayReceipts.filter(p=>matchR(p,'dtp')).reduce((s,p)=>s+p.amount,0);
-      const gt = cashT+cardT+paytmT+phonepeT+dtpT;
-      doc.autoTable({ startY: y, ...tbl, head: [['Payment Mode', 'Amount']], body: [['Cash', cashT.toFixed(2)],['Card', cardT.toFixed(2)],['Paytm', paytmT.toFixed(2)],['PhonePe', phonepeT.toFixed(2)],['DTP', dtpT.toFixed(2)],['Total', gt.toFixed(2)]], columnStyles: { 1: {halign:'right'} } });
+        // Credit Records
+        if (todayCredits.length > 0) {
+          sectionHeading('Credit Records');
+          const creditBody = todayCredits.map((c, i) => [i+1, c.customerName, c.rate || '-', c.liters ? c.liters.toFixed(2) : '-', c.amount.toFixed(2)]);
+          creditBody.push([{content: 'Total', colSpan: 3, styles: {fontStyle: 'bold'}}, stats.creditLiters.toFixed(2), stats.creditAmount.toFixed(2)]);
+          doc.autoTable({ startY: y, ...tbl, head: [['#', 'Customer', 'Rate', 'Litres', 'Amount']], body: creditBody, columnStyles: { 0: {halign:'center', cellWidth: 8}, 2: {halign:'right'}, 3: {halign:'right'}, 4: {halign:'right'} } });
+          y = doc.lastAutoTable.finalY + sp(6);
+        }
 
-      // Footer on all pages
-      const pc = doc.internal.getNumberOfPages();
-      for (let i = 1; i <= pc; i++) {
-        doc.setPage(i);
-        doc.setFontSize(10);
-        doc.setFont('helvetica', 'normal');
-        doc.text('Page ' + i + ' of ' + pc + ' | Generated on: ' + new Date().toLocaleString(), pw/2, ph - 5, { align: 'center' });
+        // Settlement Records
+        if (todaySettlements.length > 0) {
+          sectionHeading('Settlement Records');
+          const settBody = todaySettlements.map((s, i) => [i+1, s.description || 'Settlement', s.amount.toFixed(2)]);
+          settBody.push([{content: 'Total', colSpan: 2, styles: {fontStyle: 'bold'}}, todaySettlements.reduce((sum, s) => sum + s.amount, 0).toFixed(2)]);
+          doc.autoTable({ startY: y, ...tbl, head: [['#', 'Description', 'Amount']], body: settBody, columnStyles: { 0: {halign:'center', cellWidth: 8}, 2: {halign:'right'} } });
+          y = doc.lastAutoTable.finalY + sp(6);
+        }
+
+        // Income Records
+        if (todayIncome.length > 0) {
+          sectionHeading('Income Records');
+          const incBody = todayIncome.map((inc, i) => [i+1, inc.description, inc.amount.toFixed(2)]);
+          incBody.push([{content: 'Total', colSpan: 2, styles: {fontStyle: 'bold'}}, todayIncome.reduce((sum, i) => sum + i.amount, 0).toFixed(2)]);
+          doc.autoTable({ startY: y, ...tbl, head: [['#', 'Description', 'Amount']], body: incBody, columnStyles: { 0: {halign:'center', cellWidth: 8}, 2: {halign:'right'} } });
+          y = doc.lastAutoTable.finalY + sp(6);
+        }
+
+        // Expense Records
+        if (todayExpenses.length > 0) {
+          sectionHeading('Expense Records');
+          const expBody = todayExpenses.map((exp, i) => [i+1, exp.description, exp.amount.toFixed(2)]);
+          expBody.push([{content: 'Total', colSpan: 2, styles: {fontStyle: 'bold'}}, todayExpenses.reduce((sum, e) => sum + e.amount, 0).toFixed(2)]);
+          doc.autoTable({ startY: y, ...tbl, head: [['#', 'Description', 'Amount']], body: expBody, columnStyles: { 0: {halign:'center', cellWidth: 8}, 2: {halign:'right'} } });
+          y = doc.lastAutoTable.finalY + sp(6);
+        }
+
+        // Receipt Records
+        if (todayReceipts.length > 0) {
+          sectionHeading('Receipt Records');
+          const recBody = todayReceipts.map((p, i) => [i+1, p.customerName || 'Unknown', p.paymentType || p.mode || '-', p.amount.toFixed(2)]);
+          recBody.push([{content: 'Total', colSpan: 3, styles: {fontStyle: 'bold'}}, todayReceipts.reduce((sum, p) => sum + p.amount, 0).toFixed(2)]);
+          doc.autoTable({ startY: y, ...tbl, head: [['#', 'Customer', 'Payment Type', 'Amount']], body: recBody, columnStyles: { 0: {halign:'center', cellWidth: 8}, 3: {halign:'right'} } });
+          y = doc.lastAutoTable.finalY + sp(6);
+        }
+
+        // Bank Settlement Report
+        sectionHeading('Bank Settlement Report');
+        const matchR = (p, kw) => { const st=(p.settlementType||'').toLowerCase(); const m=(p.mode||'').toLowerCase(); const pt=(p.paymentType||'').toLowerCase(); return st.includes(kw)||m.includes(kw)||(pt===kw); };
+        const cashT = todaySettlements.filter(s=>s.description&&s.description.toLowerCase().includes('cash')).reduce((s,v)=>s+v.amount,0) + todayReceipts.filter(p=>matchR(p,'cash')).reduce((s,p)=>s+p.amount,0);
+        const cardT = todaySettlements.filter(s=>s.description&&s.description.toLowerCase().includes('card')).reduce((s,v)=>s+v.amount,0) + todayReceipts.filter(p=>matchR(p,'card')).reduce((s,p)=>s+p.amount,0);
+        const paytmT = todaySettlements.filter(s=>s.description&&s.description.toLowerCase().includes('paytm')).reduce((s,v)=>s+v.amount,0) + todayReceipts.filter(p=>matchR(p,'paytm')).reduce((s,p)=>s+p.amount,0);
+        const phonepeT = todaySettlements.filter(s=>s.description&&s.description.toLowerCase().includes('phonepe')).reduce((s,v)=>s+v.amount,0) + todayReceipts.filter(p=>matchR(p,'phonepe')).reduce((s,p)=>s+p.amount,0);
+        const dtpT = todaySettlements.filter(s=>s.description&&s.description.toLowerCase().includes('dtp')).reduce((s,v)=>s+v.amount,0) + todayReceipts.filter(p=>matchR(p,'dtp')).reduce((s,p)=>s+p.amount,0);
+        const gt = cashT+cardT+paytmT+phonepeT+dtpT;
+        doc.autoTable({ startY: y, ...tbl, head: [['Payment Mode', 'Amount']], body: [['Cash', cashT.toFixed(2)],['Card', cardT.toFixed(2)],['Paytm', paytmT.toFixed(2)],['PhonePe', phonepeT.toFixed(2)],['DTP', dtpT.toFixed(2)],['Total', gt.toFixed(2)]], columnStyles: { 1: {halign:'right'} } });
+
+        // Footer on all pages
+        const pc = doc.internal.getNumberOfPages();
+        for (let i = 1; i <= pc; i++) {
+          doc.setPage(i);
+          doc.setFontSize(fs(10));
+          doc.setFont('helvetica', 'normal');
+          doc.text('Page ' + i + ' of ' + pc + ' | Generated on: ' + new Date().toLocaleString(), pw/2, ph - 5, { align: 'center' });
+        }
+        return doc;
+      };
+
+      // Auto-fit to 2 pages: start at 1.0 scale, shrink until it fits
+      let scale = 1.0;
+      let doc = renderReport(scale);
+      let tries = 0;
+      while (doc.internal.getNumberOfPages() > 2 && scale > 0.18 && tries < 25) {
+        scale -= 0.04;
+        doc = renderReport(scale);
+        tries += 1;
       }
+      console.log('[PDF] final scale=' + scale.toFixed(2) + ' pages=' + doc.internal.getNumberOfPages());
 
       // Save PDF
       const fileName = 'Report_' + selectedDate + '.pdf';
@@ -2374,15 +2367,15 @@ window.onload = function() {
                       size="sm"
                       onClick={() => generateDirectPDF('share')}
                       data-testid="share-pdf-btn"
-                      className={`text-xs h-7 px-2 ${
+                      className={`text-xs h-7 w-7 p-0 ${
                         isDarkMode 
                           ? 'border-gray-600 text-gray-300 hover:bg-gray-700' 
                           : 'border-slate-300 text-slate-700 hover:bg-slate-50'
                       }`}
                       title="Share PDF (WhatsApp / Email / Drive)"
+                      aria-label="Share PDF"
                     >
-                      <Share2 className="w-3 h-3 mr-1" />
-                      Share
+                      <Share2 className="w-3.5 h-3.5" />
                     </Button>
                     <Button
                       variant="outline"

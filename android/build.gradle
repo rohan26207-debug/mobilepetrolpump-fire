@@ -9,8 +9,12 @@ buildscript {
     }
 }
 
-// Repositories are now managed in settings.gradle
-// allprojects block removed to prevent conflict with RepositoriesMode.FAIL_ON_PROJECT_REPOS
+allprojects {
+    repositories {
+        google()
+        mavenCentral()
+    }
+}
 
 task clean(type: Delete) {
     delete rootProject.buildDir

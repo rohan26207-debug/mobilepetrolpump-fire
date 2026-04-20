@@ -33,4 +33,5 @@ React-based petrol pump management application. 100% offline with localStorage o
 - **Made app 100% offline**: Removed Firebase Auth, Firestore sync, login screen. App loads directly with localStorage only.
 
 ## Pending/Future Tasks
-- P1: Clean up deprecated DeviceLinking.jsx and other unused Firebase files (firebase.js, firebaseSync.js, syncService.js, AuthContext.js, LoginScreen.jsx, SyncStatus.jsx, SyncDebugPanel.jsx, authService.js)
+- Clean up old deprecated files (DeviceLinking.jsx, Firebase files, old Android docs)
+- Add app icon for Android build

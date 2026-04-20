@@ -298,9 +298,9 @@ const ZAPTRStyleCalculator = () => {
     const todayIncome = incomeData.filter(income => income.date === selectedDate);
     const todayExpenses = expenseData.filter(expense => expense.date === selectedDate);
 
-    // Calculate fuel sales by fuel type
+    // Calculate fuel sales by fuel type (excluding MPP-tagged sales)
     const fuelSalesByType = {};
-    todaySales.forEach(sale => {
+    todaySales.filter(sale => !sale.mpp).forEach(sale => {
       if (!fuelSalesByType[sale.fuelType]) {
         fuelSalesByType[sale.fuelType] = { liters: 0, amount: 0 };
       }

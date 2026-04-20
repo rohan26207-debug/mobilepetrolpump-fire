@@ -27,7 +27,8 @@ React-based petrol pump management application with Firebase Auth (Email/Passwor
 - Delete Data restricted to Pro Mode
 - Merge Backup repositioned above Auto Backup
 - MPP checkbox always visible in Add Sale form
-- MPP-tagged sales excluded from stock calculations
+- MPP-tagged sales excluded from stock calculations (MPPStock.jsx)
+- MPP-tagged reading sales excluded from fuel sales summary (fuelSalesByType in ZAPTRStyleCalculator.jsx)
 
 ## Pending/Future Tasks
 - P1: Clean up deprecated DeviceLinking.jsx component

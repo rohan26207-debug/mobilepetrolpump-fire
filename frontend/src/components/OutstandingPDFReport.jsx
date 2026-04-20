@@ -231,15 +231,15 @@ const OutstandingPDFReport = ({ customers, creditData, payments, isDarkMode, sel
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
 <title>Outstanding Report</title>
 <style>
-*{font-family:Helvetica,Arial,sans-serif}
+*{font-family:Helvetica,Arial,sans-serif;font-weight:normal}
 body{margin:10px;line-height:1.2;color:#000;font-size:12px}
-h1{font-size:20px;margin:0;text-align:center}
-p{font-size:14px;margin:2px 0;text-align:center}
-table{width:100%;border-collapse:collapse;font-size:11px;margin:3px 0}
-th{border:1px solid #000;padding:2px;text-align:center;font-weight:bold;font-size:11px}
-td{border:1px solid #000;padding:2px;font-size:11px}
+h1{font-size:18px;margin:0;text-align:center;text-transform:uppercase}
+p{font-size:12px;margin:2px 0;text-align:center}
+table{width:100%;border-collapse:collapse;font-size:10px;margin:3px 0}
+th{border:1px solid #000;padding:2px;text-align:center;;font-size:10px}
+td{border:1px solid #000;padding:2px;font-size:10px}
 .r{text-align:right}
-.t{font-weight:bold}
+.t{}
 .print-btn{background:#000;color:white;border:none;padding:10px 20px;font-size:16px;cursor:pointer;margin:10px auto;display:block}
 .no-print{display:block}
 @media print{body{margin:5mm}.no-print{display:none}@page{margin:5mm}}
@@ -266,10 +266,10 @@ ${sortedData.map(customer => `
 </tr>
 `).join('')}
 <tr class="t">
-  <td><b>Total</b></td>
-  <td class="r"><b>${sortedData.reduce((sum, c) => sum + c.totalCredit, 0).toFixed(2)}</b></td>
-  <td class="r"><b>${sortedData.reduce((sum, c) => sum + c.totalReceived, 0).toFixed(2)}</b></td>
-  <td class="r"><b>${sortedData.reduce((sum, c) => sum + c.outstanding, 0).toFixed(2)}</b></td>
+  <td>Total</td>
+  <td class="r">${sortedData.reduce((sum, c) => sum + c.totalCredit, 0).toFixed(2)}</td>
+  <td class="r">${sortedData.reduce((sum, c) => sum + c.totalReceived, 0).toFixed(2)}</td>
+  <td class="r">${sortedData.reduce((sum, c) => sum + c.outstanding, 0).toFixed(2)}</td>
 </tr>
 </table>
 ` : '<p>No data to display</p>'}

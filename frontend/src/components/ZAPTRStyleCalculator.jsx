@@ -1288,17 +1288,17 @@ const ZAPTRStyleCalculator = () => {
 <head>
 <title>Report - ${dateText}</title>
 <style>
-*{font-family:Helvetica,Arial,sans-serif}
+*{font-family:Helvetica,Arial,sans-serif;font-weight:normal}
 body{margin:10px;line-height:1.2;color:#000;font-size:12px}
-h1{font-size:20px;margin:0;text-align:center}
-p{font-size:14px;margin:2px 0;text-align:center}
-.s{margin:10px 0 3px 0;font-size:14px;font-weight:bold}
-table{width:100%;border-collapse:collapse;font-size:11px;margin:3px 0}
-th{border:1px solid #000;padding:2px;text-align:center;font-weight:bold;font-size:11px}
-td{border:1px solid #000;padding:2px;font-size:11px}
+h1{font-size:18px;margin:0;text-align:center;text-transform:uppercase}
+p{font-size:12px;margin:2px 0;text-align:center}
+.s{margin:10px 0 3px 0;font-size:12px;text-transform:uppercase}
+table{width:100%;border-collapse:collapse;font-size:10px;margin:3px 0}
+th{border:1px solid #000;padding:2px;text-align:center;font-size:10px;text-transform:uppercase}
+td{border:1px solid #000;padding:2px;font-size:10px}
 .r{text-align:right}
 .c{text-align:center}
-.t{font-weight:bold}
+.t{}
 .print-btn{background:#000;color:white;border:none;padding:10px 20px;font-size:16px;cursor:pointer;margin:10px auto;display:block}
 .no-print{display:block}
 @media print{body{margin:5mm}.no-print{display:none}@page{margin:5mm}}
@@ -1319,7 +1319,7 @@ ${Object.keys(filteredStats.fuelSalesByType).length > 1 ? `<tr><td>Total Reading
 <tr><td>Credit Sales<td class="r">${filteredStats.creditLiters.toFixed(2)}<td class="r">${filteredStats.creditAmount.toFixed(2)}</tr>
 <tr><td>Income<td class="r">-<td class="r">${filteredStats.otherIncome.toFixed(2)}</tr>
 <tr><td>Expenses<td class="r">-<td class="r">${filteredStats.totalExpenses.toFixed(2)}</tr>
-<tr class="t"><td><b>Cash in Hand</b><td class="r"><b>-</b><td class="r"><b>${filteredStats.adjustedCashSales.toFixed(2)}</b></tr>
+<tr class="t"><td>Cash in Hand<td class="r">-<td class="r">${filteredStats.adjustedCashSales.toFixed(2)}</tr>
 </table>` : ''}
 
 ${filteredSales.length > 0 ? `
@@ -1329,7 +1329,7 @@ ${filteredSales.length > 0 ? `
 ${filteredSales.map((sale, index) =>
   `<tr><td class="c">${index + 1}<td>${sale.nozzle} - ${sale.fuelType}<td class="r">${sale.startReading}<td class="r">${sale.endReading}<td class="r">${sale.testing || 0}<td class="r">${sale.rate}<td class="r">${sale.liters}<td class="r">${sale.amount.toFixed(2)}</tr>`
 ).join('')}
-<tr class="t"><td colspan="6" class="r"><b>Total:</b><td class="r"><b>${filteredStats.totalLiters.toFixed(2)}</b><td class="r"><b>${filteredStats.fuelCashSales.toFixed(2)}</b></tr>
+<tr class="t"><td colspan="6" class="r">Total:<td class="r">${filteredStats.totalLiters.toFixed(2)}<td class="r">${filteredStats.fuelCashSales.toFixed(2)}</tr>
 </table>` : ''}
 
 ${filteredCredits.length > 0 ? `
@@ -1339,7 +1339,7 @@ ${filteredCredits.length > 0 ? `
 ${filteredCredits.map((credit, index) =>
   `<tr><td class="c">${index + 1}<td>${credit.customerName}<td class="r">${credit.rate}<td class="r">${credit.liters}<td class="r">${credit.amount.toFixed(2)}</tr>`
 ).join('')}
-<tr class="t"><td colspan="3" class="r"><b>Total:</b><td class="r"><b>${filteredStats.creditLiters.toFixed(2)}</b><td class="r"><b>${filteredStats.creditAmount.toFixed(2)}</b></tr>
+<tr class="t"><td colspan="3" class="r">Total:<td class="r">${filteredStats.creditLiters.toFixed(2)}<td class="r">${filteredStats.creditAmount.toFixed(2)}</tr>
 </table>` : ''}
 
 ${filteredSettlements.length > 0 ? `
@@ -1349,7 +1349,7 @@ ${filteredSettlements.length > 0 ? `
 ${filteredSettlements.map((s, index) =>
   `<tr><td class="c">${index + 1}<td>${s.description || 'Settlement'}<td class="r">${s.amount.toFixed(2)}</tr>`
 ).join('')}
-<tr class="t"><td colspan="2" class="r"><b>Total:</b><td class="r"><b>${filteredSettlements.reduce((sum, s) => sum + s.amount, 0).toFixed(2)}</b></tr>
+<tr class="t"><td colspan="2" class="r">Total:<td class="r">${filteredSettlements.reduce((sum, s) => sum + s.amount, 0).toFixed(2)}</tr>
 </table>` : ''}
 
 ${filteredIncome.length > 0 ? `
@@ -1359,7 +1359,7 @@ ${filteredIncome.length > 0 ? `
 ${filteredIncome.map((income, index) =>
   `<tr><td class="c">${index + 1}<td>${income.description}<td class="r">${income.amount.toFixed(2)}</tr>`
 ).join('')}
-<tr class="t"><td colspan="2" class="r"><b>Total:</b><td class="r"><b>${filteredIncome.reduce((sum, i) => sum + i.amount, 0).toFixed(2)}</b></tr>
+<tr class="t"><td colspan="2" class="r">Total:<td class="r">${filteredIncome.reduce((sum, i) => sum + i.amount, 0).toFixed(2)}</tr>
 </table>` : ''}
 
 ${filteredExpenses.length > 0 ? `
@@ -1369,7 +1369,7 @@ ${filteredExpenses.length > 0 ? `
 ${filteredExpenses.map((expense, index) =>
   `<tr><td class="c">${index + 1}<td>${expense.description}<td class="r">${expense.amount.toFixed(2)}</tr>`
 ).join('')}
-<tr class="t"><td colspan="2" class="r"><b>Total:</b><td class="r"><b>${filteredExpenses.reduce((sum, e) => sum + e.amount, 0).toFixed(2)}</b></tr>
+<tr class="t"><td colspan="2" class="r">Total:<td class="r">${filteredExpenses.reduce((sum, e) => sum + e.amount, 0).toFixed(2)}</tr>
 </table>` : ''}
 
 ${filteredReceipts.length > 0 ? `
@@ -1379,7 +1379,7 @@ ${filteredReceipts.length > 0 ? `
 ${filteredReceipts.map((p, index) =>
   `<tr><td class="c">${index + 1}<td>${p.customerName || 'Unknown'}<td class="c">${p.paymentType || p.mode || 'N/A'}<td class="r">${p.amount.toFixed(2)}</tr>`
 ).join('')}
-<tr class="t"><td colspan="3" class="r"><b>Total:</b><td class="r"><b>${filteredReceipts.reduce((sum, p) => sum + p.amount, 0).toFixed(2)}</b></tr>
+<tr class="t"><td colspan="3" class="r">Total:<td class="r">${filteredReceipts.reduce((sum, p) => sum + p.amount, 0).toFixed(2)}</tr>
 </table>` : ''}
 
 <div style="margin-top:15px;text-align:center;font-size:10px;border-top:1px solid #000;padding-top:5px">
@@ -1445,17 +1445,17 @@ window.onload = function() {
 <head>
 <title>Daily Report - ${selectedDate}</title>
 <style>
-*{font-family:Helvetica,Arial,sans-serif}
+*{font-family:Helvetica,Arial,sans-serif;font-weight:normal}
 body{margin:10px;line-height:1.2;color:#000;font-size:12px}
-h1{font-size:20px;margin:0;text-align:center}
-p{font-size:14px;margin:2px 0;text-align:center}
-.s{margin:10px 0 3px 0;font-size:14px;font-weight:bold}
-table{width:100%;border-collapse:collapse;font-size:11px;margin:3px 0}
-th{border:1px solid #000;padding:2px;text-align:center;font-weight:bold;font-size:11px}
-td{border:1px solid #000;padding:2px;font-size:11px}
+h1{font-size:18px;margin:0;text-align:center;text-transform:uppercase}
+p{font-size:12px;margin:2px 0;text-align:center}
+.s{margin:10px 0 3px 0;font-size:12px;text-transform:uppercase}
+table{width:100%;border-collapse:collapse;font-size:10px;margin:3px 0}
+th{border:1px solid #000;padding:2px;text-align:center;font-size:10px;text-transform:uppercase}
+td{border:1px solid #000;padding:2px;font-size:10px}
 .r{text-align:right}
 .c{text-align:center}
-.t{font-weight:bold}
+.t{}
 .print-btn{background:#000;color:white;border:none;padding:10px 20px;font-size:16px;cursor:pointer;margin:10px auto;display:block}
 .no-print{display:block}
 @media print{body{margin:5mm}.no-print{display:none}@page{margin:5mm}}
@@ -1495,7 +1495,7 @@ FUEL SALES: ${fuelSettings ? Object.keys(fuelSettings).map(fuelType => {
 <tr><td>3. Settlement<td class="r">-<td class="r">${stats.totalSettlement.toFixed(2)}</tr>
 <tr><td>4. Income<td class="r">-<td class="r">${stats.otherIncome.toFixed(2)}</tr>
 <tr><td>5. Expenses<td class="r">-<td class="r">${stats.totalExpenses.toFixed(2)}</tr>
-<tr class="t"><td><b>Cash in Hand</b><td class="r"><b>-</b><td class="r"><b>${stats.cashInHand.toFixed(2)}</b></tr>
+<tr class="t"><td>Cash in Hand<td class="r">-<td class="r">${stats.cashInHand.toFixed(2)}</tr>
 </table>
 
 ${todaySales.length > 0 ? `
@@ -1505,7 +1505,7 @@ ${todaySales.length > 0 ? `
 ${todaySales.map((sale, index) => 
   `<tr><td class="c">${index + 1}<td>${sale.nozzle} - ${sale.fuelType}<td class="r">${sale.startReading}<td class="r">${sale.endReading}<td class="r">${sale.testing || 0}<td class="r">${sale.rate}<td class="r">${sale.liters}<td class="r">${sale.amount.toFixed(2)}</tr>`
 ).join('')}
-<tr class="t"><td colspan="6" class="r"><b>Total:</b><td class="r"><b>${todaySales.reduce((sum, sale) => sum + parseFloat(sale.liters), 0).toFixed(2)}</b><td class="r"><b>${todaySales.reduce((sum, sale) => sum + parseFloat(sale.amount), 0).toFixed(2)}</b></tr>
+<tr class="t"><td colspan="6" class="r">Total:<td class="r">${todaySales.reduce((sum, sale) => sum + parseFloat(sale.liters), 0).toFixed(2)}<td class="r">${todaySales.reduce((sum, sale) => sum + parseFloat(sale.amount), 0).toFixed(2)}</tr>
 </table>` : ''}
 
 ${todayCredits.length > 0 ? `
@@ -1515,7 +1515,7 @@ ${todayCredits.length > 0 ? `
 ${todayCredits.map((credit, index) => 
   `<tr><td class="c">${index + 1}<td>${credit.customerName}<td class="r">${credit.rate}<td class="r">${credit.liters}<td class="r">${credit.amount.toFixed(2)}</tr>`
 ).join('')}
-<tr class="t"><td colspan="3" class="r"><b>Total:</b><td class="r"><b>${todayCredits.reduce((sum, credit) => sum + parseFloat(credit.liters), 0).toFixed(2)}</b><td class="r"><b>${todayCredits.reduce((sum, credit) => sum + parseFloat(credit.amount), 0).toFixed(2)}</b></tr>
+<tr class="t"><td colspan="3" class="r">Total:<td class="r">${todayCredits.reduce((sum, credit) => sum + parseFloat(credit.liters), 0).toFixed(2)}<td class="r">${todayCredits.reduce((sum, credit) => sum + parseFloat(credit.amount), 0).toFixed(2)}</tr>
 </table>` : ''}
 
 ${settlementData.filter(s => s.date === selectedDate).length > 0 ? `
@@ -1525,7 +1525,7 @@ ${settlementData.filter(s => s.date === selectedDate).length > 0 ? `
 ${settlementData.filter(s => s.date === selectedDate).map((settlement, index) => 
   `<tr><td class="c">${index + 1}<td>${settlement.description || 'Settlement'}<td class="r">${settlement.amount.toFixed(2)}</tr>`
 ).join('')}
-<tr class="t"><td colspan="2" class="r"><b>Total Settlements:</b><td class="r"><b>${settlementData.filter(s => s.date === selectedDate).reduce((sum, s) => sum + parseFloat(s.amount), 0).toFixed(2)}</b></tr>
+<tr class="t"><td colspan="2" class="r">Total Settlements:<td class="r">${settlementData.filter(s => s.date === selectedDate).reduce((sum, s) => sum + parseFloat(s.amount), 0).toFixed(2)}</tr>
 </table>` : ''}
 
 ${todayIncome.length > 0 ? `
@@ -1535,7 +1535,7 @@ ${todayIncome.length > 0 ? `
 ${todayIncome.map((income, index) => 
   `<tr><td class="c">${index + 1}<td>${income.description}<td class="r">${income.amount.toFixed(2)}</tr>`
 ).join('')}
-<tr class="t"><td colspan="2" class="r"><b>Total Income:</b><td class="r"><b>${todayIncome.reduce((sum, income) => sum + parseFloat(income.amount), 0).toFixed(2)}</b></tr>
+<tr class="t"><td colspan="2" class="r">Total Income:<td class="r">${todayIncome.reduce((sum, income) => sum + parseFloat(income.amount), 0).toFixed(2)}</tr>
 </table>` : ''}
 
 ${todayExpenses.length > 0 ? `
@@ -1545,7 +1545,7 @@ ${todayExpenses.length > 0 ? `
 ${todayExpenses.map((expense, index) => 
   `<tr><td class="c">${index + 1}<td>${expense.description}<td class="r">${expense.amount.toFixed(2)}</tr>`
 ).join('')}
-<tr class="t"><td colspan="2" class="r"><b>Total Expenses:</b><td class="r"><b>${todayExpenses.reduce((sum, expense) => sum + parseFloat(expense.amount), 0).toFixed(2)}</b></tr>
+<tr class="t"><td colspan="2" class="r">Total Expenses:<td class="r">${todayExpenses.reduce((sum, expense) => sum + parseFloat(expense.amount), 0).toFixed(2)}</tr>
 </table>` : ''}
 
 ${(() => {
@@ -1559,7 +1559,7 @@ ${(() => {
 ${todayReceipts.map((p, index) => 
   `<tr><td class="c">${index + 1}<td>${p.customerName || 'Unknown'}<td class="c">${p.paymentType || p.mode || 'N/A'}<td class="c">${p.paymentType === 'Settlement' ? (p.settlementType || p.mode || '') : '-'}<td class="r">${p.amount.toFixed(2)}</tr>`
 ).join('')}
-<tr class="t"><td colspan="4" class="r"><b>Total Receipts:</b><td class="r"><b>${totalReceipts.toFixed(2)}</b></tr>
+<tr class="t"><td colspan="4" class="r">Total Receipts:<td class="r">${totalReceipts.toFixed(2)}</tr>
 </table>`;
 })()}
 
@@ -1616,7 +1616,7 @@ ${(() => {
     <tr><td>Paytm<td class="r">${paytm.toFixed(2)}</tr>
     <tr><td>PhonePe<td class="r">${phonepe.toFixed(2)}</tr>
     <tr><td>DTP<td class="r">${dtp.toFixed(2)}</tr>
-    <tr class="t"><td><b>Total</b><td class="r"><b>${total.toFixed(2)}</b></tr>
+    <tr class="t"><td>Total<td class="r">${total.toFixed(2)}</tr>
   `;
 })()}
 </table>

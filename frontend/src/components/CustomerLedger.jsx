@@ -435,16 +435,16 @@ const CustomerLedger = ({ customers, creditData, payments, salesData, settlement
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
 <title>Customer Ledger Report</title>
 <style>
-*{font-family:Helvetica,Arial,sans-serif}
+*{font-family:Helvetica,Arial,sans-serif;font-weight:normal}
 body{margin:10px;line-height:1.2;color:#000;font-size:12px}
-h1{font-size:20px;margin:0;text-align:center}
+h1{font-size:18px;margin:0;text-align:center;text-transform:uppercase}
 h2{font-size:16px;margin:2px 0;text-align:center}
-p{font-size:14px;margin:2px 0;text-align:center}
-table{width:100%;border-collapse:collapse;font-size:11px;margin:3px 0}
-th{border:1px solid #000;padding:2px;text-align:center;font-weight:bold;font-size:11px}
-td{border:1px solid #000;padding:2px;font-size:11px}
+p{font-size:12px;margin:2px 0;text-align:center}
+table{width:100%;border-collapse:collapse;font-size:10px;margin:3px 0}
+th{border:1px solid #000;padding:2px;text-align:center;;font-size:10px}
+td{border:1px solid #000;padding:2px;font-size:10px}
 .r{text-align:right}
-.t{font-weight:bold}
+.t{}
 .print-btn{background:#000;color:white;border:none;padding:10px 20px;font-size:16px;cursor:pointer;margin:10px auto;display:block}
 .no-print{display:block}
 @media print{body{margin:5mm}.no-print{display:none}@page{margin:5mm}}
@@ -470,14 +470,14 @@ ${ledgerData.map(row => `
   <td>${row.description}</td>
   <td class="r">${row.credit > 0 ? row.credit.toFixed(2) : '-'}</td>
   <td class="r">${row.received > 0 ? row.received.toFixed(2) : '-'}</td>
-  <td class="r"><b>${row.outstanding.toFixed(2)}</b></td>
+  <td class="r">${row.outstanding.toFixed(2)}</td>
 </tr>
 `).join('')}
 <tr class="t">
-  <td colspan="2"><b>TOTAL</b></td>
-  <td class="r"><b>${ledgerData.reduce((sum, row) => sum + row.credit, 0).toFixed(2)}</b></td>
-  <td class="r"><b>${ledgerData.reduce((sum, row) => sum + row.received, 0).toFixed(2)}</b></td>
-  <td class="r"><b>${ledgerData[ledgerData.length - 1]?.outstanding.toFixed(2) || '0.00'}</b></td>
+  <td colspan="2">TOTAL</td>
+  <td class="r">${ledgerData.reduce((sum, row) => sum + row.credit, 0).toFixed(2)}</td>
+  <td class="r">${ledgerData.reduce((sum, row) => sum + row.received, 0).toFixed(2)}</td>
+  <td class="r">${ledgerData[ledgerData.length - 1]?.outstanding.toFixed(2) || '0.00'}</td>
 </tr>
 </table>
 ` : '<p>No transactions found</p>'}

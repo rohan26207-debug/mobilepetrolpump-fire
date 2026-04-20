@@ -5,7 +5,6 @@ import android.app.Activity;
 import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
-import android.os.Environment;
 import android.util.Base64;
 import android.util.Log;
 import android.webkit.DownloadListener;
@@ -49,8 +48,6 @@ public class MainActivity extends AppCompatActivity {
         settings.setMixedContentMode(WebSettings.MIXED_CONTENT_ALWAYS_ALLOW);
         settings.setUseWideViewPort(true);
         settings.setLoadWithOverviewMode(true);
-
-        WebView.setWebContentsDebuggingEnabled(true);
 
         webView.addJavascriptInterface(new WebAppInterface(), "MPumpCalcAndroid");
 
@@ -134,7 +131,6 @@ public class MainActivity extends AppCompatActivity {
             try {
                 byte[] pdfBytes = Base64.decode(base64Data, Base64.DEFAULT);
 
-                // Save to app Reports folder
                 File dir = new File(getExternalFilesDir(null), "MPumpCalc");
                 if (!dir.exists()) dir.mkdirs();
                 File file = new File(dir, fileName);
@@ -142,23 +138,19 @@ public class MainActivity extends AppCompatActivity {
                 fos.write(pdfBytes);
                 fos.close();
 
-                // Get URI via FileProvider
                 Uri uri = FileProvider.getUriForFile(
                     MainActivity.this,
                     getPackageName() + ".fileprovider",
                     file
                 );
 
-                // Show "Open with" chooser dialog
                 Intent intent = new Intent(Intent.ACTION_VIEW);
                 intent.setDataAndType(uri, "application/pdf");
                 intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
-
                 Intent chooser = Intent.createChooser(intent, "Open PDF with");
                 startActivity(chooser);
 
                 runOnUiThread(() -> Toast.makeText(MainActivity.this, "PDF saved: " + fileName, Toast.LENGTH_SHORT).show());
-
             } catch (Exception e) {
                 Log.e(TAG, "PDF error: " + e.getMessage());
                 runOnUiThread(() -> Toast.makeText(MainActivity.this, "Error: " + e.getMessage(), Toast.LENGTH_SHORT).show());

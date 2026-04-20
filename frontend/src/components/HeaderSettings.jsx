@@ -1443,17 +1443,21 @@ const HeaderSettings = ({ isDarkMode, fuelSettings, setFuelSettings, customers, 
                         variant="outline" 
                         className="w-full bg-orange-600 hover:bg-orange-700 text-white border-orange-600"
                         onClick={() => {
-                          // Use standard file input - works in both browser and Android WebView
+                          // Create file input and append to DOM (required for mobile browsers)
                           const fileInput = document.createElement('input');
                           fileInput.type = 'file';
-                          fileInput.accept = '.json,application/json';
+                          fileInput.accept = '.json,application/json,.txt,text/plain';
+                          fileInput.style.display = 'none';
+                          document.body.appendChild(fileInput);
                           
                           fileInput.onchange = (e) => {
                             const file = e.target.files[0];
+                            // Remove input from DOM
+                            if (fileInput.parentNode) document.body.removeChild(fileInput);
                             if (!file) return;
                             
-                            // Check file type
-                            if (!file.name.endsWith('.json')) {
+                            // Check file type - accept json and txt
+                            if (!file.name.endsWith('.json') && !file.name.endsWith('.txt')) {
                               toast({
                                 title: "Invalid File",
                                 description: "Please select a valid JSON backup file",
@@ -1467,12 +1471,20 @@ const HeaderSettings = ({ isDarkMode, fuelSettings, setFuelSettings, customers, 
                             reader.onload = (event) => {
                               try {
                                 const importedData = JSON.parse(event.target.result);
+                                console.log('Merge: Parsed data keys:', Object.keys(importedData));
+                                console.log('Merge: salesData count:', importedData.salesData?.length || 0);
+                                console.log('Merge: customers count:', importedData.customers?.length || 0);
+                                console.log('Merge: settlements count:', importedData.settlements?.length || 0);
                                 
                                 // Validate data structure - accept if has any valid data
-                                if (!importedData.salesData && !importedData.creditData && 
-                                    !importedData.incomeData && !importedData.expenseData &&
-                                    !importedData.customers && !importedData.payments &&
-                                    !importedData.settlements && !importedData.fuelSettings) {
+                                const hasData = importedData.salesData || importedData.creditData || 
+                                    importedData.incomeData || importedData.expenseData ||
+                                    importedData.customers || importedData.payments ||
+                                    importedData.settlements || importedData.fuelSettings;
+                                
+                                console.log('Merge: hasData =', !!hasData);
+                                
+                                if (!hasData) {
                                   toast({
                                     title: "Invalid Backup File",
                                     description: "The file doesn't contain valid backup data",
@@ -1481,27 +1493,26 @@ const HeaderSettings = ({ isDarkMode, fuelSettings, setFuelSettings, customers, 
                                   return;
                                 }
                                 
-                                // Confirm merge
-                                if (window.confirm('This will merge the backup data with your existing data. In case of conflicts, your existing data will be kept. Continue?')) {
-                                  const success = localStorageService.mergeAllData(importedData);
+                                // Proceed with merge directly
+                                console.log('Merge: Calling mergeAllData...');
+                                const success = localStorageService.mergeAllData(importedData);
+                                console.log('Merge: Result =', success);
                                   
-                                  if (success) {
+                                if (success) {
                                     toast({
                                       title: "Data Merged Successfully",
                                       description: "Backup data has been merged with existing data. Refreshing...",
                                     });
                                     
-                                    // Refresh page after 2 seconds
                                     setTimeout(() => {
                                       window.location.reload();
                                     }, 2000);
-                                  } else {
+                                } else {
                                     toast({
                                       title: "Merge Failed",
                                       description: "Failed to merge data. Please try again.",
                                       variant: "destructive",
                                     });
-                                  }
                                 }
                               } catch (error) {
                                 toast({
@@ -1516,8 +1527,8 @@ const HeaderSettings = ({ isDarkMode, fuelSettings, setFuelSettings, customers, 
                             reader.readAsText(file);
                           };
                           
-                          // Trigger file selection
-                          fileInput.click();
+                          // Trigger file selection after DOM attachment
+                          setTimeout(() => fileInput.click(), 100);
                         }}
                       >
                         🔀 Merge Manual Data

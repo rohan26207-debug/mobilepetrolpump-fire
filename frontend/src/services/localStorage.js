@@ -582,24 +582,29 @@ class LocalStorageService {
 
   mergeAllData(importedData) {
     try {
+      console.log('mergeAllData: Starting merge...');
+      console.log('mergeAllData: Namespace:', ACTIVE_NAMESPACE);
+      console.log('mergeAllData: Import keys:', Object.keys(importedData));
+      
       const mergeArrays = (existingArray, newArray) => {
         if (!Array.isArray(existingArray)) existingArray = [];
         if (!Array.isArray(newArray)) newArray = [];
         const existingIds = new Set(existingArray.map(item => item.id));
         const itemsToAdd = newArray.filter(item => !existingIds.has(item.id));
+        console.log(`mergeAllData: existing=${existingArray.length}, new=${newArray.length}, adding=${itemsToAdd.length}`);
         return [...existingArray, ...itemsToAdd];
       };
 
-      if (importedData.salesData) this.setSalesData(mergeArrays(this.getSalesData(), importedData.salesData));
-      if (importedData.creditData) this.setCreditData(mergeArrays(this.getCreditData(), importedData.creditData));
-      if (importedData.incomeData) this.setIncomeData(mergeArrays(this.getIncomeData(), importedData.incomeData));
-      if (importedData.expenseData) this.setExpenseData(mergeArrays(this.getExpenseData(), importedData.expenseData));
-      if (importedData.customers) this.setCustomers(mergeArrays(this.getCustomers(), importedData.customers));
-      if (importedData.payments) this.setPayments(mergeArrays(this.getPayments(), importedData.payments));
-      if (importedData.settlements) this.setSettlements(mergeArrays(this.getSettlements(), importedData.settlements));
-      if (importedData.settlementTypes) this.setSettlementTypes(mergeArrays(this.getSettlementTypes(), importedData.settlementTypes));
-      if (importedData.incomeCategories) this.setIncomeCategories(mergeArrays(this.getIncomeCategories(), importedData.incomeCategories));
-      if (importedData.expenseCategories) this.setExpenseCategories(mergeArrays(this.getExpenseCategories(), importedData.expenseCategories));
+      if (importedData.salesData) { console.log('mergeAllData: Merging salesData'); this.setSalesData(mergeArrays(this.getSalesData(), importedData.salesData)); }
+      if (importedData.creditData) { console.log('mergeAllData: Merging creditData'); this.setCreditData(mergeArrays(this.getCreditData(), importedData.creditData)); }
+      if (importedData.incomeData) { console.log('mergeAllData: Merging incomeData'); this.setIncomeData(mergeArrays(this.getIncomeData(), importedData.incomeData)); }
+      if (importedData.expenseData) { console.log('mergeAllData: Merging expenseData'); this.setExpenseData(mergeArrays(this.getExpenseData(), importedData.expenseData)); }
+      if (importedData.customers) { console.log('mergeAllData: Merging customers'); this.setCustomers(mergeArrays(this.getCustomers(), importedData.customers)); }
+      if (importedData.payments) { console.log('mergeAllData: Merging payments'); this.setPayments(mergeArrays(this.getPayments(), importedData.payments)); }
+      if (importedData.settlements) { console.log('mergeAllData: Merging settlements'); this.setSettlements(mergeArrays(this.getSettlements(), importedData.settlements)); }
+      if (importedData.settlementTypes) { console.log('mergeAllData: Merging settlementTypes'); this.setSettlementTypes(mergeArrays(this.getSettlementTypes(), importedData.settlementTypes)); }
+      if (importedData.incomeCategories) { console.log('mergeAllData: Merging incomeCategories'); this.setIncomeCategories(mergeArrays(this.getIncomeCategories(), importedData.incomeCategories)); }
+      if (importedData.expenseCategories) { console.log('mergeAllData: Merging expenseCategories'); this.setExpenseCategories(mergeArrays(this.getExpenseCategories(), importedData.expenseCategories)); }
 
       if (importedData.fuelSettings && !this.getFuelSettings()) this.setFuelSettings(importedData.fuelSettings);
 

@@ -1306,7 +1306,7 @@ const ZAPTRStyleCalculator = () => {
         if (fuelSettings) {
           doc.setFontSize(10);
           doc.setFont('helvetica', 'bold');
-          doc.setTextColor(37, 99, 235);
+          doc.setTextColor(0, 0, 0);
           const fuelSalesLine = 'FUEL SALES: ' + Object.keys(fuelSettings).map(fuelType => {
             const fuelData = filteredStats.fuelSalesByType ? (filteredStats.fuelSalesByType[fuelType] || { liters: 0, amount: 0 }) : { liters: 0, amount: 0 };
             return `${fuelType}-${fuelData.liters.toFixed(0)} L`;
@@ -1380,7 +1380,7 @@ const ZAPTRStyleCalculator = () => {
 
         // Cash in Hand
         summaryData.push([
-          { content: 'Cash in Hand', styles: { fontStyle: 'bold', fillColor: [240, 240, 240] } },
+          { content: 'Cash in Hand', styles: { fontStyle: 'bold' } },
           '-',
           { content: `₹${filteredStats.cashInHand.toFixed(2)}`, styles: { fontStyle: 'bold' } }
         ]);
@@ -1393,9 +1393,9 @@ const ZAPTRStyleCalculator = () => {
             { content: 'Amount', styles: { halign: 'center' } }
           ]],
           body: summaryData,
-          theme: 'grid',
+          theme: 'plain',
           styles: { fontSize: 7, cellPadding: 1.5 },
-          headStyles: { fillColor: [240, 240, 240], textColor: [0, 0, 0], fontStyle: 'bold', fontSize: 7 },
+          headStyles: { textColor: [0, 0, 0], fontStyle: 'bold', fontSize: 7 },
           columnStyles: {
             0: { cellWidth: 55 },
             1: { halign: 'right', cellWidth: 30 },
@@ -1435,9 +1435,9 @@ const ZAPTRStyleCalculator = () => {
           startY: yPos,
           head: [['Nozzle', 'Fuel', 'Start', 'End', 'Testing', 'Liters', 'Rate', 'Amount']],
           body: salesTableData,
-          theme: 'grid',
+          theme: 'plain',
           styles: { fontSize: 7, cellPadding: 1.5 },
-          headStyles: { fillColor: [240, 240, 240], textColor: [0, 0, 0], fontStyle: 'bold' },
+          headStyles: { textColor: [0, 0, 0], fontStyle: 'bold' },
           columnStyles: {
             0: { halign: 'center', cellWidth: 14 },
             1: { cellWidth: 16 },
@@ -1483,9 +1483,9 @@ const ZAPTRStyleCalculator = () => {
           startY: yPos,
           head: [['Customer', 'Vehicle', 'Fuel Type', 'Liters', 'Rate', 'Amount']],
           body: creditTableData,
-          theme: 'grid',
+          theme: 'plain',
           styles: { fontSize: 7, cellPadding: 1.5 },
-          headStyles: { fillColor: [240, 240, 240], textColor: [0, 0, 0], fontStyle: 'bold' },
+          headStyles: { textColor: [0, 0, 0], fontStyle: 'bold' },
           columnStyles: {
             1: { halign: 'center' },
             3: { halign: 'right' },
@@ -1520,7 +1520,7 @@ const ZAPTRStyleCalculator = () => {
         // Add total row
         const totalSettlement = filteredSettlements.reduce((sum, s) => sum + s.amount, 0);
         settlementTableData.push([
-          { content: 'Total', colSpan: 3, styles: { fontStyle: 'bold', fillColor: [240, 240, 240] } },
+          { content: 'Total', colSpan: 3, styles: { fontStyle: 'bold' } },
           { content: `₹${totalSettlement.toFixed(2)}`, styles: { fontStyle: 'bold', halign: 'right' } },
           ''
         ]);
@@ -1529,9 +1529,9 @@ const ZAPTRStyleCalculator = () => {
           startY: yPos,
           head: [['#', 'Date', 'Description', 'Amount', 'MPP']],
           body: settlementTableData,
-          theme: 'grid',
+          theme: 'plain',
           styles: { fontSize: 8, cellPadding: 2 },
-          headStyles: { fillColor: [240, 240, 240], textColor: [0, 0, 0], fontStyle: 'bold' },
+          headStyles: { textColor: [0, 0, 0], fontStyle: 'bold' },
           columnStyles: {
             0: { cellWidth: 10 },
             1: { cellWidth: 25 },
@@ -1574,9 +1574,9 @@ const ZAPTRStyleCalculator = () => {
           startY: yPos,
           head: [['Type', 'Description', 'Amount']],
           body: incomeExpenseData,
-          theme: 'grid',
+          theme: 'plain',
           styles: { fontSize: 8, cellPadding: 2 },
-          headStyles: { fillColor: [240, 240, 240], textColor: [0, 0, 0], fontStyle: 'bold' },
+          headStyles: { textColor: [0, 0, 0], fontStyle: 'bold' },
           columnStyles: {
             2: { halign: 'right' }
           }
@@ -1616,9 +1616,9 @@ const ZAPTRStyleCalculator = () => {
           startY: yPos,
           head: [['Customer', 'Payment Type', 'Settlement Type', 'Amount']],
           body: receiptTableData,
-          theme: 'grid',
+          theme: 'plain',
           styles: { fontSize: 7, cellPadding: 1.5 },
-          headStyles: { fillColor: [240, 240, 240], textColor: [0, 0, 0], fontStyle: 'bold' },
+          headStyles: { textColor: [0, 0, 0], fontStyle: 'bold' },
           columnStyles: {
             0: { cellWidth: 40 },
             1: { halign: 'center', cellWidth: 25 },
@@ -1696,7 +1696,7 @@ const ZAPTRStyleCalculator = () => {
       
       const grandTotal = finalCashTotal + cardTotal + paytmTotal + phonepeTotal + dtpTotal;
       bankSettlementData.push([
-        { content: 'Total', styles: { fontStyle: 'bold', fillColor: [240, 240, 240] } },
+        { content: 'Total', styles: { fontStyle: 'bold' } },
         { content: `₹${grandTotal.toFixed(2)}`, styles: { fontStyle: 'bold', halign: 'right' } }
       ]);
 
@@ -1704,9 +1704,9 @@ const ZAPTRStyleCalculator = () => {
         startY: yPos,
         head: [['Payment Mode', 'Amount']],
         body: bankSettlementData,
-        theme: 'grid',
+        theme: 'plain',
         styles: { fontSize: 10, cellPadding: 3 },
-        headStyles: { fillColor: [240, 240, 240], textColor: [0, 0, 0], fontStyle: 'bold' },
+        headStyles: { textColor: [0, 0, 0], fontStyle: 'bold' },
         columnStyles: {
           0: { cellWidth: 80 },
           1: { halign: 'right', cellWidth: 80 }
@@ -2046,7 +2046,7 @@ window.onload = function() {
 
       // Stock Summary
       doc.setFontSize(10);
-      doc.setTextColor(124, 58, 237); // Purple color
+      doc.setTextColor(0, 0, 0);
       const stockSummaryText = fuelSettings ? Object.keys(fuelSettings).map(fuelType => {
         const storageKey = `${fuelType.toLowerCase()}StockData`;
         const savedData = localStorageService.getItem(storageKey);
@@ -2067,7 +2067,7 @@ window.onload = function() {
       if (fuelSettings) {
         doc.setFontSize(10);
         doc.setFont('helvetica', 'bold');
-        doc.setTextColor(37, 99, 235);
+        doc.setTextColor(0, 0, 0);
         const fuelSalesLine = 'FUEL SALES: ' + Object.keys(fuelSettings).map(fuelType => {
           const fuelData = currentStats.fuelSalesByType ? (currentStats.fuelSalesByType[fuelType] || { liters: 0, amount: 0 }) : { liters: 0, amount: 0 };
           return `${fuelType}-${fuelData.liters.toFixed(0)} L`;
@@ -2127,7 +2127,7 @@ window.onload = function() {
 
       // Cash in Hand
       summaryData.push([
-        { content: 'Cash in Hand', styles: { fontStyle: 'bold', fillColor: [240, 240, 240] } },
+        { content: 'Cash in Hand', styles: { fontStyle: 'bold' } },
         '-',
         { content: `₹${currentStats.cashInHand.toFixed(2)}`, styles: { fontStyle: 'bold' } }
       ]);
@@ -2140,9 +2140,9 @@ window.onload = function() {
           { content: 'Amount', styles: { halign: 'center' } }
         ]],
         body: summaryData,
-        theme: 'grid',
+        theme: 'plain',
         styles: { fontSize: 7, cellPadding: 1.5 },
-        headStyles: { fillColor: [240, 240, 240], textColor: [0, 0, 0], fontStyle: 'bold', fontSize: 7 },
+        headStyles: { textColor: [0, 0, 0], fontStyle: 'bold', fontSize: 7 },
         columnStyles: {
           0: { cellWidth: 55 },
           1: { halign: 'right', cellWidth: 30 },
@@ -2173,8 +2173,8 @@ window.onload = function() {
           startY: yPos,
           head: [['#', 'Description', 'Start', 'End', 'Testing', 'Rate', 'Litres', 'Amount']],
           body: salesTableData,
-          theme: 'grid',
-          headStyles: { fillColor: [240, 240, 240], textColor: [0, 0, 0] },
+          theme: 'plain',
+          headStyles: { textColor: [0, 0, 0] },
           styles: { fontSize: 9 }
         });
 
@@ -2206,8 +2206,8 @@ window.onload = function() {
           startY: yPos,
           head: [['#', 'Customer', 'Vehicle', 'Rate', 'Litres', 'Amount']],
           body: creditTableData,
-          theme: 'grid',
-          headStyles: { fillColor: [240, 240, 240], textColor: [0, 0, 0] },
+          theme: 'plain',
+          headStyles: { textColor: [0, 0, 0] },
           styles: { fontSize: 9 }
         });
 
@@ -2238,8 +2238,8 @@ window.onload = function() {
           startY: yPos,
           head: [['#', 'Description', 'Amount', 'MPP']],
           body: settlementTableData,
-          theme: 'grid',
-          headStyles: { fillColor: [240, 240, 240], textColor: [0, 0, 0] },
+          theme: 'plain',
+          headStyles: { textColor: [0, 0, 0] },
           styles: { fontSize: 9 }
         });
 
@@ -2268,8 +2268,8 @@ window.onload = function() {
           startY: yPos,
           head: [['#', 'Description', 'Amount']],
           body: incomeTableData,
-          theme: 'grid',
-          headStyles: { fillColor: [240, 240, 240], textColor: [0, 0, 0] },
+          theme: 'plain',
+          headStyles: { textColor: [0, 0, 0] },
           styles: { fontSize: 9 }
         });
 
@@ -2298,8 +2298,8 @@ window.onload = function() {
           startY: yPos,
           head: [['#', 'Description', 'Amount']],
           body: expenseTableData,
-          theme: 'grid',
-          headStyles: { fillColor: [240, 240, 240], textColor: [0, 0, 0] },
+          theme: 'plain',
+          headStyles: { textColor: [0, 0, 0] },
           styles: { fontSize: 9 }
         });
 
@@ -2327,8 +2327,8 @@ window.onload = function() {
           startY: yPos,
           head: [['#', 'Customer', 'Payment Type', 'Settlement Type', 'Amount']],
           body: receiptTableData,
-          theme: 'grid',
-          headStyles: { fillColor: [240, 240, 240], textColor: [0, 0, 0] },
+          theme: 'plain',
+          headStyles: { textColor: [0, 0, 0] },
           styles: { fontSize: 9 }
         });
 
@@ -2395,7 +2395,7 @@ window.onload = function() {
       
       const grandTotal = cashTotal + cardTotal + paytmTotal + phonepeTotal + dtpTotal;
       bankSettlementData.push([
-        { content: 'Total', styles: { fontStyle: 'bold', fillColor: [240, 240, 240] } },
+        { content: 'Total', styles: { fontStyle: 'bold' } },
         { content: `₹${grandTotal.toFixed(2)}`, styles: { fontStyle: 'bold', halign: 'right' } }
       ]);
 
@@ -2403,8 +2403,8 @@ window.onload = function() {
         startY: yPos,
         head: [['Payment Mode', 'Amount']],
         body: bankSettlementData,
-        theme: 'grid',
-        headStyles: { fillColor: [240, 240, 240], textColor: [0, 0, 0] },
+        theme: 'plain',
+        headStyles: { textColor: [0, 0, 0] },
         styles: { fontSize: 10 }
       });
 

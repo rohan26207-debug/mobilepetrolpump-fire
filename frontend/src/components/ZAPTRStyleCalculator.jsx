@@ -1638,8 +1638,10 @@ const ZAPTRStyleCalculator = () => {
       const relevantSettlements = settlementData.filter(dateFilter);
       const relevantPayments = payments.filter(dateFilter);
       
-      // Cash = Cash in Hand (already includes cash receipts)
-      const finalCashTotal = filteredStats.cashInHand;
+      // Cash = Sum of settlement records with "cash" in description
+      const finalCashTotal = relevantSettlements
+        .filter(s => s.description && s.description.toLowerCase().includes('cash'))
+        .reduce((sum, s) => sum + (s.amount || 0), 0);
       
       // Card = Settlements with "card" in description + Payments with mode "card"
       const cardFromSettlements = relevantSettlements
@@ -1932,8 +1934,10 @@ ${(() => {
   const todayPayments = payments.filter(p => p.date === selectedDate);
   
   // Cash = Cash in Hand + MPP Cash + Home Cash + Cash Mode Payments
-  // Cash = Cash in Hand (already includes cash receipts)
-  const cash = stats.cashInHand;
+  // Cash = Sum of settlement records with "cash" in description
+  const cash = todaySettlements
+    .filter(s => s.description && s.description.toLowerCase().includes('cash'))
+    .reduce((sum, s) => sum + (s.amount || 0), 0);
   
   // Card = Settlements with "card" in description + Payments with mode "card"
   const cardFromSettlements = todaySettlements
@@ -2349,8 +2353,10 @@ window.onload = function() {
       doc.text('BANK SETTLEMENT REPORT', 14, yPos);
       yPos += 5;
       
-      // Cash = Cash in Hand (already includes cash receipts)
-      const cashTotal = currentStats.cashInHand;
+      // Cash = Sum of settlement records with "cash" in description
+      const cashTotal = todaySettlements
+        .filter(s => s.description && s.description.toLowerCase().includes('cash'))
+        .reduce((sum, s) => sum + (s.amount || 0), 0);
       
       // Card = Settlements with "card" in description + Payments with mode "card"
       const cardFromSettlements = todaySettlements

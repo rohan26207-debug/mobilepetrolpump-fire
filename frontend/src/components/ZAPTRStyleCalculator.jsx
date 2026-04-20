@@ -1422,8 +1422,18 @@ const ZAPTRStyleCalculator = () => {
         doc.text('Page ' + i + ' of ' + pc + ' | Generated on: ' + new Date().toLocaleString(), pw/2, ph - 5, { align: 'center' });
       }
 
-      doc.save('Report_' + selectedDate + '.pdf');
-      toast({ title: "PDF Downloaded", description: 'Report_' + selectedDate + '.pdf' });
+      // Save PDF - detect Android WebView
+      const fileName = 'Report_' + selectedDate + '.pdf';
+      if (window.MPumpCalcAndroid && window.MPumpCalcAndroid.openPdfWithViewer) {
+        // Android: pass base64 to Java bridge
+        const base64 = doc.output('dataurlstring').split(',')[1];
+        window.MPumpCalcAndroid.openPdfWithViewer(base64, fileName);
+        toast({ title: "PDF Generated", description: 'Saving ' + fileName });
+      } else {
+        // Browser: normal download
+        doc.save(fileName);
+        toast({ title: "PDF Downloaded", description: fileName });
+      }
     } catch (error) {
       console.error('PDF error:', error);
       toast({ title: "PDF Failed", description: error.message, variant: "destructive" });

@@ -1296,6 +1296,20 @@ const ZAPTRStyleCalculator = () => {
 
       // SUMMARY TABLE (if enabled)
       if (pdfSettings.includeSummary) {
+        // FUEL SALES single line above summary
+        if (fuelSettings) {
+          doc.setFontSize(10);
+          doc.setFont('helvetica', 'bold');
+          doc.setTextColor(37, 99, 235);
+          const fuelSalesLine = 'FUEL SALES: ' + Object.keys(fuelSettings).map(fuelType => {
+            const fuelData = filteredStats.fuelSalesByType ? (filteredStats.fuelSalesByType[fuelType] || { liters: 0, amount: 0 }) : { liters: 0, amount: 0 };
+            return `${fuelType}-${fuelData.liters.toFixed(0)} L`;
+          }).join(', ');
+          doc.text(fuelSalesLine, 14, yPos);
+          doc.setTextColor(0, 0, 0);
+          yPos += 8;
+        }
+
         doc.setFontSize(12);
         doc.setFont('helvetica', 'bold');
         doc.text('SUMMARY', 14, yPos);
@@ -1373,35 +1387,6 @@ const ZAPTRStyleCalculator = () => {
             { content: 'Amount', styles: { halign: 'center' } }
           ]],
           body: summaryData,
-          theme: 'grid',
-          styles: { fontSize: 7, cellPadding: 1.5 },
-          headStyles: { fillColor: [240, 240, 240], textColor: [0, 0, 0], fontStyle: 'bold', fontSize: 7 },
-          columnStyles: {
-            0: { cellWidth: 55 },
-            1: { halign: 'right', cellWidth: 30 },
-            2: { halign: 'right', cellWidth: 40 }
-          }
-        });
-
-        yPos = doc.lastAutoTable.finalY + 10;
-      }
-
-      // FUEL SALES BREAKDOWN
-      if (pdfSettings.includeSummary && fuelSettings) {
-        doc.setFontSize(12);
-        doc.setFont('helvetica', 'bold');
-        doc.text('FUEL SALES', 14, yPos);
-        yPos += 5;
-
-        const fuelSalesData = Object.keys(fuelSettings).map(fuelType => {
-          const fuelData = filteredStats.fuelSalesByType ? (filteredStats.fuelSalesByType[fuelType] || { liters: 0, amount: 0 }) : { liters: 0, amount: 0 };
-          return [fuelType, fuelData.liters.toFixed(2), `₹${fuelData.amount.toFixed(2)}`];
-        });
-
-        doc.autoTable({
-          startY: yPos,
-          head: [['Fuel Type', 'Litres', 'Amount']],
-          body: fuelSalesData,
           theme: 'grid',
           styles: { fontSize: 7, cellPadding: 1.5 },
           headStyles: { fillColor: [240, 240, 240], textColor: [0, 0, 0], fontStyle: 'bold', fontSize: 7 },
@@ -1819,6 +1804,13 @@ STOCK: ${fuelSettings ? Object.keys(fuelSettings).map(fuelType => {
 }).join(', ') : 'N/A'}
 </p>
 
+<p style="font-size:16px;margin:8px 0;font-weight:bold;color:#2563eb">
+FUEL SALES: ${fuelSettings ? Object.keys(fuelSettings).map(fuelType => {
+  const fuelData = stats.fuelSalesByType[fuelType] || { liters: 0, amount: 0 };
+  return fuelType + '-' + fuelData.liters.toFixed(0) + ' L';
+}).join(', ') : 'N/A'}
+</p>
+
 <div class="s">SUMMARY</div>
 <table>
 <tr><th>Category<th>Litres<th>Amount</tr>
@@ -1828,15 +1820,6 @@ STOCK: ${fuelSettings ? Object.keys(fuelSettings).map(fuelType => {
 <tr><td>4. Income<td class="r">-<td class="r">₹${stats.otherIncome.toFixed(2)}</tr>
 <tr><td>5. Expenses<td class="r">-<td class="r">₹${stats.totalExpenses.toFixed(2)}</tr>
 <tr class="t"><td><b>Cash in Hand</b><td class="r"><b>-</b><td class="r"><b>₹${stats.cashInHand.toFixed(2)}</b></tr>
-</table>
-
-<div class="s">FUEL SALES</div>
-<table>
-<tr><th>Fuel Type<th>Litres<th>Amount</tr>
-${fuelSettings ? Object.keys(fuelSettings).map(fuelType => {
-  const fuelData = stats.fuelSalesByType[fuelType] || { liters: 0, amount: 0 };
-  return `<tr><td>${fuelType}<td class="r">${fuelData.liters.toFixed(2)}<td class="r">₹${fuelData.amount.toFixed(2)}</tr>`;
-}).join('') : ''}
 </table>
 
 ${todaySales.length > 0 ? `
@@ -2047,7 +2030,21 @@ window.onload = function() {
       doc.setTextColor(0, 0, 0); // Reset to black
       yPos += 15;
 
-      // Summary Section with 5-column layout
+      // FUEL SALES single line above summary
+      if (fuelSettings) {
+        doc.setFontSize(10);
+        doc.setFont('helvetica', 'bold');
+        doc.setTextColor(37, 99, 235);
+        const fuelSalesLine = 'FUEL SALES: ' + Object.keys(fuelSettings).map(fuelType => {
+          const fuelData = currentStats.fuelSalesByType ? (currentStats.fuelSalesByType[fuelType] || { liters: 0, amount: 0 }) : { liters: 0, amount: 0 };
+          return `${fuelType}-${fuelData.liters.toFixed(0)} L`;
+        }).join(', ');
+        doc.text(fuelSalesLine, 14, yPos);
+        doc.setTextColor(0, 0, 0);
+        yPos += 8;
+      }
+
+      // Summary Section
       doc.setFontSize(14);
       doc.text('SUMMARY', 14, yPos);
       yPos += 5;
@@ -2121,34 +2118,6 @@ window.onload = function() {
       });
 
       yPos = doc.lastAutoTable.finalY + 10;
-
-      // FUEL SALES BREAKDOWN
-      if (fuelSettings) {
-        doc.setFontSize(14);
-        doc.text('FUEL SALES', 14, yPos);
-        yPos += 5;
-
-        const fuelSalesData = Object.keys(fuelSettings).map(fuelType => {
-          const fuelData = currentStats.fuelSalesByType ? (currentStats.fuelSalesByType[fuelType] || { liters: 0, amount: 0 }) : { liters: 0, amount: 0 };
-          return [fuelType, fuelData.liters.toFixed(2), `₹${fuelData.amount.toFixed(2)}`];
-        });
-
-        doc.autoTable({
-          startY: yPos,
-          head: [['Fuel Type', 'Litres', 'Amount']],
-          body: fuelSalesData,
-          theme: 'grid',
-          styles: { fontSize: 9 },
-          headStyles: { fillColor: [240, 240, 240], textColor: [0, 0, 0] },
-          columnStyles: {
-            0: { cellWidth: 55 },
-            1: { halign: 'right', cellWidth: 30 },
-            2: { halign: 'right', cellWidth: 40 }
-          }
-        });
-
-        yPos = doc.lastAutoTable.finalY + 10;
-      }
 
       // Sales Records
       if (todaySales.length > 0 && yPos < 250) {

@@ -1393,9 +1393,9 @@ const ZAPTRStyleCalculator = () => {
             { content: 'Amount', styles: { halign: 'center' } }
           ]],
           body: summaryData,
-          theme: 'plain',
+          theme: 'grid',
           styles: { fontSize: 7, cellPadding: 1.5 },
-          headStyles: { textColor: [0, 0, 0], fontStyle: 'bold', fontSize: 7 },
+          headStyles: { fillColor: false, textColor: [0, 0, 0], fontStyle: 'bold', fontSize: 7 },
           columnStyles: {
             0: { cellWidth: 55 },
             1: { halign: 'right', cellWidth: 30 },
@@ -1435,9 +1435,9 @@ const ZAPTRStyleCalculator = () => {
           startY: yPos,
           head: [['Nozzle', 'Fuel', 'Start', 'End', 'Testing', 'Liters', 'Rate', 'Amount']],
           body: salesTableData,
-          theme: 'plain',
+          theme: 'grid',
           styles: { fontSize: 7, cellPadding: 1.5 },
-          headStyles: { textColor: [0, 0, 0], fontStyle: 'bold' },
+          headStyles: { fillColor: false, textColor: [0, 0, 0], fontStyle: 'bold' },
           columnStyles: {
             0: { halign: 'center', cellWidth: 14 },
             1: { cellWidth: 16 },
@@ -1483,9 +1483,9 @@ const ZAPTRStyleCalculator = () => {
           startY: yPos,
           head: [['Customer', 'Vehicle', 'Fuel Type', 'Liters', 'Rate', 'Amount']],
           body: creditTableData,
-          theme: 'plain',
+          theme: 'grid',
           styles: { fontSize: 7, cellPadding: 1.5 },
-          headStyles: { textColor: [0, 0, 0], fontStyle: 'bold' },
+          headStyles: { fillColor: false, textColor: [0, 0, 0], fontStyle: 'bold' },
           columnStyles: {
             1: { halign: 'center' },
             3: { halign: 'right' },
@@ -1529,9 +1529,9 @@ const ZAPTRStyleCalculator = () => {
           startY: yPos,
           head: [['#', 'Date', 'Description', 'Amount', 'MPP']],
           body: settlementTableData,
-          theme: 'plain',
+          theme: 'grid',
           styles: { fontSize: 8, cellPadding: 2 },
-          headStyles: { textColor: [0, 0, 0], fontStyle: 'bold' },
+          headStyles: { fillColor: false, textColor: [0, 0, 0], fontStyle: 'bold' },
           columnStyles: {
             0: { cellWidth: 10 },
             1: { cellWidth: 25 },
@@ -1574,9 +1574,9 @@ const ZAPTRStyleCalculator = () => {
           startY: yPos,
           head: [['Type', 'Description', 'Amount']],
           body: incomeExpenseData,
-          theme: 'plain',
+          theme: 'grid',
           styles: { fontSize: 8, cellPadding: 2 },
-          headStyles: { textColor: [0, 0, 0], fontStyle: 'bold' },
+          headStyles: { fillColor: false, textColor: [0, 0, 0], fontStyle: 'bold' },
           columnStyles: {
             2: { halign: 'right' }
           }
@@ -1616,9 +1616,9 @@ const ZAPTRStyleCalculator = () => {
           startY: yPos,
           head: [['Customer', 'Payment Type', 'Settlement Type', 'Amount']],
           body: receiptTableData,
-          theme: 'plain',
+          theme: 'grid',
           styles: { fontSize: 7, cellPadding: 1.5 },
-          headStyles: { textColor: [0, 0, 0], fontStyle: 'bold' },
+          headStyles: { fillColor: false, textColor: [0, 0, 0], fontStyle: 'bold' },
           columnStyles: {
             0: { cellWidth: 40 },
             1: { halign: 'center', cellWidth: 25 },
@@ -2173,8 +2173,8 @@ window.onload = function() {
           startY: yPos,
           head: [['#', 'Description', 'Start', 'End', 'Testing', 'Rate', 'Litres', 'Amount']],
           body: salesTableData,
-          theme: 'plain',
-          headStyles: { textColor: [0, 0, 0] },
+          theme: 'grid',
+          headStyles: { fillColor: false, textColor: [0, 0, 0] },
           styles: { fontSize: 9 }
         });
 
@@ -2206,8 +2206,8 @@ window.onload = function() {
           startY: yPos,
           head: [['#', 'Customer', 'Vehicle', 'Rate', 'Litres', 'Amount']],
           body: creditTableData,
-          theme: 'plain',
-          headStyles: { textColor: [0, 0, 0] },
+          theme: 'grid',
+          headStyles: { fillColor: false, textColor: [0, 0, 0] },
           styles: { fontSize: 9 }
         });
 
@@ -2238,8 +2238,8 @@ window.onload = function() {
           startY: yPos,
           head: [['#', 'Description', 'Amount', 'MPP']],
           body: settlementTableData,
-          theme: 'plain',
-          headStyles: { textColor: [0, 0, 0] },
+          theme: 'grid',
+          headStyles: { fillColor: false, textColor: [0, 0, 0] },
           styles: { fontSize: 9 }
         });
 
@@ -2268,8 +2268,8 @@ window.onload = function() {
           startY: yPos,
           head: [['#', 'Description', 'Amount']],
           body: incomeTableData,
-          theme: 'plain',
-          headStyles: { textColor: [0, 0, 0] },
+          theme: 'grid',
+          headStyles: { fillColor: false, textColor: [0, 0, 0] },
           styles: { fontSize: 9 }
         });
 
@@ -2298,8 +2298,8 @@ window.onload = function() {
           startY: yPos,
           head: [['#', 'Description', 'Amount']],
           body: expenseTableData,
-          theme: 'plain',
-          headStyles: { textColor: [0, 0, 0] },
+          theme: 'grid',
+          headStyles: { fillColor: false, textColor: [0, 0, 0] },
           styles: { fontSize: 9 }
         });
 
@@ -2327,8 +2327,8 @@ window.onload = function() {
           startY: yPos,
           head: [['#', 'Customer', 'Payment Type', 'Settlement Type', 'Amount']],
           body: receiptTableData,
-          theme: 'plain',
-          headStyles: { textColor: [0, 0, 0] },
+          theme: 'grid',
+          headStyles: { fillColor: false, textColor: [0, 0, 0] },
           styles: { fontSize: 9 }
         });
 

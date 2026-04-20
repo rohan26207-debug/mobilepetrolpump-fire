@@ -2419,7 +2419,6 @@ window.onload = function() {
                           : 'border-slate-300 text-slate-700 hover:bg-slate-50'
                       }`}
                     >
-                      <FileText className="w-3 h-3 mr-1" />
                       PDF
                     </Button>
                     <Button
@@ -2432,7 +2431,6 @@ window.onload = function() {
                           : 'border-slate-300 text-slate-700 hover:bg-slate-50'
                       }`}
                     >
-                      <Share2 className="w-3 h-3 mr-1" />
                       Copy
                     </Button>
                   </div>

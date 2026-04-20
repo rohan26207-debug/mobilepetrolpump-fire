@@ -435,7 +435,7 @@ const CustomerLedger = ({ customers, creditData, payments, salesData, settlement
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
 <title>Customer Ledger Report</title>
 <style>
-*{font-family:serif}
+*{font-family:Helvetica,Arial,sans-serif}
 body{margin:10px;line-height:1.2;color:#000;font-size:12px}
 h1{font-size:20px;margin:0;text-align:center}
 h2{font-size:16px;margin:2px 0;text-align:center}

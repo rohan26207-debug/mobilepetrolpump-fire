@@ -231,7 +231,7 @@ const OutstandingPDFReport = ({ customers, creditData, payments, isDarkMode, sel
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
 <title>Outstanding Report</title>
 <style>
-*{font-family:serif}
+*{font-family:Helvetica,Arial,sans-serif}
 body{margin:10px;line-height:1.2;color:#000;font-size:12px}
 h1{font-size:20px;margin:0;text-align:center}
 p{font-size:14px;margin:2px 0;text-align:center}

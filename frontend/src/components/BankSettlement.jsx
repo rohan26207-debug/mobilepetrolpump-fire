@@ -178,7 +178,7 @@ const BankSettlement = ({ isDarkMode, settlementData, payments, creditData, sale
 <meta charset="UTF-8">
 <title>Bank Settlement Report</title>
 <style>
-*{font-family:serif}
+*{font-family:Helvetica,Arial,sans-serif}
 body{margin:10px;line-height:1.2;color:#000;font-size:12px}
 h1{font-size:20px;margin:0;text-align:center}
 p{font-size:14px;margin:2px 0;text-align:center}

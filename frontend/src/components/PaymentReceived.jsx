@@ -31,7 +31,8 @@ const PaymentReceived = ({
   const [customerId, setCustomerId] = useState('');
   const [amount, setAmount] = useState('');
   const [paymentDate, setPaymentDate] = useState(selectedDate);
-  const [settlementType, setSettlementType] = useState(''); // Changed from paymentMode to settlementType
+  const [paymentType, setPaymentType] = useState(''); // Cash, NEFT, RTGS, Cheque, Settlement
+  const [settlementType, setSettlementType] = useState(''); // Only used when paymentType is Settlement
   const [customerSearch, setCustomerSearch] = useState('');
   const [showCustomerDropdown, setShowCustomerDropdown] = useState(false);
   const [settlementTypes, setSettlementTypes] = useState([]); // New: load settlement types
@@ -58,7 +59,8 @@ const PaymentReceived = ({
   const [editCustomerId, setEditCustomerId] = useState('');
   const [editAmount, setEditAmount] = useState('');
   const [editPaymentDate, setEditPaymentDate] = useState('');
-  const [editSettlementType, setEditSettlementType] = useState(''); // Changed from editPaymentMode
+  const [editSettlementType, setEditSettlementType] = useState('');
+  const [editPaymentType, setEditPaymentType] = useState('');
   const [editCustomerSearch, setEditCustomerSearch] = useState('');
   const [showEditCustomerDropdown, setShowEditCustomerDropdown] = useState(false);
   
@@ -118,7 +120,8 @@ const PaymentReceived = ({
     setEditCustomerSearch(payment.customerName);
     setEditAmount(payment.amount.toString());
     setEditPaymentDate(payment.date);
-    setEditSettlementType(payment.mode || ''); // Changed to settlementType
+    setEditSettlementType(payment.settlementType || '');
+    setEditPaymentType(payment.paymentType || payment.mode || '');
     setEditDialogOpen(true);
   };
 
@@ -131,7 +134,9 @@ const PaymentReceived = ({
           customerName: customer.name,
           amount: parseFloat(editAmount),
           date: editPaymentDate,
-          mode: editSettlementType // Changed to settlementType
+          paymentType: editPaymentType,
+          mode: editPaymentType === 'Settlement' ? editSettlementType : editPaymentType,
+          settlementType: editPaymentType === 'Settlement' ? editSettlementType : ''
         });
         setEditDialogOpen(false);
         setEditingPayment(null);
@@ -139,6 +144,7 @@ const PaymentReceived = ({
         setEditCustomerSearch('');
         setEditAmount('');
         setEditPaymentDate('');
+        setEditPaymentType('');
         setEditSettlementType('');
       }
     }
@@ -175,17 +181,21 @@ const PaymentReceived = ({
           customerName: customer.name,
           amount: parseFloat(amount),
           date: paymentDate,
-          mode: settlementType // Changed to settlementType
+          paymentType: paymentType,
+          mode: paymentType === 'Settlement' ? settlementType : paymentType,
+          settlementType: paymentType === 'Settlement' ? settlementType : ''
         });
         // Save the current payment date before clearing
         const currentDate = paymentDate;
-        const currentType = settlementType;
+        const currentPaymentType = paymentType;
+        const currentSettlementType = settlementType;
         setCustomerId('');
         setCustomerSearch('');
         setAmount('');
-        // Keep the same date and settlement type for next payment
+        // Keep the same date and types for next payment
         setPaymentDate(currentDate);
-        setSettlementType(currentType);
+        setPaymentType(currentPaymentType);
+        setSettlementType(currentSettlementType);
       }
     }
   };
@@ -755,7 +765,7 @@ const PaymentReceived = ({
                         {payment.customerName}
                       </div>
                       <div className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-slate-500'}`}>
-                        {new Date(payment.date).toLocaleDateString()} • {payment.mode || 'N/A'}
+                        {new Date(payment.date).toLocaleDateString()} • {payment.paymentType || payment.mode || 'N/A'}{payment.paymentType === 'Settlement' && payment.settlementType ? ` (${payment.settlementType})` : ''}
                       </div>
                     </div>
                     <div className="flex items-center gap-3">
@@ -881,22 +891,51 @@ const PaymentReceived = ({
                 />
               </div>
 
-              {/* Amount and Mode in same row */}
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <Label htmlFor="amount" className={isDarkMode ? 'text-gray-300' : 'text-slate-700'}>
-                    Amount Received
-                  </Label>
-                  <Input
-                    id="amount"
-                    type="number"
-                    step="0.01"
-                    value={amount}
-                    onChange={(e) => setAmount(e.target.value)}
-                    placeholder="Enter amount"
-                    className={`mt-1 ${isDarkMode ? 'bg-gray-700 border-gray-600 text-white' : ''}`}
-                  />
-                </div>
+              {/* Amount */}
+              <div>
+                <Label htmlFor="amount" className={isDarkMode ? 'text-gray-300' : 'text-slate-700'}>
+                  Amount Received
+                </Label>
+                <Input
+                  id="amount"
+                  type="number"
+                  step="0.01"
+                  value={amount}
+                  onChange={(e) => setAmount(e.target.value)}
+                  placeholder="Enter amount"
+                  className={`mt-1 ${isDarkMode ? 'bg-gray-700 border-gray-600 text-white' : ''}`}
+                />
+              </div>
+
+              {/* Payment Type */}
+              <div>
+                <Label className={isDarkMode ? 'text-gray-300' : 'text-slate-700'}>
+                  Payment Type
+                </Label>
+                <Select
+                  value={paymentType}
+                  onValueChange={(value) => {
+                    setPaymentType(value);
+                    if (value !== 'Settlement') setSettlementType('');
+                  }}
+                >
+                  <SelectTrigger data-testid="payment-type-select" className={`mt-1 ${isDarkMode ? 'bg-gray-700 border-gray-600 text-white' : ''}`}>
+                    <SelectValue placeholder="Select payment type..." />
+                  </SelectTrigger>
+                  <SelectContent className={isDarkMode ? 'bg-gray-700 border-gray-600' : ''}>
+                    <SelectGroup>
+                      <SelectItem value="Cash" className={isDarkMode ? 'text-white hover:bg-gray-600' : ''}>Cash</SelectItem>
+                      <SelectItem value="NEFT" className={isDarkMode ? 'text-white hover:bg-gray-600' : ''}>NEFT</SelectItem>
+                      <SelectItem value="RTGS" className={isDarkMode ? 'text-white hover:bg-gray-600' : ''}>RTGS</SelectItem>
+                      <SelectItem value="Cheque" className={isDarkMode ? 'text-white hover:bg-gray-600' : ''}>Cheque</SelectItem>
+                      <SelectItem value="Settlement" className={isDarkMode ? 'text-white hover:bg-gray-600' : ''}>Settlement</SelectItem>
+                    </SelectGroup>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {/* Settlement Type - only shown when Payment Type is Settlement */}
+              {paymentType === 'Settlement' && (
                 <div>
                   <Label className={isDarkMode ? 'text-gray-300' : 'text-slate-700'}>
                     Settlement Type
@@ -929,7 +968,7 @@ const PaymentReceived = ({
                     </SelectContent>
                   </Select>
                 </div>
-              </div>
+              )}
 
               {/* Record Receipt & Add More */}
               <Button
@@ -1056,22 +1095,51 @@ const PaymentReceived = ({
               />
             </div>
 
-            {/* Amount and Mode in same row */}
-            <div className="grid grid-cols-2 gap-3">
-              <div>
-                <Label htmlFor="editAmount" className={isDarkMode ? 'text-gray-300' : 'text-slate-700'}>
-                  Amount
-                </Label>
-                <Input
-                  id="editAmount"
-                  type="number"
-                  step="0.01"
-                  value={editAmount}
-                  onChange={(e) => setEditAmount(e.target.value)}
-                  placeholder="Enter amount"
-                  className={isDarkMode ? 'bg-gray-700 border-gray-600 text-white' : ''}
-                />
-              </div>
+            {/* Amount */}
+            <div>
+              <Label htmlFor="editAmount" className={isDarkMode ? 'text-gray-300' : 'text-slate-700'}>
+                Amount
+              </Label>
+              <Input
+                id="editAmount"
+                type="number"
+                step="0.01"
+                value={editAmount}
+                onChange={(e) => setEditAmount(e.target.value)}
+                placeholder="Enter amount"
+                className={isDarkMode ? 'bg-gray-700 border-gray-600 text-white' : ''}
+              />
+            </div>
+
+            {/* Payment Type */}
+            <div>
+              <Label className={isDarkMode ? 'text-gray-300' : 'text-slate-700'}>
+                Payment Type
+              </Label>
+              <Select
+                value={editPaymentType}
+                onValueChange={(value) => {
+                  setEditPaymentType(value);
+                  if (value !== 'Settlement') setEditSettlementType('');
+                }}
+              >
+                <SelectTrigger className={isDarkMode ? 'bg-gray-700 border-gray-600 text-white' : ''}>
+                  <SelectValue placeholder="Select payment type..." />
+                </SelectTrigger>
+                <SelectContent className={isDarkMode ? 'bg-gray-700 border-gray-600' : ''}>
+                  <SelectGroup>
+                    <SelectItem value="Cash" className={isDarkMode ? 'text-white hover:bg-gray-600' : ''}>Cash</SelectItem>
+                    <SelectItem value="NEFT" className={isDarkMode ? 'text-white hover:bg-gray-600' : ''}>NEFT</SelectItem>
+                    <SelectItem value="RTGS" className={isDarkMode ? 'text-white hover:bg-gray-600' : ''}>RTGS</SelectItem>
+                    <SelectItem value="Cheque" className={isDarkMode ? 'text-white hover:bg-gray-600' : ''}>Cheque</SelectItem>
+                    <SelectItem value="Settlement" className={isDarkMode ? 'text-white hover:bg-gray-600' : ''}>Settlement</SelectItem>
+                  </SelectGroup>
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* Settlement Type - only when Payment Type is Settlement */}
+            {editPaymentType === 'Settlement' && (
               <div>
                 <Label className={isDarkMode ? 'text-gray-300' : 'text-slate-700'}>
                   Settlement Type
@@ -1104,7 +1172,7 @@ const PaymentReceived = ({
                   </SelectContent>
                 </Select>
               </div>
-            </div>
+            )}
 
             <div className="flex gap-2 pt-4">
               <Button

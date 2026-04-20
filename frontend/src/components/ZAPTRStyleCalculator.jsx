@@ -469,9 +469,15 @@ const ZAPTRStyleCalculator = () => {
     const totalLiters = todaySales.reduce((sum, sale) => sum + sale.liters, 0);
     const totalFuelAmount = todaySales.filter(sale => sale.type === 'cash' || !sale.type).reduce((sum, sale) => sum + sale.amount, 0);
 
-    // Cash in Hand = All Fuel Sales - All Credit Sales + All Income - All Expenses - All Settlement
+    // Cash receipts (payments with paymentType 'Cash') for today
+    const todayPayments = payments.filter(p => p.date === selectedDate);
+    const cashReceipts = todayPayments
+      .filter(p => (p.paymentType || p.mode || '').toLowerCase() === 'cash')
+      .reduce((sum, p) => sum + (p.amount || 0), 0);
+
+    // Cash in Hand = All Fuel Sales - All Credit Sales + All Income - All Expenses - All Settlement + Cash Receipts
     const totalSettlement = todaySettlements.reduce((sum, s) => sum + (s.amount || 0), 0);
-    const cashInHand = totalFuelAmount - creditTotalAmount + otherIncome - totalExpenses - totalSettlement;
+    const cashInHand = totalFuelAmount - creditTotalAmount + otherIncome - totalExpenses - totalSettlement + cashReceipts;
     
     // MPP Cash is separate and calculated independently
     // Total available cash = Cash in Hand + MPP Cash (for display only)
@@ -521,7 +527,7 @@ const ZAPTRStyleCalculator = () => {
   // Recalculate stats when data or sync changes
   const stats = React.useMemo(() => {
     return getTodayStats();
-  }, [salesData, creditData, incomeData, expenseData, settlementData, selectedDate]);
+  }, [salesData, creditData, incomeData, expenseData, settlementData, selectedDate, payments]);
 
   // Data handling functions (offline localStorage)
   const addSaleRecord = (saleData) => {

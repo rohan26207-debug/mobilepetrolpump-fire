@@ -231,19 +231,18 @@ const OutstandingPDFReport = ({ customers, creditData, payments, isDarkMode, sel
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
 <title>Outstanding Report</title>
 <style>
-body{font-family:Arial,sans-serif;margin:20px;padding:0;line-height:1.4}
-h1{font-size:24px;margin:10px 0;text-align:center;color:#333}
-p{font-size:14px;margin:5px 0;text-align:center;color:#666}
-table{width:100%;border-collapse:collapse;margin:15px 0;font-size:13px}
-th{background:#f0f0f0;border:1px solid #333;padding:8px;text-align:left;font-weight:bold}
-td{border:1px solid #333;padding:6px}
+*{font-family:serif}
+body{margin:10px;line-height:1.2;color:#000;font-size:12px}
+h1{font-size:20px;margin:0;text-align:center}
+p{font-size:14px;margin:2px 0;text-align:center}
+table{width:100%;border-collapse:collapse;font-size:11px;margin:3px 0}
+th{border:1px solid #000;padding:2px;text-align:center;font-weight:bold;font-size:11px}
+td{border:1px solid #000;padding:2px;font-size:11px}
 .r{text-align:right}
-.credit{color:#2563eb}
-.receipt{color:#16a34a}
-.positive{color:#d97706}
-.negative{color:#16a34a}
-.total-row{font-weight:bold;background:#f8f8f8}
-@media print{body{margin:10mm}}
+.t{font-weight:bold}
+.print-btn{background:#000;color:white;border:none;padding:10px 20px;font-size:16px;cursor:pointer;margin:10px auto;display:block}
+.no-print{display:block}
+@media print{body{margin:5mm}.no-print{display:none}@page{margin:5mm}}
 </style>
 </head>
 <body>
@@ -254,29 +253,33 @@ ${sortedData.length > 0 ? `
 <table>
 <tr>
   <th>Customer Name</th>
-  <th class="r">Credit</th>
-  <th class="r">Receipt</th>
-  <th class="r">Outstanding Amount</th>
+  <th>Credit</th>
+  <th>Receipt</th>
+  <th>Outstanding</th>
 </tr>
 ${sortedData.map(customer => `
 <tr>
   <td>${customer.name}</td>
-  <td class="r credit">₹${customer.totalCredit.toFixed(2)}</td>
-  <td class="r receipt">₹${customer.totalReceived.toFixed(2)}</td>
-  <td class="r ${customer.outstanding > 0 ? 'positive' : 'negative'}">₹${customer.outstanding.toFixed(2)}</td>
+  <td class="r">${customer.totalCredit.toFixed(2)}</td>
+  <td class="r">${customer.totalReceived.toFixed(2)}</td>
+  <td class="r">${customer.outstanding.toFixed(2)}</td>
 </tr>
 `).join('')}
-<tr class="total-row">
+<tr class="t">
   <td><b>Total</b></td>
-  <td class="r credit"><b>₹${sortedData.reduce((sum, c) => sum + c.totalCredit, 0).toFixed(2)}</b></td>
-  <td class="r receipt"><b>₹${sortedData.reduce((sum, c) => sum + c.totalReceived, 0).toFixed(2)}</b></td>
-  <td class="r"><b>₹${sortedData.reduce((sum, c) => sum + c.outstanding, 0).toFixed(2)}</b></td>
+  <td class="r"><b>${sortedData.reduce((sum, c) => sum + c.totalCredit, 0).toFixed(2)}</b></td>
+  <td class="r"><b>${sortedData.reduce((sum, c) => sum + c.totalReceived, 0).toFixed(2)}</b></td>
+  <td class="r"><b>${sortedData.reduce((sum, c) => sum + c.outstanding, 0).toFixed(2)}</b></td>
 </tr>
 </table>
-` : '<p style="text-align:center;margin:30px 0">No data to display</p>'}
+` : '<p>No data to display</p>'}
 
-<div style="margin-top:20px;text-align:center;font-size:11px;border-top:1px solid #ccc;padding-top:8px">
-Generated on: ${new Date().toLocaleString('en-IN')}
+<div style="margin-top:10px;text-align:center;font-size:10px;border-top:1px solid #000;padding-top:5px">
+Generated on: ${new Date().toLocaleString()}
+</div>
+
+<div class="no-print" style="text-align:center;margin:20px 0">
+<button class="print-btn" onclick="window.print()">Print / Save as PDF</button>
 </div>
 
 <script>

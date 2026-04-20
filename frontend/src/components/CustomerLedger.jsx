@@ -435,18 +435,19 @@ const CustomerLedger = ({ customers, creditData, payments, salesData, settlement
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
 <title>Customer Ledger Report</title>
 <style>
-body{font-family:Arial,sans-serif;margin:20px;padding:0;line-height:1.4}
-h1{font-size:24px;margin:10px 0;text-align:center;color:#333}
-h2{font-size:18px;margin:5px 0;text-align:center;color:#555}
-p{font-size:13px;margin:5px 0;text-align:center;color:#666}
-table{width:100%;border-collapse:collapse;margin:15px 0;font-size:12px}
-th{background:#f0f0f0;border:1px solid #333;padding:7px;text-align:left;font-weight:bold}
-td{border:1px solid #333;padding:5px}
+*{font-family:serif}
+body{margin:10px;line-height:1.2;color:#000;font-size:12px}
+h1{font-size:20px;margin:0;text-align:center}
+h2{font-size:16px;margin:2px 0;text-align:center}
+p{font-size:14px;margin:2px 0;text-align:center}
+table{width:100%;border-collapse:collapse;font-size:11px;margin:3px 0}
+th{border:1px solid #000;padding:2px;text-align:center;font-weight:bold;font-size:11px}
+td{border:1px solid #000;padding:2px;font-size:11px}
 .r{text-align:right}
-.credit{color:#d97706}
-.received{color:#16a34a}
-.total-row{font-weight:bold;background:#f8f8f8}
-@media print{body{margin:10mm}}
+.t{font-weight:bold}
+.print-btn{background:#000;color:white;border:none;padding:10px 20px;font-size:16px;cursor:pointer;margin:10px auto;display:block}
+.no-print{display:block}
+@media print{body{margin:5mm}.no-print{display:none}@page{margin:5mm}}
 </style>
 </head>
 <body>
@@ -459,30 +460,34 @@ ${ledgerData.length > 0 ? `
 <tr>
   <th>Date</th>
   <th>Description</th>
-  <th class="r">Credit</th>
-  <th class="r">Received</th>
-  <th class="r">Outstanding</th>
+  <th>Credit</th>
+  <th>Received</th>
+  <th>Outstanding</th>
 </tr>
 ${ledgerData.map(row => `
 <tr>
   <td>${new Date(row.date).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })}</td>
   <td>${row.description}</td>
-  <td class="r credit">${row.credit > 0 ? '₹' + row.credit.toFixed(2) : '-'}</td>
-  <td class="r received">${row.received > 0 ? '₹' + row.received.toFixed(2) : '-'}</td>
-  <td class="r"><b>₹${row.outstanding.toFixed(2)}</b></td>
+  <td class="r">${row.credit > 0 ? row.credit.toFixed(2) : '-'}</td>
+  <td class="r">${row.received > 0 ? row.received.toFixed(2) : '-'}</td>
+  <td class="r"><b>${row.outstanding.toFixed(2)}</b></td>
 </tr>
 `).join('')}
-<tr class="total-row">
+<tr class="t">
   <td colspan="2"><b>TOTAL</b></td>
-  <td class="r credit"><b>₹${ledgerData.reduce((sum, row) => sum + row.credit, 0).toFixed(2)}</b></td>
-  <td class="r received"><b>₹${ledgerData.reduce((sum, row) => sum + row.received, 0).toFixed(2)}</b></td>
-  <td class="r"><b>₹${ledgerData[ledgerData.length - 1]?.outstanding.toFixed(2) || '0.00'}</b></td>
+  <td class="r"><b>${ledgerData.reduce((sum, row) => sum + row.credit, 0).toFixed(2)}</b></td>
+  <td class="r"><b>${ledgerData.reduce((sum, row) => sum + row.received, 0).toFixed(2)}</b></td>
+  <td class="r"><b>${ledgerData[ledgerData.length - 1]?.outstanding.toFixed(2) || '0.00'}</b></td>
 </tr>
 </table>
-` : '<p style="text-align:center;margin:30px 0">No transactions found</p>'}
+` : '<p>No transactions found</p>'}
 
-<div style="margin-top:20px;text-align:center;font-size:11px;border-top:1px solid #ccc;padding-top:8px">
-Generated on: ${new Date().toLocaleString('en-IN')}
+<div style="margin-top:10px;text-align:center;font-size:10px;border-top:1px solid #000;padding-top:5px">
+Generated on: ${new Date().toLocaleString()}
+</div>
+
+<div class="no-print" style="text-align:center;margin:20px 0">
+<button class="print-btn" onclick="window.print()">Print / Save as PDF</button>
 </div>
 
 <script>

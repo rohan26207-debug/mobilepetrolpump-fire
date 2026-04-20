@@ -1638,46 +1638,46 @@ const ZAPTRStyleCalculator = () => {
       const relevantSettlements = settlementData.filter(dateFilter);
       const relevantPayments = payments.filter(dateFilter);
       
-      // Cash = Sum of settlement records with "cash" in description
+      // Cash = Settlement "cash" + Receipts with paymentType "Cash" or settlementType "cash"
       const finalCashTotal = relevantSettlements
         .filter(s => s.description && s.description.toLowerCase().includes('cash'))
-        .reduce((sum, s) => sum + (s.amount || 0), 0);
+        .reduce((sum, s) => sum + (s.amount || 0), 0)
+        + relevantPayments
+        .filter(p => (p.paymentType || '').toLowerCase() === 'cash' || 
+          ((p.paymentType || '').toLowerCase() === 'settlement' && (p.settlementType || p.mode || '').toLowerCase().includes('cash')))
+        .reduce((sum, p) => sum + (p.amount || 0), 0);
       
-      // Card = Settlements with "card" in description + Payments with mode "card"
-      const cardFromSettlements = relevantSettlements
+      // Card = Settlement "card" + Receipts with settlementType "card"
+      const cardTotal = relevantSettlements
         .filter(s => s.description && s.description.toLowerCase().includes('card'))
-        .reduce((sum, s) => sum + (s.amount || 0), 0);
-      const cardFromPayments = relevantPayments
-        .filter(p => p.mode && p.mode.toLowerCase() === 'card')
+        .reduce((sum, s) => sum + (s.amount || 0), 0)
+        + relevantPayments
+        .filter(p => (p.paymentType || '').toLowerCase() === 'settlement' && (p.settlementType || p.mode || '').toLowerCase().includes('card'))
         .reduce((sum, p) => sum + (p.amount || 0), 0);
-      const cardTotal = cardFromSettlements + cardFromPayments;
       
-      // Paytm = Settlements with "paytm" in description + Payments with mode "paytm" or "wallet"
-      const paytmFromSettlements = relevantSettlements
+      // Paytm = Settlement "paytm" + Receipts with settlementType "paytm"
+      const paytmTotal = relevantSettlements
         .filter(s => s.description && s.description.toLowerCase().includes('paytm'))
-        .reduce((sum, s) => sum + (s.amount || 0), 0);
-      const paytmFromPayments = relevantPayments
-        .filter(p => p.mode && (p.mode.toLowerCase() === 'wallet' || p.mode.toLowerCase().includes('paytm')))
+        .reduce((sum, s) => sum + (s.amount || 0), 0)
+        + relevantPayments
+        .filter(p => (p.paymentType || '').toLowerCase() === 'settlement' && (p.settlementType || p.mode || '').toLowerCase().includes('paytm'))
         .reduce((sum, p) => sum + (p.amount || 0), 0);
-      const paytmTotal = paytmFromSettlements + paytmFromPayments;
       
-      // PhonePe = Settlements with "phonepe" in description + Payments with mode "phonepe"
-      const phonepeFromSettlements = relevantSettlements
+      // PhonePe = Settlement "phonepe" + Receipts with settlementType "phonepe"
+      const phonepeTotal = relevantSettlements
         .filter(s => s.description && s.description.toLowerCase().includes('phonepe'))
-        .reduce((sum, s) => sum + (s.amount || 0), 0);
-      const phonepeFromPayments = relevantPayments
-        .filter(p => p.mode && p.mode.toLowerCase().includes('phonepe'))
+        .reduce((sum, s) => sum + (s.amount || 0), 0)
+        + relevantPayments
+        .filter(p => (p.paymentType || '').toLowerCase() === 'settlement' && (p.settlementType || p.mode || '').toLowerCase().includes('phonepe'))
         .reduce((sum, p) => sum + (p.amount || 0), 0);
-      const phonepeTotal = phonepeFromSettlements + phonepeFromPayments;
       
-      // DTP = Settlements with "dtp" in description + Payments with mode "dtp"
-      const dtpFromSettlements = relevantSettlements
+      // DTP = Settlement "dtp" + Receipts with settlementType "dtp"
+      const dtpTotal = relevantSettlements
         .filter(s => s.description && s.description.toLowerCase().includes('dtp'))
-        .reduce((sum, s) => sum + (s.amount || 0), 0);
-      const dtpFromPayments = relevantPayments
-        .filter(p => p.mode && p.mode.toLowerCase() === 'dtp')
+        .reduce((sum, s) => sum + (s.amount || 0), 0)
+        + relevantPayments
+        .filter(p => (p.paymentType || '').toLowerCase() === 'settlement' && (p.settlementType || p.mode || '').toLowerCase().includes('dtp'))
         .reduce((sum, p) => sum + (p.amount || 0), 0);
-      const dtpTotal = dtpFromSettlements + dtpFromPayments;
       
       if (yPos > 220) {
         doc.addPage();
@@ -1933,47 +1933,46 @@ ${(() => {
   const todaySettlements = settlementData.filter(s => s.date === selectedDate);
   const todayPayments = payments.filter(p => p.date === selectedDate);
   
-  // Cash = Cash in Hand + MPP Cash + Home Cash + Cash Mode Payments
-  // Cash = Sum of settlement records with "cash" in description
+  // Cash = Settlement "cash" + Receipts with paymentType "Cash" or settlementType "cash"
   const cash = todaySettlements
     .filter(s => s.description && s.description.toLowerCase().includes('cash'))
-    .reduce((sum, s) => sum + (s.amount || 0), 0);
+    .reduce((sum, s) => sum + (s.amount || 0), 0)
+    + todayPayments
+    .filter(p => (p.paymentType || '').toLowerCase() === 'cash' || 
+      ((p.paymentType || '').toLowerCase() === 'settlement' && (p.settlementType || p.mode || '').toLowerCase().includes('cash')))
+    .reduce((sum, p) => sum + (p.amount || 0), 0);
   
-  // Card = Settlements with "card" in description + Payments with mode "card"
-  const cardFromSettlements = todaySettlements
+  // Card = Settlement "card" + Receipts with settlementType "card"
+  const card = todaySettlements
     .filter(s => s.description && s.description.toLowerCase().includes('card'))
-    .reduce((sum, s) => sum + (s.amount || 0), 0);
-  const cardFromPayments = todayPayments
-    .filter(p => p.mode && p.mode.toLowerCase() === 'card')
+    .reduce((sum, s) => sum + (s.amount || 0), 0)
+    + todayPayments
+    .filter(p => (p.paymentType || '').toLowerCase() === 'settlement' && (p.settlementType || p.mode || '').toLowerCase().includes('card'))
     .reduce((sum, p) => sum + (p.amount || 0), 0);
-  const card = cardFromSettlements + cardFromPayments;
   
-  // Paytm = Settlements with "paytm" in description + Payments with mode "paytm" or "wallet"
-  const paytmFromSettlements = todaySettlements
+  // Paytm = Settlement "paytm" + Receipts with settlementType "paytm"
+  const paytm = todaySettlements
     .filter(s => s.description && s.description.toLowerCase().includes('paytm'))
-    .reduce((sum, s) => sum + (s.amount || 0), 0);
-  const paytmFromPayments = todayPayments
-    .filter(p => p.mode && (p.mode.toLowerCase() === 'wallet' || p.mode.toLowerCase().includes('paytm')))
+    .reduce((sum, s) => sum + (s.amount || 0), 0)
+    + todayPayments
+    .filter(p => (p.paymentType || '').toLowerCase() === 'settlement' && (p.settlementType || p.mode || '').toLowerCase().includes('paytm'))
     .reduce((sum, p) => sum + (p.amount || 0), 0);
-  const paytm = paytmFromSettlements + paytmFromPayments;
   
-  // PhonePe = Settlements with "phonepe" in description + Payments with mode "phonepe"
-  const phonepeFromSettlements = todaySettlements
+  // PhonePe = Settlement "phonepe" + Receipts with settlementType "phonepe"
+  const phonepe = todaySettlements
     .filter(s => s.description && s.description.toLowerCase().includes('phonepe'))
-    .reduce((sum, s) => sum + (s.amount || 0), 0);
-  const phonepeFromPayments = todayPayments
-    .filter(p => p.mode && p.mode.toLowerCase().includes('phonepe'))
+    .reduce((sum, s) => sum + (s.amount || 0), 0)
+    + todayPayments
+    .filter(p => (p.paymentType || '').toLowerCase() === 'settlement' && (p.settlementType || p.mode || '').toLowerCase().includes('phonepe'))
     .reduce((sum, p) => sum + (p.amount || 0), 0);
-  const phonepe = phonepeFromSettlements + phonepeFromPayments;
   
-  // DTP = Settlements with "dtp" in description + Payments with mode "dtp"
-  const dtpFromSettlements = todaySettlements
+  // DTP = Settlement "dtp" + Receipts with settlementType "dtp"
+  const dtp = todaySettlements
     .filter(s => s.description && s.description.toLowerCase().includes('dtp'))
-    .reduce((sum, s) => sum + (s.amount || 0), 0);
-  const dtpFromPayments = todayPayments
-    .filter(p => p.mode && p.mode.toLowerCase() === 'dtp')
+    .reduce((sum, s) => sum + (s.amount || 0), 0)
+    + todayPayments
+    .filter(p => (p.paymentType || '').toLowerCase() === 'settlement' && (p.settlementType || p.mode || '').toLowerCase().includes('dtp'))
     .reduce((sum, p) => sum + (p.amount || 0), 0);
-  const dtp = dtpFromSettlements + dtpFromPayments;
   
   const total = cash + card + paytm + phonepe + dtp;
   
@@ -2353,47 +2352,47 @@ window.onload = function() {
       doc.text('BANK SETTLEMENT REPORT', 14, yPos);
       yPos += 5;
       
-      // Cash = Sum of settlement records with "cash" in description
+      // Cash = Settlement "cash" + Receipts with paymentType "Cash" or settlementType "cash"
+      const todayPayments = payments.filter(p => p.date === selectedDate);
       const cashTotal = todaySettlements
         .filter(s => s.description && s.description.toLowerCase().includes('cash'))
-        .reduce((sum, s) => sum + (s.amount || 0), 0);
+        .reduce((sum, s) => sum + (s.amount || 0), 0)
+        + todayPayments
+        .filter(p => (p.paymentType || '').toLowerCase() === 'cash' || 
+          ((p.paymentType || '').toLowerCase() === 'settlement' && (p.settlementType || p.mode || '').toLowerCase().includes('cash')))
+        .reduce((sum, p) => sum + (p.amount || 0), 0);
       
-      // Card = Settlements with "card" in description + Payments with mode "card"
-      const cardFromSettlements = todaySettlements
+      // Card = Settlement "card" + Receipts with settlementType "card"
+      const cardTotal = todaySettlements
         .filter(s => s.description && s.description.toLowerCase().includes('card'))
-        .reduce((sum, s) => sum + (s.amount || 0), 0);
-      const todayPayments = payments.filter(p => p.date === selectedDate);
-      const cardFromPayments = todayPayments
-        .filter(p => p.mode && p.mode.toLowerCase() === 'card')
+        .reduce((sum, s) => sum + (s.amount || 0), 0)
+        + todayPayments
+        .filter(p => (p.paymentType || '').toLowerCase() === 'settlement' && (p.settlementType || p.mode || '').toLowerCase().includes('card'))
         .reduce((sum, p) => sum + (p.amount || 0), 0);
-      const cardTotal = cardFromSettlements + cardFromPayments;
       
-      // Paytm = Settlements with "paytm" in description + Payments with mode "paytm" or "wallet"
-      const paytmFromSettlements = todaySettlements
+      // Paytm = Settlement "paytm" + Receipts with settlementType "paytm"
+      const paytmTotal = todaySettlements
         .filter(s => s.description && s.description.toLowerCase().includes('paytm'))
-        .reduce((sum, s) => sum + (s.amount || 0), 0);
-      const paytmFromPayments = todayPayments
-        .filter(p => p.mode && (p.mode.toLowerCase() === 'wallet' || p.mode.toLowerCase().includes('paytm')))
+        .reduce((sum, s) => sum + (s.amount || 0), 0)
+        + todayPayments
+        .filter(p => (p.paymentType || '').toLowerCase() === 'settlement' && (p.settlementType || p.mode || '').toLowerCase().includes('paytm'))
         .reduce((sum, p) => sum + (p.amount || 0), 0);
-      const paytmTotal = paytmFromSettlements + paytmFromPayments;
       
-      // PhonePe = Settlements with "phonepe" in description + Payments with mode "phonepe"
-      const phonepeFromSettlements = todaySettlements
+      // PhonePe = Settlement "phonepe" + Receipts with settlementType "phonepe"
+      const phonepeTotal = todaySettlements
         .filter(s => s.description && s.description.toLowerCase().includes('phonepe'))
-        .reduce((sum, s) => sum + (s.amount || 0), 0);
-      const phonepeFromPayments = todayPayments
-        .filter(p => p.mode && p.mode.toLowerCase().includes('phonepe'))
+        .reduce((sum, s) => sum + (s.amount || 0), 0)
+        + todayPayments
+        .filter(p => (p.paymentType || '').toLowerCase() === 'settlement' && (p.settlementType || p.mode || '').toLowerCase().includes('phonepe'))
         .reduce((sum, p) => sum + (p.amount || 0), 0);
-      const phonepeTotal = phonepeFromSettlements + phonepeFromPayments;
       
-      // DTP = Settlements with "dtp" in description + Payments with mode "dtp"
-      const dtpFromSettlements = todaySettlements
+      // DTP = Settlement "dtp" + Receipts with settlementType "dtp"
+      const dtpTotal = todaySettlements
         .filter(s => s.description && s.description.toLowerCase().includes('dtp'))
-        .reduce((sum, s) => sum + (s.amount || 0), 0);
-      const dtpFromPayments = todayPayments
-        .filter(p => p.mode && p.mode.toLowerCase() === 'dtp')
+        .reduce((sum, s) => sum + (s.amount || 0), 0)
+        + todayPayments
+        .filter(p => (p.paymentType || '').toLowerCase() === 'settlement' && (p.settlementType || p.mode || '').toLowerCase().includes('dtp'))
         .reduce((sum, p) => sum + (p.amount || 0), 0);
-      const dtpTotal = dtpFromSettlements + dtpFromPayments;
       
       const bankSettlementData = [
         ['Cash', `₹${cashTotal.toFixed(2)}`],

@@ -27,31 +27,48 @@ const BankSettlement = ({ isDarkMode, settlementData, payments, creditData, sale
     return dateArray.map((date, index) => {
       // Filter data for this date
       const daySettlements = settlementData.filter(s => s.date === date);
+      const dayPayments = payments.filter(p => p.date === date);
 
-      // Cash = Sum of settlement records with "cash" in description
+      // Cash = Settlement "cash" + Receipts with paymentType "Cash" or settlementType "cash"
       const cashAmount = daySettlements
         .filter(s => s.description && s.description.toLowerCase().includes('cash'))
-        .reduce((sum, s) => sum + (s.amount || 0), 0);
+        .reduce((sum, s) => sum + (s.amount || 0), 0)
+        + dayPayments
+        .filter(p => (p.paymentType || '').toLowerCase() === 'cash' || 
+          ((p.paymentType || '').toLowerCase() === 'settlement' && (p.settlementType || p.mode || '').toLowerCase().includes('cash')))
+        .reduce((sum, p) => sum + (p.amount || 0), 0);
 
-      // Card = Settlements with "card" in description
+      // Card = Settlement "card" + Receipts with settlementType "card"
       const cardAmount = daySettlements
         .filter(s => s.description && s.description.toLowerCase().includes('card'))
-        .reduce((sum, s) => sum + (s.amount || 0), 0);
+        .reduce((sum, s) => sum + (s.amount || 0), 0)
+        + dayPayments
+        .filter(p => (p.paymentType || '').toLowerCase() === 'settlement' && (p.settlementType || p.mode || '').toLowerCase().includes('card'))
+        .reduce((sum, p) => sum + (p.amount || 0), 0);
 
-      // Paytm = Settlements with "paytm" in description
+      // Paytm = Settlement "paytm" + Receipts with settlementType "paytm"
       const paytmAmount = daySettlements
         .filter(s => s.description && s.description.toLowerCase().includes('paytm'))
-        .reduce((sum, s) => sum + (s.amount || 0), 0);
+        .reduce((sum, s) => sum + (s.amount || 0), 0)
+        + dayPayments
+        .filter(p => (p.paymentType || '').toLowerCase() === 'settlement' && (p.settlementType || p.mode || '').toLowerCase().includes('paytm'))
+        .reduce((sum, p) => sum + (p.amount || 0), 0);
 
-      // PhonePe = Settlements with "phonepe" in description
+      // PhonePe = Settlement "phonepe" + Receipts with settlementType "phonepe"
       const phonepeAmount = daySettlements
         .filter(s => s.description && s.description.toLowerCase().includes('phonepe'))
-        .reduce((sum, s) => sum + (s.amount || 0), 0);
+        .reduce((sum, s) => sum + (s.amount || 0), 0)
+        + dayPayments
+        .filter(p => (p.paymentType || '').toLowerCase() === 'settlement' && (p.settlementType || p.mode || '').toLowerCase().includes('phonepe'))
+        .reduce((sum, p) => sum + (p.amount || 0), 0);
 
-      // DTP = Settlements with "dtp" in description
+      // DTP = Settlement "dtp" + Receipts with settlementType "dtp"
       const dtpAmount = daySettlements
         .filter(s => s.description && s.description.toLowerCase().includes('dtp'))
-        .reduce((sum, s) => sum + (s.amount || 0), 0);
+        .reduce((sum, s) => sum + (s.amount || 0), 0)
+        + dayPayments
+        .filter(p => (p.paymentType || '').toLowerCase() === 'settlement' && (p.settlementType || p.mode || '').toLowerCase().includes('dtp'))
+        .reduce((sum, p) => sum + (p.amount || 0), 0);
 
       return {
         srNo: index + 1,
@@ -63,7 +80,7 @@ const BankSettlement = ({ isDarkMode, settlementData, payments, creditData, sale
         dtpAmount
       };
     });
-  }, [fromDate, toDate, settlementData]);
+  }, [fromDate, toDate, settlementData, payments]);
 
   // Calculate totals
   const totals = useMemo(() => {

@@ -1288,19 +1288,20 @@ const ZAPTRStyleCalculator = () => {
 <head>
 <title>Report - ${dateText}</title>
 <style>
-body{font-family:Arial,sans-serif;margin:10px;line-height:1.2;color:#000}
-h1{font-size:28px;margin:0;text-align:center}
-p{font-size:18px;margin:2px 0;text-align:center}
-.s{margin:15px 0 5px 0;font-size:18px;font-weight:bold}
-table{width:100%;border-collapse:collapse;font-size:14px;margin:5px 0}
-th{border:1px solid #000;padding:4px;text-align:center;font-weight:bold;font-size:15px}
-td{border:1px solid #000;padding:3px;font-size:14px}
+*{font-family:serif}
+body{margin:10px;line-height:1.2;color:#000;font-size:12px}
+h1{font-size:20px;margin:0;text-align:center}
+p{font-size:14px;margin:2px 0;text-align:center}
+.s{margin:10px 0 3px 0;font-size:14px;font-weight:bold}
+table{width:100%;border-collapse:collapse;font-size:11px;margin:3px 0}
+th{border:1px solid #000;padding:2px;text-align:center;font-weight:bold;font-size:11px}
+td{border:1px solid #000;padding:2px;font-size:11px}
 .r{text-align:right}
 .c{text-align:center}
 .t{font-weight:bold}
-.print-btn{background:#000;color:white;border:none;padding:10px 20px;font-size:16px;cursor:pointer;border-radius:5px;margin:10px auto;display:block}
+.print-btn{background:#000;color:white;border:none;padding:10px 20px;font-size:16px;cursor:pointer;margin:10px auto;display:block}
 .no-print{display:block}
-@media print{body{margin:8mm}.no-print{display:none}}
+@media print{body{margin:5mm}.no-print{display:none}@page{margin:5mm}}
 </style>
 </head>
 <body>
@@ -1444,20 +1445,20 @@ window.onload = function() {
 <head>
 <title>Daily Report - ${selectedDate}</title>
 <style>
-body{font:Arial;margin:10px;line-height:1.2;color:#000}
-h1{font-size:28px;margin:0;text-align:center}
-p{font-size:18px;margin:2px 0;text-align:center}
-.s{margin:15px 0 5px 0;font-size:18px;font-weight:bold}
-table{width:100%;border-collapse:collapse;font-size:14px;margin:5px 0}
-th{border:1px solid #000;padding:4px;text-align:center;font-weight:bold;font-size:15px}
-td{border:1px solid #000;padding:3px;font-size:14px}
+*{font-family:serif}
+body{margin:10px;line-height:1.2;color:#000;font-size:12px}
+h1{font-size:20px;margin:0;text-align:center}
+p{font-size:14px;margin:2px 0;text-align:center}
+.s{margin:10px 0 3px 0;font-size:14px;font-weight:bold}
+table{width:100%;border-collapse:collapse;font-size:11px;margin:3px 0}
+th{border:1px solid #000;padding:2px;text-align:center;font-weight:bold;font-size:11px}
+td{border:1px solid #000;padding:2px;font-size:11px}
 .r{text-align:right}
 .c{text-align:center}
 .t{font-weight:bold}
-.print-btn{background:#000;color:white;border:none;padding:10px 20px;font-size:16px;cursor:pointer;border-radius:5px;margin:10px auto;display:block}
-.print-btn:hover{background:#333}
+.print-btn{background:#000;color:white;border:none;padding:10px 20px;font-size:16px;cursor:pointer;margin:10px auto;display:block}
 .no-print{display:block}
-@media print{body{margin:8mm}.no-print{display:none}}
+@media print{body{margin:5mm}.no-print{display:none}@page{margin:5mm}}
 </style>
 </head>
 <body>

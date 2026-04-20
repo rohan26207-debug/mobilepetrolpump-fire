@@ -1805,18 +1805,18 @@ const ZAPTRStyleCalculator = () => {
 <head>
 <title>Daily Report - ${selectedDate}</title>
 <style>
-body{font:Arial;margin:10px;line-height:1.2}
+body{font:Arial;margin:10px;line-height:1.2;color:#000}
 h1{font-size:28px;margin:0;text-align:center}
 p{font-size:18px;margin:2px 0;text-align:center}
 .s{margin:15px 0 5px 0;font-size:18px;font-weight:bold}
 table{width:100%;border-collapse:collapse;font-size:14px;margin:5px 0}
-th{background:#f0f0f0;border:1px solid #000;padding:4px;text-align:center;font-weight:bold;font-size:15px}
+th{border:1px solid #000;padding:4px;text-align:center;font-weight:bold;font-size:15px}
 td{border:1px solid #000;padding:3px;font-size:14px}
 .r{text-align:right}
 .c{text-align:center}
-.t{font-weight:bold;background:#f8f8f8}
-.print-btn{background:#007bff;color:white;border:none;padding:10px 20px;font-size:16px;cursor:pointer;border-radius:5px;margin:10px auto;display:block;box-shadow:0 2px 4px rgba(0,0,0,0.2)}
-.print-btn:hover{background:#0056b3}
+.t{font-weight:bold}
+.print-btn{background:#000;color:white;border:none;padding:10px 20px;font-size:16px;cursor:pointer;border-radius:5px;margin:10px auto;display:block}
+.print-btn:hover{background:#333}
 .no-print{display:block}
 @media print{body{margin:8mm}.no-print{display:none}}
 </style>
@@ -1825,7 +1825,7 @@ td{border:1px solid #000;padding:3px;font-size:14px}
 <h1>Daily Report</h1>
 <p>Date: ${selectedDate}</p>
 
-<p style="font-size:16px;margin:8px 0;font-weight:bold;color:#7c3aed">
+<p style="font-size:16px;margin:8px 0;font-weight:bold;color:#000">
 STOCK: ${fuelSettings ? Object.keys(fuelSettings).map(fuelType => {
   const storageKey = fuelType.toLowerCase() + 'StockData';
   const savedData = localStorageService.getItem(storageKey);
@@ -1840,7 +1840,7 @@ STOCK: ${fuelSettings ? Object.keys(fuelSettings).map(fuelType => {
 }).join(', ') : 'N/A'}
 </p>
 
-<p style="font-size:16px;margin:8px 0;font-weight:bold;color:#2563eb">
+<p style="font-size:16px;margin:8px 0;font-weight:bold;color:#000">
 FUEL SALES: ${fuelSettings ? Object.keys(fuelSettings).map(fuelType => {
   const fuelData = stats.fuelSalesByType[fuelType] || { liters: 0, amount: 0 };
   return fuelType + '-' + fuelData.liters.toFixed(0) + ' L';

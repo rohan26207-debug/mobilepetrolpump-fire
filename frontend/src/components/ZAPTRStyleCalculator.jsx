@@ -1312,13 +1312,16 @@ const ZAPTRStyleCalculator = () => {
         const sectionHeading = (label) => {
           if (y > ph - 30) { doc.addPage(); y = 15; }
           doc.setFont('helvetica', 'bold');
-          doc.setFontSize(fs(11));
+          doc.setFontSize(11);
           doc.text(label, 14, y);
           y += sp(5);
         };
+        const sectionGap = () => {
+          if (y > ph - 30) { doc.addPage(); y = 15; }
+        };
 
-        // Summary
-        sectionHeading('Summary');
+        // Summary (heading removed for space)
+        sectionGap();
         doc.autoTable({ startY: y, ...tbl, head: [['Category', 'Litres', 'Amount']], body: [
           ['Fuel Sales', stats.totalLiters.toFixed(2), stats.totalFuelAmount.toFixed(2)],
           ['Credit Sales', stats.creditLiters.toFixed(2), stats.creditAmount.toFixed(2)],
@@ -1329,21 +1332,21 @@ const ZAPTRStyleCalculator = () => {
         ], columnStyles: { 1: { halign: 'right' }, 2: { halign: 'right' } } });
         y = doc.lastAutoTable.finalY + sp(6);
 
-        // Sales Records
+        // Sales Records (heading removed for space)
         if (todaySales.length > 0) {
-          sectionHeading('Sales Records');
+          sectionGap();
           const salesBody = todaySales.map((s, i) => [i+1, s.nozzle + ' - ' + s.fuelType, s.startReading, s.endReading, s.testing || 0, s.rate, s.liters.toFixed(2), s.amount.toFixed(2)]);
           salesBody.push([{content: 'Total', colSpan: 6, styles: {fontStyle: 'bold'}}, stats.totalLiters.toFixed(2), stats.totalFuelAmount.toFixed(2)]);
           doc.autoTable({ startY: y, ...tbl, head: [['#', 'Description', 'Start', 'End', 'Test', 'Rate', 'Litres', 'Amount']], body: salesBody, columnStyles: { 0: {halign:'center', cellWidth: 8}, 2: {halign:'right'}, 3: {halign:'right'}, 4: {halign:'right'}, 5: {halign:'right'}, 6: {halign:'right'}, 7: {halign:'right'} } });
           y = doc.lastAutoTable.finalY + sp(6);
         }
 
-        // Credit Records
+        // Credit Records (heading removed for space; 'Customer' column relabelled to 'Credit')
         if (todayCredits.length > 0) {
-          sectionHeading('Credit Records');
+          sectionGap();
           const creditBody = todayCredits.map((c, i) => [i+1, c.customerName, c.rate || '-', c.liters ? c.liters.toFixed(2) : '-', c.amount.toFixed(2)]);
           creditBody.push([{content: 'Total', colSpan: 3, styles: {fontStyle: 'bold'}}, stats.creditLiters.toFixed(2), stats.creditAmount.toFixed(2)]);
-          doc.autoTable({ startY: y, ...tbl, head: [['#', 'Customer', 'Rate', 'Litres', 'Amount']], body: creditBody, columnStyles: { 0: {halign:'center', cellWidth: 8}, 2: {halign:'right'}, 3: {halign:'right'}, 4: {halign:'right'} } });
+          doc.autoTable({ startY: y, ...tbl, head: [['#', 'Credit', 'Rate', 'Litres', 'Amount']], body: creditBody, columnStyles: { 0: {halign:'center', cellWidth: 8}, 2: {halign:'right'}, 3: {halign:'right'}, 4: {halign:'right'} } });
           y = doc.lastAutoTable.finalY + sp(6);
         }
 

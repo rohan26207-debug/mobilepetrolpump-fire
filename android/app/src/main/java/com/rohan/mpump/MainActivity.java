@@ -4,7 +4,6 @@ import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.content.Intent;
 import android.net.Uri;
-import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
 import android.util.Base64;
@@ -23,7 +22,6 @@ import androidx.core.content.FileProvider;
 
 import java.io.File;
 import java.io.FileOutputStream;
-import java.io.OutputStream;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -54,17 +52,12 @@ public class MainActivity extends AppCompatActivity {
 
         WebView.setWebContentsDebuggingEnabled(true);
 
-        // JavaScript bridge
         webView.addJavascriptInterface(new WebAppInterface(), "MPumpCalcAndroid");
 
-        // Handle file downloads (blob/data URLs for PDF)
         webView.setDownloadListener(new DownloadListener() {
             @Override
             public void onDownloadStart(String url, String userAgent, String contentDisposition, String mimeType, long contentLength) {
-                Log.d(TAG, "Download: " + url + " mime: " + mimeType);
-
                 if (url.startsWith("blob:")) {
-                    // Convert blob URL to base64 and save
                     webView.evaluateJavascript(
                         "(function() {" +
                         "  var xhr = new XMLHttpRequest();" +
@@ -74,25 +67,16 @@ public class MainActivity extends AppCompatActivity {
                         "    var reader = new FileReader();" +
                         "    reader.onloadend = function() {" +
                         "      var base64 = reader.result.split(',')[1];" +
-                        "      MPumpCalcAndroid.savePdf(base64, 'Report.pdf');" +
+                        "      MPumpCalcAndroid.openPdfWithViewer(base64, 'Report.pdf');" +
                         "    };" +
                         "    reader.readAsDataURL(xhr.response);" +
                         "  };" +
                         "  xhr.send();" +
                         "})();", null);
-                } else if (url.startsWith("data:")) {
-                    // Handle data URL downloads
-                    try {
-                        String base64 = url.substring(url.indexOf(",") + 1);
-                        savePdfToFile(base64, "Report.pdf");
-                    } catch (Exception e) {
-                        Log.e(TAG, "Data URL download error", e);
-                    }
                 }
             }
         });
 
-        // File chooser for import/merge
         webView.setWebChromeClient(new WebChromeClient() {
             @Override
             public boolean onShowFileChooser(WebView webView, ValueCallback<Uri[]> filePathCallback, FileChooserParams fileChooserParams) {
@@ -111,43 +95,10 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
-        webView.setWebViewClient(new WebViewClient() {
-            @Override
-            public void onPageFinished(WebView view, String url) {
-                super.onPageFinished(view, url);
-                view.evaluateJavascript("window.isAndroidApp = true;", null);
-            }
-        });
-
+        webView.setWebViewClient(new WebViewClient());
         webView.loadUrl("file:///android_asset/www/index.html");
     }
 
-    // Save PDF base64 to file and open
-    private void savePdfToFile(String base64Data, String fileName) {
-        try {
-            byte[] pdfBytes = Base64.decode(base64Data, Base64.DEFAULT);
-            File dir = new File(getExternalFilesDir(null), "Reports");
-            if (!dir.exists()) dir.mkdirs();
-            File file = new File(dir, fileName);
-            FileOutputStream fos = new FileOutputStream(file);
-            fos.write(pdfBytes);
-            fos.close();
-
-            // Open PDF
-            Uri uri = FileProvider.getUriForFile(this, getPackageName() + ".fileprovider", file);
-            Intent intent = new Intent(Intent.ACTION_VIEW);
-            intent.setDataAndType(uri, "application/pdf");
-            intent.setFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
-            startActivity(intent);
-
-            Toast.makeText(this, "PDF saved: " + fileName, Toast.LENGTH_SHORT).show();
-        } catch (Exception e) {
-            Log.e(TAG, "Save PDF error", e);
-            Toast.makeText(this, "Error saving PDF", Toast.LENGTH_SHORT).show();
-        }
-    }
-
-    // File chooser result
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
@@ -176,16 +127,47 @@ public class MainActivity extends AppCompatActivity {
         if (webView != null) webView.destroy();
     }
 
-    // JavaScript interface
     public class WebAppInterface {
-        @JavascriptInterface
-        public void savePdf(String base64Data, String fileName) {
-            runOnUiThread(() -> savePdfToFile(base64Data, fileName));
-        }
 
         @JavascriptInterface
         public void openPdfWithViewer(String base64Data, String fileName) {
-            runOnUiThread(() -> savePdfToFile(base64Data, fileName));
+            try {
+                byte[] pdfBytes = Base64.decode(base64Data, Base64.DEFAULT);
+
+                // Save to app Reports folder
+                File dir = new File(getExternalFilesDir(null), "MPumpCalc");
+                if (!dir.exists()) dir.mkdirs();
+                File file = new File(dir, fileName);
+                FileOutputStream fos = new FileOutputStream(file);
+                fos.write(pdfBytes);
+                fos.close();
+
+                // Get URI via FileProvider
+                Uri uri = FileProvider.getUriForFile(
+                    MainActivity.this,
+                    getPackageName() + ".fileprovider",
+                    file
+                );
+
+                // Show "Open with" chooser dialog
+                Intent intent = new Intent(Intent.ACTION_VIEW);
+                intent.setDataAndType(uri, "application/pdf");
+                intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+
+                Intent chooser = Intent.createChooser(intent, "Open PDF with");
+                startActivity(chooser);
+
+                runOnUiThread(() -> Toast.makeText(MainActivity.this, "PDF saved: " + fileName, Toast.LENGTH_SHORT).show());
+
+            } catch (Exception e) {
+                Log.e(TAG, "PDF error: " + e.getMessage());
+                runOnUiThread(() -> Toast.makeText(MainActivity.this, "Error: " + e.getMessage(), Toast.LENGTH_SHORT).show());
+            }
+        }
+
+        @JavascriptInterface
+        public void savePdf(String base64Data, String fileName) {
+            openPdfWithViewer(base64Data, fileName);
         }
 
         @JavascriptInterface

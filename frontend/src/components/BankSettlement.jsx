@@ -27,141 +27,31 @@ const BankSettlement = ({ isDarkMode, settlementData, payments, creditData, sale
     return dateArray.map((date, index) => {
       // Filter data for this date
       const daySettlements = settlementData.filter(s => s.date === date);
-      const dayPayments = payments.filter(p => p.date === date);
-      const dayCreditSales = creditData.filter(c => c.date === date);
-      const daySales = salesData.filter(s => s.date === date);
-      const dayIncome = incomeData.filter(i => i.date === date);
-      const dayExpenses = expenseData.filter(e => e.date === date);
 
-      // Calculate Cash amount = Cash in Hand + MPP Cash (same as PDF)
-      // Separate sales by MPP tag
-      const salesNoMPP = daySales.filter(s => !s.mpp && s.mpp !== true && s.mpp !== 'true');
-      const salesMPP = daySales.filter(s => s.mpp === true || s.mpp === 'true');
-      
-      const fuelSalesNoMPP = salesNoMPP.reduce((sum, s) => sum + (s.amount || 0), 0);
-      const fuelSalesMPP = salesMPP.reduce((sum, s) => sum + (s.amount || 0), 0);
-      
-      // Separate credits by MPP tag
-      const creditsNoMPP = dayCreditSales.filter(c => !c.mpp && c.mpp !== true && c.mpp !== 'true');
-      const creditsMPP = dayCreditSales.filter(c => c.mpp === true || c.mpp === 'true');
-      
-      const creditAmountNoMPP = creditsNoMPP.reduce((sum, c) => sum + (c.amount || 0), 0);
-      const creditAmountMPP = creditsMPP.reduce((sum, c) => sum + (c.amount || 0), 0);
-      
-      // Separate income
-      const directIncomeNoMPP = dayIncome.filter(i => !i.mpp).reduce((sum, i) => sum + (i.amount || 0), 0);
-      const directIncomeMPP = dayIncome.filter(i => i.mpp === true || i.mpp === 'true').reduce((sum, i) => sum + (i.amount || 0), 0);
-      
-      const creditIncomeNoMPP = creditsNoMPP.reduce((sum, c) => {
-        if (c.incomeEntries && c.incomeEntries.length > 0) {
-          return sum + c.incomeEntries.reduce((incSum, entry) => incSum + (entry.amount || 0), 0);
-        }
-        return sum;
-      }, 0);
-      
-      const creditIncomeMPP = creditsMPP.reduce((sum, c) => {
-        if (c.incomeEntries && c.incomeEntries.length > 0) {
-          return sum + c.incomeEntries.reduce((incSum, entry) => incSum + (entry.amount || 0), 0);
-        }
-        return sum;
-      }, 0);
-      
-      const otherIncomeNoMPP = directIncomeNoMPP + creditIncomeNoMPP;
-      const otherIncomeMPP = directIncomeMPP + creditIncomeMPP;
-      
-      // Separate expenses
-      const directExpensesNoMPP = dayExpenses.filter(e => !e.mpp).reduce((sum, e) => sum + (e.amount || 0), 0);
-      const directExpensesMPP = dayExpenses.filter(e => e.mpp === true || e.mpp === 'true').reduce((sum, e) => sum + (e.amount || 0), 0);
-      
-      const creditExpensesNoMPP = creditsNoMPP.reduce((sum, c) => {
-        if (c.expenseEntries && c.expenseEntries.length > 0) {
-          return sum + c.expenseEntries.reduce((expSum, entry) => expSum + (entry.amount || 0), 0);
-        }
-        return sum;
-      }, 0);
-      
-      const creditExpensesMPP = creditsMPP.reduce((sum, c) => {
-        if (c.expenseEntries && c.expenseEntries.length > 0) {
-          return sum + c.expenseEntries.reduce((expSum, entry) => expSum + (entry.amount || 0), 0);
-        }
-        return sum;
-      }, 0);
-      
-      const totalExpensesNoMPP = directExpensesNoMPP + creditExpensesNoMPP;
-      const totalExpensesMPP = directExpensesMPP + creditExpensesMPP;
-      
-      // Separate settlements
-      const settlementsNoMPP = daySettlements.filter(s => !s.mpp && s.mpp !== true && s.mpp !== 'true');
-      const settlementsMPP = daySettlements.filter(s => s.mpp === true || s.mpp === 'true');
-      
-      const settlementNoMPP = settlementsNoMPP.reduce((sum, s) => sum + (s.amount || 0), 0);
-      const settlementMPP = settlementsMPP.reduce((sum, s) => sum + (s.amount || 0), 0);
-      
-      // Calculate Cash in Hand and MPP Cash
-      const cashInHand = fuelSalesNoMPP - creditAmountNoMPP - totalExpensesNoMPP + otherIncomeNoMPP - settlementNoMPP;
-      const mppCash = fuelSalesMPP - creditAmountMPP - totalExpensesMPP + otherIncomeMPP - settlementMPP;
-      
-      // Home Cash = Settlements with "home" in description (both MPP and non-MPP)
-      const homeCashFromSettlements = daySettlements
-        .filter(s => s.description && s.description.toLowerCase().includes('home'))
+      // Cash = Sum of settlement records with "cash" in description
+      const cashAmount = daySettlements
+        .filter(s => s.description && s.description.toLowerCase().includes('cash'))
         .reduce((sum, s) => sum + (s.amount || 0), 0);
-      
-      // Home Cash from Receipts (mode = 'home')
-      const homeCashFromReceipts = dayPayments
-        .filter(p => p.mode && p.mode.toLowerCase().includes('home'))
-        .reduce((sum, p) => sum + (p.amount || 0), 0);
-      
-      // Cash mode payments/receipts (mode = 'cash')
-      const cashModePayments = dayPayments
-        .filter(p => p.mode && p.mode.toLowerCase() === 'cash')
-        .reduce((sum, p) => sum + (p.amount || 0), 0);
-      
-      // Total Cash = Cash in Hand + MPP Cash + Home Cash (settlements + receipts) + Cash Mode Payments
-      const cashAmount = cashInHand + mppCash + homeCashFromSettlements + homeCashFromReceipts + cashModePayments;
 
-      // Calculate Card amount (Settlement + Customer receipts with mode='Card')
-      const settlementCard = daySettlements
+      // Card = Settlements with "card" in description
+      const cardAmount = daySettlements
         .filter(s => s.description && s.description.toLowerCase().includes('card'))
         .reduce((sum, s) => sum + (s.amount || 0), 0);
-      
-      const paymentCard = dayPayments
-        .filter(p => p.mode && p.mode.toLowerCase() === 'card')
-        .reduce((sum, p) => sum + (p.amount || 0), 0);
 
-      const cardAmount = settlementCard + paymentCard;
-
-      // Calculate Paytm amount
-      const settlementPaytm = daySettlements
+      // Paytm = Settlements with "paytm" in description
+      const paytmAmount = daySettlements
         .filter(s => s.description && s.description.toLowerCase().includes('paytm'))
         .reduce((sum, s) => sum + (s.amount || 0), 0);
-      
-      const paymentPaytm = dayPayments
-        .filter(p => p.mode && (p.mode.toLowerCase() === 'wallet' || p.mode.toLowerCase().includes('paytm')))
-        .reduce((sum, p) => sum + (p.amount || 0), 0);
 
-      const paytmAmount = settlementPaytm + paymentPaytm;
-
-      // Calculate PhonePe amount
-      const settlementPhonepe = daySettlements
+      // PhonePe = Settlements with "phonepe" in description
+      const phonepeAmount = daySettlements
         .filter(s => s.description && s.description.toLowerCase().includes('phonepe'))
         .reduce((sum, s) => sum + (s.amount || 0), 0);
-      
-      const paymentPhonepe = dayPayments
-        .filter(p => p.mode && p.mode.toLowerCase().includes('phonepe'))
-        .reduce((sum, p) => sum + (p.amount || 0), 0);
 
-      const phonepeAmount = settlementPhonepe + paymentPhonepe;
-
-      // Calculate DTP amount
-      const settlementDTP = daySettlements
+      // DTP = Settlements with "dtp" in description
+      const dtpAmount = daySettlements
         .filter(s => s.description && s.description.toLowerCase().includes('dtp'))
         .reduce((sum, s) => sum + (s.amount || 0), 0);
-      
-      const paymentDTP = dayPayments
-        .filter(p => p.mode && p.mode.toLowerCase() === 'dtp')
-        .reduce((sum, p) => sum + (p.amount || 0), 0);
-
-      const dtpAmount = settlementDTP + paymentDTP;
 
       return {
         srNo: index + 1,
@@ -173,7 +63,7 @@ const BankSettlement = ({ isDarkMode, settlementData, payments, creditData, sale
         dtpAmount
       };
     });
-  }, [fromDate, toDate, settlementData, payments, creditData, salesData, incomeData, expenseData]);
+  }, [fromDate, toDate, settlementData]);
 
   // Calculate totals
   const totals = useMemo(() => {

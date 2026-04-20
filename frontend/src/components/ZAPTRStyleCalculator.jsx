@@ -465,6 +465,10 @@ const ZAPTRStyleCalculator = () => {
     });
     console.log('========================================');
     
+    // Total fuel amount and liters (all sales including MPP)
+    const totalLiters = todaySales.reduce((sum, sale) => sum + sale.liters, 0);
+    const totalFuelAmount = todaySales.filter(sale => sale.type === 'cash' || !sale.type).reduce((sum, sale) => sum + sale.amount, 0);
+
     // Cash in Hand = All Fuel Sales - All Credit Sales + All Income - All Expenses - All Settlement
     const totalSettlement = todaySettlements.reduce((sum, s) => sum + (s.amount || 0), 0);
     const cashInHand = totalFuelAmount - creditTotalAmount + otherIncome - totalExpenses - totalSettlement;
@@ -472,9 +476,6 @@ const ZAPTRStyleCalculator = () => {
     // MPP Cash is separate and calculated independently
     // Total available cash = Cash in Hand + MPP Cash (for display only)
     const totalAvailableCash = cashInHand + mppCash;
-    
-    const totalLiters = todaySales.reduce((sum, sale) => sum + sale.liters, 0);
-    const totalFuelAmount = todaySales.filter(sale => sale.type === 'cash' || !sale.type).reduce((sum, sale) => sum + sale.amount, 0);
     
     // Total income is fuel sales + other income
     const totalIncome = fuelCashSales + otherIncome;

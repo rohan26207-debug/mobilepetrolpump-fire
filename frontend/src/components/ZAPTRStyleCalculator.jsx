@@ -1638,25 +1638,8 @@ const ZAPTRStyleCalculator = () => {
       const relevantSettlements = settlementData.filter(dateFilter);
       const relevantPayments = payments.filter(dateFilter);
       
-      // Cash = Cash in Hand + Home Cash + Cash Mode Payments
-      const cashTotal = filteredStats.cashInHand;
-      
-      // Add Home Cash (settlements with "home" in description)
-      const homeCashFromSettlements = relevantSettlements
-        .filter(s => s.description && s.description.toLowerCase().includes('home'))
-        .reduce((sum, s) => sum + (s.amount || 0), 0);
-      
-      // Add Home Cash from Receipts (mode = 'home')
-      const homeCashFromReceipts = relevantPayments
-        .filter(p => p.mode && p.mode.toLowerCase().includes('home'))
-        .reduce((sum, p) => sum + (p.amount || 0), 0);
-      
-      // Add Cash Mode Payments
-      const cashModePayments = relevantPayments
-        .filter(p => p.mode && p.mode.toLowerCase() === 'cash')
-        .reduce((sum, p) => sum + (p.amount || 0), 0);
-      
-      const finalCashTotal = cashTotal + homeCashFromSettlements + homeCashFromReceipts + cashModePayments;
+      // Cash = Cash in Hand (already includes cash receipts)
+      const finalCashTotal = filteredStats.cashInHand;
       
       // Card = Settlements with "card" in description + Payments with mode "card"
       const cardFromSettlements = relevantSettlements
@@ -1949,24 +1932,8 @@ ${(() => {
   const todayPayments = payments.filter(p => p.date === selectedDate);
   
   // Cash = Cash in Hand + MPP Cash + Home Cash + Cash Mode Payments
-  const cashFromSummary = stats.cashInHand;
-  
-  // Add Home Cash (settlements with "home" in description)
-  const homeCashFromSettlements = todaySettlements
-    .filter(s => s.description && s.description.toLowerCase().includes('home'))
-    .reduce((sum, s) => sum + (s.amount || 0), 0);
-  
-  // Add Home Cash from Receipts (mode = 'home')
-  const homeCashFromReceipts = todayPayments
-    .filter(p => p.mode && p.mode.toLowerCase().includes('home'))
-    .reduce((sum, p) => sum + (p.amount || 0), 0);
-  
-  // Add Cash Mode Payments
-  const cashModePayments = todayPayments
-    .filter(p => p.mode && p.mode.toLowerCase() === 'cash')
-    .reduce((sum, p) => sum + (p.amount || 0), 0);
-  
-  const cash = cashFromSummary + homeCashFromSettlements + homeCashFromReceipts + cashModePayments;
+  // Cash = Cash in Hand (already includes cash receipts)
+  const cash = stats.cashInHand;
   
   // Card = Settlements with "card" in description + Payments with mode "card"
   const cardFromSettlements = todaySettlements
@@ -2382,25 +2349,8 @@ window.onload = function() {
       doc.text('BANK SETTLEMENT REPORT', 14, yPos);
       yPos += 5;
       
-      // Cash = Cash in Hand + MPP Cash + Home Cash + Cash Mode Payments
-      const cashFromSummary = currentStats.cashInHand + currentStats.mppCash;
-      
-      // Add Home Cash (settlements with "home" in description)
-      const homeCashFromSettlements = todaySettlements
-        .filter(s => s.description && s.description.toLowerCase().includes('home'))
-        .reduce((sum, s) => sum + (s.amount || 0), 0);
-      
-      // Add Home Cash from Receipts (mode = 'home')
-      const homeCashFromReceipts = todayPayments
-        .filter(p => p.mode && p.mode.toLowerCase().includes('home'))
-        .reduce((sum, p) => sum + (p.amount || 0), 0);
-      
-      // Add Cash Mode Payments  
-      const cashModePayments = todayPayments
-        .filter(p => p.mode && p.mode.toLowerCase() === 'cash')
-        .reduce((sum, p) => sum + (p.amount || 0), 0);
-      
-      const cashTotal = cashFromSummary + homeCashFromSettlements + homeCashFromReceipts + cashModePayments;
+      // Cash = Cash in Hand (already includes cash receipts)
+      const cashTotal = currentStats.cashInHand;
       
       // Card = Settlements with "card" in description + Payments with mode "card"
       const cardFromSettlements = todaySettlements

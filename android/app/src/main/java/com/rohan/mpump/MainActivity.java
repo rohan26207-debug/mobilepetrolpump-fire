@@ -2,11 +2,13 @@ package com.rohan.mpump;
 
 import android.annotation.SuppressLint;
 import android.app.Activity;
+import android.content.ContentValues;
 import android.content.Intent;
-import android.database.Cursor;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
-import android.provider.OpenableColumns;
+import android.os.Environment;
+import android.provider.MediaStore;
 import android.util.Base64;
 import android.util.Log;
 import android.webkit.DownloadListener;
@@ -23,7 +25,7 @@ import androidx.core.content.FileProvider;
 
 import java.io.File;
 import java.io.FileOutputStream;
-import java.io.InputStream;
+import java.io.OutputStream;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -129,11 +131,20 @@ public class MainActivity extends AppCompatActivity {
 
     public class WebAppInterface {
 
+        /**
+         * Saves the PDF to BOTH the public Downloads folder (so the user sees it as a
+         * "downloaded" file in the system Downloads app) AND the app-private folder
+         * (used with FileProvider to launch the viewer immediately).
+         */
         @JavascriptInterface
         public void openPdfWithViewer(String base64Data, String fileName) {
             try {
                 byte[] pdfBytes = Base64.decode(base64Data, Base64.DEFAULT);
 
+                // 1) Save to PUBLIC Downloads folder (visible in system Downloads app)
+                String publicLocation = savePdfToDownloads(pdfBytes, fileName);
+
+                // 2) Save to app-private folder for FileProvider -> Intent.ACTION_VIEW
                 File dir = new File(getExternalFilesDir(null), "MPumpCalc");
                 if (!dir.exists()) dir.mkdirs();
                 File file = new File(dir, fileName);
@@ -151,12 +162,61 @@ public class MainActivity extends AppCompatActivity {
                 intent.setDataAndType(uri, "application/pdf");
                 intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
                 Intent chooser = Intent.createChooser(intent, "Open PDF with");
+                chooser.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
                 startActivity(chooser);
 
-                runOnUiThread(() -> Toast.makeText(MainActivity.this, "PDF saved: " + fileName, Toast.LENGTH_SHORT).show());
+                final String msg = publicLocation != null
+                    ? "Downloaded: " + publicLocation
+                    : "PDF saved: " + fileName;
+                runOnUiThread(() -> Toast.makeText(MainActivity.this, msg, Toast.LENGTH_LONG).show());
             } catch (Exception e) {
-                Log.e(TAG, "PDF error: " + e.getMessage());
+                Log.e(TAG, "PDF error: " + e.getMessage(), e);
                 runOnUiThread(() -> Toast.makeText(MainActivity.this, "Error: " + e.getMessage(), Toast.LENGTH_SHORT).show());
+            }
+        }
+
+        /**
+         * Writes the PDF to the public Downloads directory.
+         * - Android 10+ (API 29): MediaStore.Downloads (no permission needed)
+         * - Android 9 and below : Environment.DIRECTORY_DOWNLOADS (WRITE_EXTERNAL_STORAGE already granted at install for maxSdk=28)
+         * Returns the user-visible path on success, null on failure.
+         */
+        private String savePdfToDownloads(byte[] pdfBytes, String fileName) {
+            try {
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                    ContentValues values = new ContentValues();
+                    values.put(MediaStore.Downloads.DISPLAY_NAME, fileName);
+                    values.put(MediaStore.Downloads.MIME_TYPE, "application/pdf");
+                    values.put(MediaStore.Downloads.RELATIVE_PATH, Environment.DIRECTORY_DOWNLOADS + "/MPumpCalc");
+                    values.put(MediaStore.Downloads.IS_PENDING, 1);
+
+                    Uri collection = MediaStore.Downloads.getContentUri(MediaStore.VOLUME_EXTERNAL_PRIMARY);
+                    Uri itemUri = getContentResolver().insert(collection, values);
+                    if (itemUri == null) return null;
+
+                    try (OutputStream os = getContentResolver().openOutputStream(itemUri)) {
+                        if (os == null) return null;
+                        os.write(pdfBytes);
+                        os.flush();
+                    }
+
+                    values.clear();
+                    values.put(MediaStore.Downloads.IS_PENDING, 0);
+                    getContentResolver().update(itemUri, values, null, null);
+
+                    return "Downloads/MPumpCalc/" + fileName;
+                } else {
+                    File downloads = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS), "MPumpCalc");
+                    if (!downloads.exists()) downloads.mkdirs();
+                    File target = new File(downloads, fileName);
+                    try (FileOutputStream fos = new FileOutputStream(target)) {
+                        fos.write(pdfBytes);
+                    }
+                    return "Downloads/MPumpCalc/" + fileName;
+                }
+            } catch (Exception e) {
+                Log.e(TAG, "Downloads save error: " + e.getMessage(), e);
+                return null;
             }
         }
 

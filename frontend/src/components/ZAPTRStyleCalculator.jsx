@@ -1263,18 +1263,19 @@ const ZAPTRStyleCalculator = () => {
 
       // Header
       doc.setFillColor(60, 60, 60);
-      doc.rect(0, 0, pw, 12, 'F');
+      doc.rect(0, 0, pw, 14, 'F');
       doc.setFont('helvetica', 'bold');
-      doc.setFontSize(10);
+      doc.setFontSize(14);
       doc.setTextColor(255, 255, 255);
-      doc.text('Manager Pump', 14, 8);
-      doc.setFontSize(8);
-      doc.text('Date: ' + selectedDate + '  Time: ' + new Date().toLocaleTimeString(), pw - 14, 8, { align: 'right' });
+      doc.text('Manager Pump', 14, 9.5);
+      doc.setFontSize(9);
+      doc.text('Date: ' + selectedDate + '  Time: ' + new Date().toLocaleTimeString(), pw - 14, 9.5, { align: 'right' });
       doc.setTextColor(0, 0, 0);
+      y = 20;
 
       // Stock line
       if (fuelSettings) {
-        doc.setFontSize(8);
+        doc.setFontSize(9);
         doc.setFont('helvetica', 'normal');
         const stockLine = 'STOCK: ' + Object.keys(fuelSettings).map(ft => {
           const sd = localStorageService.getItem(ft.toLowerCase() + 'StockData');
@@ -1303,13 +1304,13 @@ const ZAPTRStyleCalculator = () => {
       const todayExpenses = expenseData.filter(e => e.date === selectedDate);
       const todayReceipts = payments.filter(p => p.date === selectedDate);
 
-      const tbl = { theme: 'grid', styles: { font: 'helvetica', fontSize: 7, cellPadding: 1.5, lineWidth: 0.1, lineColor: [0,0,0], textColor: [0,0,0] }, headStyles: { fillColor: false, textColor: [0,0,0], fontStyle: 'bold', fontSize: 7 } };
+      const tbl = { theme: 'grid', styles: { font: 'helvetica', fontSize: 9, cellPadding: 1.8, lineWidth: 0.1, lineColor: [0,0,0], textColor: [0,0,0] }, headStyles: { fillColor: false, textColor: [0,0,0], fontStyle: 'bold', fontSize: 10 } };
 
       // Summary
       doc.setFont('helvetica', 'bold');
-      doc.setFontSize(10);
+      doc.setFontSize(13);
       doc.text('Summary', 14, y);
-      y += 4;
+      y += 5;
       doc.autoTable({ startY: y, ...tbl, head: [['Category', 'Litres', 'Amount']], body: [
         ['Fuel Sales', stats.totalLiters.toFixed(2), stats.totalFuelAmount.toFixed(2)],
         ['Credit Sales', stats.creditLiters.toFixed(2), stats.creditAmount.toFixed(2)],
@@ -1324,9 +1325,9 @@ const ZAPTRStyleCalculator = () => {
       if (todaySales.length > 0) {
         if (y > ph - 40) { doc.addPage(); y = 15; }
         doc.setFont('helvetica', 'bold');
-        doc.setFontSize(10);
+        doc.setFontSize(13);
         doc.text('Sales Records', 14, y);
-        y += 4;
+        y += 5;
         const salesBody = todaySales.map((s, i) => [i+1, s.nozzle + ' - ' + s.fuelType, s.startReading, s.endReading, s.testing || 0, s.rate, s.liters.toFixed(2), s.amount.toFixed(2)]);
         salesBody.push([{content: 'Total', colSpan: 6, styles: {fontStyle: 'bold'}}, stats.totalLiters.toFixed(2), stats.totalFuelAmount.toFixed(2)]);
         doc.autoTable({ startY: y, ...tbl, head: [['#', 'Description', 'Start', 'End', 'Test', 'Rate', 'Litres', 'Amount']], body: salesBody, columnStyles: { 0: {halign:'center', cellWidth: 8}, 2: {halign:'right'}, 3: {halign:'right'}, 4: {halign:'right'}, 5: {halign:'right'}, 6: {halign:'right'}, 7: {halign:'right'} } });
@@ -1337,9 +1338,9 @@ const ZAPTRStyleCalculator = () => {
       if (todayCredits.length > 0) {
         if (y > ph - 40) { doc.addPage(); y = 15; }
         doc.setFont('helvetica', 'bold');
-        doc.setFontSize(10);
+        doc.setFontSize(13);
         doc.text('Credit Records', 14, y);
-        y += 4;
+        y += 5;
         const creditBody = todayCredits.map((c, i) => [i+1, c.customerName, c.rate || '-', c.liters ? c.liters.toFixed(2) : '-', c.amount.toFixed(2)]);
         creditBody.push([{content: 'Total', colSpan: 3, styles: {fontStyle: 'bold'}}, stats.creditLiters.toFixed(2), stats.creditAmount.toFixed(2)]);
         doc.autoTable({ startY: y, ...tbl, head: [['#', 'Customer', 'Rate', 'Litres', 'Amount']], body: creditBody, columnStyles: { 0: {halign:'center', cellWidth: 8}, 2: {halign:'right'}, 3: {halign:'right'}, 4: {halign:'right'} } });
@@ -1363,9 +1364,9 @@ const ZAPTRStyleCalculator = () => {
       if (todayIncome.length > 0) {
         if (y > ph - 40) { doc.addPage(); y = 15; }
         doc.setFont('helvetica', 'bold');
-        doc.setFontSize(10);
+        doc.setFontSize(13);
         doc.text('Income Records', 14, y);
-        y += 4;
+        y += 5;
         const incBody = todayIncome.map((inc, i) => [i+1, inc.description, inc.amount.toFixed(2)]);
         incBody.push([{content: 'Total', colSpan: 2, styles: {fontStyle: 'bold'}}, todayIncome.reduce((sum, i) => sum + i.amount, 0).toFixed(2)]);
         doc.autoTable({ startY: y, ...tbl, head: [['#', 'Description', 'Amount']], body: incBody, columnStyles: { 0: {halign:'center', cellWidth: 8}, 2: {halign:'right'} } });
@@ -1376,9 +1377,9 @@ const ZAPTRStyleCalculator = () => {
       if (todayExpenses.length > 0) {
         if (y > ph - 40) { doc.addPage(); y = 15; }
         doc.setFont('helvetica', 'bold');
-        doc.setFontSize(10);
+        doc.setFontSize(13);
         doc.text('Expense Records', 14, y);
-        y += 4;
+        y += 5;
         const expBody = todayExpenses.map((exp, i) => [i+1, exp.description, exp.amount.toFixed(2)]);
         expBody.push([{content: 'Total', colSpan: 2, styles: {fontStyle: 'bold'}}, todayExpenses.reduce((sum, e) => sum + e.amount, 0).toFixed(2)]);
         doc.autoTable({ startY: y, ...tbl, head: [['#', 'Description', 'Amount']], body: expBody, columnStyles: { 0: {halign:'center', cellWidth: 8}, 2: {halign:'right'} } });
@@ -1389,9 +1390,9 @@ const ZAPTRStyleCalculator = () => {
       if (todayReceipts.length > 0) {
         if (y > ph - 40) { doc.addPage(); y = 15; }
         doc.setFont('helvetica', 'bold');
-        doc.setFontSize(10);
+        doc.setFontSize(13);
         doc.text('Receipt Records', 14, y);
-        y += 4;
+        y += 5;
         const recBody = todayReceipts.map((p, i) => [i+1, p.customerName || 'Unknown', p.paymentType || p.mode || '-', p.amount.toFixed(2)]);
         recBody.push([{content: 'Total', colSpan: 3, styles: {fontStyle: 'bold'}}, todayReceipts.reduce((sum, p) => sum + p.amount, 0).toFixed(2)]);
         doc.autoTable({ startY: y, ...tbl, head: [['#', 'Customer', 'Payment Type', 'Amount']], body: recBody, columnStyles: { 0: {halign:'center', cellWidth: 8}, 3: {halign:'right'} } });
@@ -1401,9 +1402,9 @@ const ZAPTRStyleCalculator = () => {
       // Bank Settlement Report
       if (y > ph - 40) { doc.addPage(); y = 15; }
       doc.setFont('helvetica', 'bold');
-      doc.setFontSize(10);
+      doc.setFontSize(13);
       doc.text('Bank Settlement Report', 14, y);
-      y += 4;
+      y += 5;
       const matchR = (p, kw) => { const st=(p.settlementType||'').toLowerCase(); const m=(p.mode||'').toLowerCase(); const pt=(p.paymentType||'').toLowerCase(); return st.includes(kw)||m.includes(kw)||(pt===kw); };
       const cashT = todaySettlements.filter(s=>s.description&&s.description.toLowerCase().includes('cash')).reduce((s,v)=>s+v.amount,0) + todayReceipts.filter(p=>matchR(p,'cash')).reduce((s,p)=>s+p.amount,0);
       const cardT = todaySettlements.filter(s=>s.description&&s.description.toLowerCase().includes('card')).reduce((s,v)=>s+v.amount,0) + todayReceipts.filter(p=>matchR(p,'card')).reduce((s,p)=>s+p.amount,0);
@@ -1417,7 +1418,7 @@ const ZAPTRStyleCalculator = () => {
       const pc = doc.internal.getNumberOfPages();
       for (let i = 1; i <= pc; i++) {
         doc.setPage(i);
-        doc.setFontSize(7);
+        doc.setFontSize(8);
         doc.setFont('helvetica', 'normal');
         doc.text('Page ' + i + ' of ' + pc + ' | Generated on: ' + new Date().toLocaleString(), pw/2, ph - 5, { align: 'center' });
       }
@@ -1433,7 +1434,7 @@ const ZAPTRStyleCalculator = () => {
         try {
           const base64 = doc.output('dataurlstring').split(',')[1];
           window.MPumpCalcAndroid.openPdfWithViewer(base64, fileName);
-          toast({ title: "PDF Generated", description: 'Opening ' + fileName });
+          toast({ title: "PDF Downloaded", description: fileName + ' saved to Downloads' });
         } catch (bridgeError) {
           console.warn('JS bridge failed, using print dialog:', bridgeError);
           const pdfBlob = doc.output('bloburl');

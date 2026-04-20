@@ -31,7 +31,11 @@ React-based petrol pump management application. 100% offline with localStorage o
 - MPP section removed from dashboard summary
 - Fixed "change is not defined" runtime error in Firestore listeners
 - **Made app 100% offline**: Removed Firebase Auth, Firestore sync, login screen. App loads directly with localStorage only.
+- **PDF optimization**: jsPDF with built-in Helvetica; file size reduced from ~138KB to ~2.5KB (well below 20KB target).
+- **PDF font sizes matched to reference PDF (Feb 2026)**: Header title 14pt (bar 14mm), date 9pt, section headings 13pt, table body 9pt, table headers 10pt, footer 8pt.
+- **Android wrapper with auto-download + auto-open (Feb 2026)**: `MPumpCalcAndroid.openPdfWithViewer` now saves to public `Downloads/MPumpCalc/` via MediaStore (API 29+) or `Environment.DIRECTORY_DOWNLOADS` (older), and then fires `Intent.ACTION_VIEW` via FileProvider to open the file. Toast confirms "Downloaded: Downloads/MPumpCalc/<filename>".
 
 ## Pending/Future Tasks
-- Clean up old deprecated files (DeviceLinking.jsx, Firebase files, old Android docs)
-- Add app icon for Android build
+- Clean up old deprecated files (DeviceLinking.jsx, firebase.js, firebaseSync.js, SyncStatus.jsx, LoginScreen.jsx, AuthContext.js, SyncDebugPanel.jsx) — dead code, not imported anywhere, safe to delete.
+- Refactor `ZAPTRStyleCalculator.jsx` (>3,500 lines) into smaller logical components.
+- Add app icon for Android build.

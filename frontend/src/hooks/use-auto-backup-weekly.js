@@ -46,9 +46,19 @@ export const useAutoBackupWeekly = (toast) => {
 
         // Check if running in Android WebView
         const isAndroid = typeof window.MPumpCalcAndroid !== 'undefined';
+        const ownerEmail = (localStorage.getItem('mpump_backup_email') || '').trim();
+        const emailSubject = `M.Pump Weekly Backup - ${new Date().toISOString().split('T')[0]}`;
+        const emailBody = `Hi,\n\nAttached is the automatic weekly backup of Manager Petrol Pump data.\n\nFile: ${fileName}\nGenerated: ${new Date().toLocaleString()}\n\nKeep this file safe — you can restore data by importing it from Settings -> Backup -> Import Data.`;
 
-        if (isAndroid && typeof window.MPumpCalcAndroid.saveFileToDownloads === 'function') {
-          // Android app - save to public Downloads/MPumpCalc/ via native bridge
+        if (isAndroid && ownerEmail && typeof window.MPumpCalcAndroid.emailBackup === 'function') {
+          // Save file + open Gmail compose pre-filled with owner's email
+          const bytes = new TextEncoder().encode(dataStr);
+          let binary = '';
+          for (let i = 0; i < bytes.byteLength; i++) binary += String.fromCharCode(bytes[i]);
+          const base64 = btoa(binary);
+          window.MPumpCalcAndroid.emailBackup(base64, fileName, 'application/json', ownerEmail, emailSubject, emailBody);
+        } else if (isAndroid && typeof window.MPumpCalcAndroid.saveFileToDownloads === 'function') {
+          // Android without owner email configured - just save locally
           const bytes = new TextEncoder().encode(dataStr);
           let binary = '';
           for (let i = 0; i < bytes.byteLength; i++) binary += String.fromCharCode(bytes[i]);
@@ -71,6 +81,12 @@ export const useAutoBackupWeekly = (toast) => {
             document.body.removeChild(link);
             URL.revokeObjectURL(url);
           }, 100);
+
+          // If on web + owner email set, open mailto fallback (no attachment possible via mailto)
+          if (ownerEmail) {
+            const mailto = `mailto:${encodeURIComponent(ownerEmail)}?subject=${encodeURIComponent(emailSubject)}&body=${encodeURIComponent(emailBody + '\n\n(Please attach the downloaded file manually.)')}`;
+            window.open(mailto, '_blank');
+          }
         }
 
         // Update settings

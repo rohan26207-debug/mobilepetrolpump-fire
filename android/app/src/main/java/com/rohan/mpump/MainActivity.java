@@ -253,6 +253,68 @@ public class MainActivity extends AppCompatActivity {
         }
 
         /**
+         * Saves the file, then opens Gmail (or the default mail client) with:
+         *   - To: toEmail pre-filled
+         *   - Subject: subject pre-filled
+         *   - Body: body pre-filled
+         *   - Attachment: the saved file
+         * User just taps "Send".
+         */
+        @JavascriptInterface
+        public void emailBackup(String base64Data, String fileName, String mimeType,
+                                String toEmail, String subject, String body) {
+            try {
+                byte[] bytes = Base64.decode(base64Data, Base64.DEFAULT);
+
+                // Also save to public Downloads for archival
+                saveBytesToDownloads(bytes, fileName, mimeType != null ? mimeType : "application/octet-stream");
+
+                // Write to app-private folder for FileProvider attachment
+                File dir = new File(getExternalFilesDir(null), "MPumpCalc");
+                if (!dir.exists()) dir.mkdirs();
+                File file = new File(dir, fileName);
+                try (FileOutputStream fos = new FileOutputStream(file)) {
+                    fos.write(bytes);
+                }
+
+                Uri uri = FileProvider.getUriForFile(
+                    MainActivity.this,
+                    getPackageName() + ".fileprovider",
+                    file
+                );
+
+                Intent emailIntent = new Intent(Intent.ACTION_SEND);
+                emailIntent.setType(mimeType != null ? mimeType : "application/octet-stream");
+                if (toEmail != null && !toEmail.isEmpty()) {
+                    emailIntent.putExtra(Intent.EXTRA_EMAIL, new String[]{toEmail});
+                }
+                if (subject != null) emailIntent.putExtra(Intent.EXTRA_SUBJECT, subject);
+                if (body != null) emailIntent.putExtra(Intent.EXTRA_TEXT, body);
+                emailIntent.putExtra(Intent.EXTRA_STREAM, uri);
+                emailIntent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+
+                // Try to force Gmail if installed; otherwise fall back to chooser
+                Intent launch;
+                try {
+                    Intent gmailIntent = new Intent(emailIntent);
+                    gmailIntent.setPackage("com.google.android.gm");
+                    if (gmailIntent.resolveActivity(getPackageManager()) != null) {
+                        launch = gmailIntent;
+                    } else {
+                        launch = Intent.createChooser(emailIntent, "Send backup via");
+                    }
+                } catch (Exception e) {
+                    launch = Intent.createChooser(emailIntent, "Send backup via");
+                }
+                launch.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                startActivity(launch);
+            } catch (Exception e) {
+                Log.e(TAG, "emailBackup error: " + e.getMessage(), e);
+                runOnUiThread(() -> Toast.makeText(MainActivity.this, "Email failed: " + e.getMessage(), Toast.LENGTH_SHORT).show());
+            }
+        }
+
+        /**
          * Generates the PDF, saves it, and immediately launches an ACTION_SEND chooser
          * (WhatsApp / Email / Drive / Bluetooth / etc.) so the user can forward the
          * daily report in one tap.

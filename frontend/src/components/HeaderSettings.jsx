@@ -286,6 +286,7 @@ const HeaderSettings = ({ isDarkMode, fuelSettings, setFuelSettings, customers, 
   // Weekly auto-backup state
   const [weeklyBackupEnabled, setWeeklyBackupEnabled] = useState(false);
   const [weeklyLastBackup, setWeeklyLastBackup] = useState(null);
+  const [ownerEmail, setOwnerEmail] = useState(() => localStorage.getItem('mpump_backup_email') || '');
   const [weeklyNextScheduled, setWeeklyNextScheduled] = useState(null);
 
   // Load weekly auto-backup settings
@@ -1630,6 +1631,34 @@ const HeaderSettings = ({ isDarkMode, fuelSettings, setFuelSettings, customers, 
                               {weeklyNextScheduled 
                                 ? new Date(weeklyNextScheduled).toLocaleString()
                                 : 'Not scheduled'}
+                            </div>
+
+                            <div className="pt-2 space-y-1">
+                              <label
+                                htmlFor="owner-email-input"
+                                className={`text-xs font-medium ${isDarkMode ? 'text-gray-200' : 'text-slate-700'}`}
+                              >
+                                Send backup to email (optional)
+                              </label>
+                              <input
+                                id="owner-email-input"
+                                data-testid="owner-email-input"
+                                type="email"
+                                placeholder="owner@gmail.com"
+                                value={ownerEmail}
+                                onChange={(e) => {
+                                  setOwnerEmail(e.target.value);
+                                  localStorage.setItem('mpump_backup_email', e.target.value);
+                                }}
+                                className={`w-full text-sm px-2 py-1 rounded border ${
+                                  isDarkMode
+                                    ? 'bg-gray-700 border-gray-500 text-white placeholder-gray-400'
+                                    : 'bg-white border-slate-300 text-slate-800 placeholder-slate-400'
+                                }`}
+                              />
+                              <p className={`text-xs ${isDarkMode ? 'text-gray-400' : 'text-slate-500'}`}>
+                                Gmail will open pre-filled with the backup attached. Tap Send to deliver.
+                              </p>
                             </div>
                           </div>
                         )}

@@ -47,11 +47,15 @@ export const useAutoBackupWeekly = (toast) => {
         // Check if running in Android WebView
         const isAndroid = typeof window.MPumpCalcAndroid !== 'undefined';
 
-        if (isAndroid && window.MPumpCalcAndroid.saveJsonBackup) {
-          // For Android app - use native method
-          window.MPumpCalcAndroid.saveJsonBackup(dataStr, fileName);
+        if (isAndroid && typeof window.MPumpCalcAndroid.saveFileToDownloads === 'function') {
+          // Android app - save to public Downloads/MPumpCalc/ via native bridge
+          const bytes = new TextEncoder().encode(dataStr);
+          let binary = '';
+          for (let i = 0; i < bytes.byteLength; i++) binary += String.fromCharCode(bytes[i]);
+          const base64 = btoa(binary);
+          window.MPumpCalcAndroid.saveFileToDownloads(base64, fileName, 'application/json');
         } else {
-          // For web browser - download file
+          // Web browser - download file via anchor
           const dataBlob = new Blob([dataStr], { type: 'application/json' });
           const url = URL.createObjectURL(dataBlob);
           const link = document.createElement('a');

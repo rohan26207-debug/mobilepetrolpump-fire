@@ -202,17 +202,17 @@ const DSRReport = ({ isDarkMode, fuelSettings, salesData }) => {
                   <td className={variationCls(r.cummVar)}>{sign(r.cummVar)}</td>
                 </tr>
               ))}
-              {/* Totals row */}
+              {/* Totals row — only Receipt and Pump Test are summed */}
               <tr>
                 <td className={`${tdCenter} font-bold`}>Total</td>
                 <td className={tdRight}>-</td>
                 <td className={`${tdRight} font-bold`}>{fmt(totals.receipt)}</td>
                 <td className={tdRight}>-</td>
-                <td className={`${tdRight} font-bold`}>{fmt(totals.salesByMeter)}</td>
-                <td className={`${tdRight} font-bold`}>{fmt(totals.pumpTest)}</td>
-                <td className={`${tdRight} font-bold`}>{fmt(totals.netSales)}</td>
                 <td className={tdRight}>-</td>
-                <td className={`${tdRight} font-bold`}>{fmt(totals.salesByDip)}</td>
+                <td className={`${tdRight} font-bold`}>{fmt(totals.pumpTest)}</td>
+                <td className={tdRight}>-</td>
+                <td className={tdRight}>-</td>
+                <td className={tdRight}>-</td>
                 <td className={tdRight}>-</td>
                 <td className={tdRight}>-</td>
               </tr>

@@ -53,12 +53,19 @@ const HeaderSettings = ({ isDarkMode, fuelSettings, setFuelSettings, customers, 
   const [showProPasswordDialog, setShowProPasswordDialog] = useState(false);
   const [proPassword, setProPassword] = useState('');
   const [fyBackupOpen, setFyBackupOpen] = useState(false);
+  const [fyBackupBusy, setFyBackupBusy] = useState(false);
   const [fyBackupYear, setFyBackupYear] = useState(() => {
     // Default to current FY (1 Apr through 31 Mar). If today is on/after Apr 1
     // current year, the FY starts this year; otherwise the previous year.
     const now = new Date();
     return now.getMonth() >= 3 ? now.getFullYear() : now.getFullYear() - 1;
   });
+  // Storage info state — computed on mount & when explicitly invalidated, so
+  // we never re-iterate every localStorage key on each parent re-render.
+  const [storageInfo, setStorageInfo] = useState(() => localStorageService.getStorageInfo());
+  const refreshStorageInfo = useCallback(() => {
+    setStorageInfo(localStorageService.getStorageInfo());
+  }, []);
   const { toast } = useToast();
   const { confirm, confirmDialog } = useConfirm();
   
@@ -1423,15 +1430,15 @@ const HeaderSettings = ({ isDarkMode, fuelSettings, setFuelSettings, customers, 
                         <Button 
                           variant="outline" 
                           className="w-full"
-                          onClick={() => setFyBackupOpen(true)}
+                          onClick={() => { refreshStorageInfo(); setFyBackupOpen(true); }}
                           data-testid="backup-financial-year-btn"
                         >
                           📅 Backup Financial Year
                         </Button>
                         
-                        {/* Live storage gauge */}
+                        {/* Live storage gauge (cached; refreshed when dialog opens) */}
                         {(() => {
-                          const info = localStorageService.getStorageInfo();
+                          const info = storageInfo;
                           const usedKB = Math.round(info.totalSize / 1024);
                           const maxKB = Math.round(info.maxSize / 1024);
                           const pct = Math.min(100, Math.round(info.usagePercent));
@@ -1443,7 +1450,8 @@ const HeaderSettings = ({ isDarkMode, fuelSettings, setFuelSettings, customers, 
                           return (
                             <div
                               data-testid="storage-gauge"
-                              className={`w-full rounded-lg border p-3 ${
+                              onClick={refreshStorageInfo}
+                              className={`w-full rounded-lg border p-3 cursor-pointer ${
                                 isDarkMode ? 'border-gray-600 bg-gray-800' : 'border-slate-300 bg-slate-50'
                               }`}
                             >
@@ -1470,7 +1478,7 @@ const HeaderSettings = ({ isDarkMode, fuelSettings, setFuelSettings, customers, 
                               <p className={`text-xs mt-2 ${
                                 isDarkMode ? 'text-gray-400' : 'text-slate-500'
                               }`}>
-                                {info.itemCount} items stored. {pct >= 85 ? 'Approaching limit — consider archiving older financial years.' : 'Plenty of room left.'}
+                                {info.itemCount} items stored. {pct >= 85 ? 'Approaching limit — consider archiving older financial years.' : 'Tap to refresh.'}
                               </p>
                             </div>
                           );
@@ -1895,16 +1903,19 @@ const HeaderSettings = ({ isDarkMode, fuelSettings, setFuelSettings, customers, 
                     isDarkMode ? 'bg-gray-700 border-gray-600 text-white' : 'bg-white border-slate-300'
                   }`}
                 >
-                  {Array.from({ length: 8 }).map((_, i) => {
+                  {(() => {
                     const today = new Date();
                     const currentFy = today.getMonth() >= 3 ? today.getFullYear() : today.getFullYear() - 1;
-                    const yr = currentFy - i;
-                    return (
-                      <option key={yr} value={yr}>
-                        {yr} – {yr + 1}{i === 0 ? '  (current)' : ''}
-                      </option>
-                    );
-                  })}
+                    // 2 future + current + 7 past = 10 options, newest first
+                    const options = [];
+                    for (let yr = currentFy + 2; yr >= currentFy - 7; yr--) {
+                      let label = `${yr} – ${yr + 1}`;
+                      if (yr === currentFy) label += '  (current)';
+                      else if (yr > currentFy) label += '  (future)';
+                      options.push(<option key={yr} value={yr}>{label}</option>);
+                    }
+                    return options;
+                  })()}
                 </select>
               </div>
 
@@ -1918,60 +1929,71 @@ const HeaderSettings = ({ isDarkMode, fuelSettings, setFuelSettings, customers, 
                 </Button>
                 <Button
                   data-testid="fy-backup-export-btn"
+                  disabled={fyBackupBusy}
                   onClick={() => {
-                    try {
-                      const data = localStorageService.exportFinancialYearData(fyBackupYear);
-                      const dataStr = JSON.stringify(data, null, 2);
-                      const fileName = `mpump-FY${fyBackupYear}-${fyBackupYear + 1}.json`;
+                    if (fyBackupBusy) return;
+                    setFyBackupBusy(true);
+                    // Yield to React so the "Generating…" state paints before we
+                    // synchronously filter+stringify the backup payload, which
+                    // can take several hundred ms with years of data and would
+                    // otherwise look like the dialog is hung.
+                    setTimeout(() => {
+                      try {
+                        const data = localStorageService.exportFinancialYearData(fyBackupYear);
+                        const dataStr = JSON.stringify(data, null, 2);
+                        const fileName = `mpump-FY${fyBackupYear}-${fyBackupYear + 1}.json`;
 
-                      // Android WebView path — save into Downloads/MPumpCalc
-                      if (typeof window.MPumpCalcAndroid !== 'undefined' &&
-                          typeof window.MPumpCalcAndroid.saveFileToDownloads === 'function') {
-                        const bytes = new TextEncoder().encode(dataStr);
-                        let binary = '';
-                        for (let i = 0; i < bytes.byteLength; i++) binary += String.fromCharCode(bytes[i]);
-                        const base64 = btoa(binary);
-                        window.MPumpCalcAndroid.saveFileToDownloads(base64, fileName, 'application/json');
+                        // Android WebView path — save into Downloads/MPumpCalc
+                        if (typeof window.MPumpCalcAndroid !== 'undefined' &&
+                            typeof window.MPumpCalcAndroid.saveFileToDownloads === 'function') {
+                          const bytes = new TextEncoder().encode(dataStr);
+                          let binary = '';
+                          for (let i = 0; i < bytes.byteLength; i++) binary += String.fromCharCode(bytes[i]);
+                          const base64 = btoa(binary);
+                          window.MPumpCalcAndroid.saveFileToDownloads(base64, fileName, 'application/json');
+                          toast({
+                            title: 'Backup Saved',
+                            description: `Saved to Downloads/MPumpCalc/${fileName}`,
+                          });
+                        } else {
+                          // Browser fallback
+                          const blob = new Blob([dataStr], { type: 'application/json' });
+                          const url = URL.createObjectURL(blob);
+                          const link = document.createElement('a');
+                          link.href = url;
+                          link.download = fileName;
+                          document.body.appendChild(link);
+                          link.click();
+                          document.body.removeChild(link);
+                          URL.revokeObjectURL(url);
+                          toast({
+                            title: 'Backup Downloaded',
+                            description: fileName,
+                          });
+                        }
+
+                        const counts = {
+                          sales: data.salesData.length,
+                          credits: data.creditData.length,
+                          receipts: data.payments.length,
+                        };
+                        console.log('FY Backup:', counts);
+                        setFyBackupOpen(false);
+                      } catch (err) {
+                        console.error('FY backup error:', err);
                         toast({
-                          title: 'Backup Saved',
-                          description: `Saved to Downloads/MPumpCalc/${fileName}`,
+                          title: 'Backup Failed',
+                          description: 'Could not generate financial year backup.',
+                          variant: 'destructive',
                         });
-                      } else {
-                        // Browser fallback
-                        const blob = new Blob([dataStr], { type: 'application/json' });
-                        const url = URL.createObjectURL(blob);
-                        const link = document.createElement('a');
-                        link.href = url;
-                        link.download = fileName;
-                        document.body.appendChild(link);
-                        link.click();
-                        document.body.removeChild(link);
-                        URL.revokeObjectURL(url);
-                        toast({
-                          title: 'Backup Downloaded',
-                          description: fileName,
-                        });
+                      } finally {
+                        setFyBackupBusy(false);
                       }
-
-                      const counts = {
-                        sales: data.salesData.length,
-                        credits: data.creditData.length,
-                        receipts: data.payments.length,
-                      };
-                      console.log('FY Backup:', counts);
-                      setFyBackupOpen(false);
-                    } catch (err) {
-                      console.error('FY backup error:', err);
-                      toast({
-                        title: 'Backup Failed',
-                        description: 'Could not generate financial year backup.',
-                        variant: 'destructive',
-                      });
-                    }
+                    }, 50);
                   }}
-                  className="bg-blue-600 hover:bg-blue-700 text-white"
+                  className="bg-blue-600 hover:bg-blue-700 text-white disabled:opacity-60"
                 >
-                  Export FY {fyBackupYear}–{fyBackupYear + 1}
+                  {fyBackupBusy ? 'Generating…' : `Export FY ${fyBackupYear}–${fyBackupYear + 1}`}
                 </Button>
               </div>
             </CardContent>

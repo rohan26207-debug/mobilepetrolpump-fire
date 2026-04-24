@@ -64,6 +64,20 @@ input:focus {
   }
 }
 
+/* iOS-style wiggle animation for "edit mode" reorder */
+@keyframes mpump-wiggle {
+  0%   { transform: rotate(-1.2deg); }
+  50%  { transform: rotate(1.2deg); }
+  100% { transform: rotate(-1.2deg); }
+}
+.mpump-wiggle {
+  animation: mpump-wiggle 0.18s ease-in-out infinite;
+  transform-origin: 50% 50%;
+}
+/* Slight stagger so the row of tabs doesn't look like one block flapping */
+.mpump-wiggle:nth-child(2n) { animation-delay: -0.09s; }
+.mpump-wiggle.is-dragging { animation: none; opacity: 0.85; z-index: 30; }
+
 /* Gradient text effect */
 .gradient-text {
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);

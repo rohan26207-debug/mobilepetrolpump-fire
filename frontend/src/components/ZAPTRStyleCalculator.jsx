@@ -48,6 +48,25 @@ import OutstandingReport from './OutstandingReport';
 import OutstandingPDFReport from './OutstandingPDFReport';
 import CustomerInitialBalance from './CustomerInitialBalance';
 import SalesReport from './SalesReport';
+import {
+  DndContext,
+  PointerSensor,
+  TouchSensor,
+  useSensor,
+  useSensors,
+  closestCenter,
+} from '@dnd-kit/core';
+import {
+  SortableContext,
+  arrayMove,
+  horizontalListSortingStrategy,
+  rectSortingStrategy,
+} from '@dnd-kit/sortable';
+import {
+  SortableTab,
+  loadBalanceTabOrder,
+  saveBalanceTabOrder,
+} from './SortableTab';
 import CustomerLedger from './CustomerLedger';
 import BankSettlement from './BankSettlement';
 // Anonymous mode: LoginScreen removed
@@ -391,6 +410,9 @@ const ZAPTRStyleCalculator = () => {
   const [textSize, setTextSize] = useState(100); // Default 100% (normal size)
   const [parentTab, setParentTab] = useState('today'); // Parent tab: 'today' or 'outstanding'
   const [outstandingSubTab, setOutstandingSubTab] = useState('received'); // Sub-tab in Balance view
+  // Balance sub-tab order (drag-to-reorder via long-press wiggle mode)
+  const [balanceTabOrder, setBalanceTabOrder] = useState(() => loadBalanceTabOrder());
+  const [wiggleMode, setWiggleMode] = useState(false);
   const [backupDialogOpen, setBackupDialogOpen] = useState(false); // Backup tab opens Settings dialog on Backup
   const [todaySubTab, setTodaySubTab] = useState('all'); // Sub-tab in Today Summary: 'all' or 'c-sales'
   const [salesData, setSalesData] = useState([]);
@@ -444,6 +466,52 @@ const ZAPTRStyleCalculator = () => {
   });
   
   const { toast } = useToast();
+
+  // dnd-kit sensors for the tab reorder. Activation distance lets a normal tap
+  // through; the long-press handler in SortableTab is what enters wiggle mode.
+  const dndSensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 6 } }),
+    useSensor(TouchSensor, { activationConstraint: { delay: 80, tolerance: 6 } }),
+  );
+
+  const handleBalanceTabDragEnd = (event) => {
+    const { active, over } = event;
+    if (!active || !over || active.id === over.id) return;
+    setBalanceTabOrder(prev => {
+      const oldIdx = prev.indexOf(active.id);
+      const newIdx = prev.indexOf(over.id);
+      if (oldIdx === -1 || newIdx === -1) return prev;
+      return arrayMove(prev, oldIdx, newIdx);
+    });
+  };
+
+  // Persist + exit wiggle mode whenever the user navigates away from Balance,
+  // hits the Total Summary tab, presses the Android back button, etc.
+  useEffect(() => {
+    if (!wiggleMode) return;
+    if (parentTab !== 'outstanding') {
+      setWiggleMode(false);
+      saveBalanceTabOrder(balanceTabOrder);
+    }
+  }, [parentTab, wiggleMode, balanceTabOrder]);
+
+  // Save final order when wiggle mode toggles off for any reason.
+  useEffect(() => {
+    if (!wiggleMode) saveBalanceTabOrder(balanceTabOrder);
+  }, [wiggleMode, balanceTabOrder]);
+
+  // Android hardware back: while wiggling, swallow the back press to exit
+  // edit mode rather than navigate away from the app.
+  useEffect(() => {
+    if (!wiggleMode) return;
+    const onBack = (e) => {
+      e.preventDefault();
+      setWiggleMode(false);
+    };
+    window.history.pushState({ wiggle: true }, '');
+    window.addEventListener('popstate', onBack);
+    return () => window.removeEventListener('popstate', onBack);
+  }, [wiggleMode]);
 
   // Auto-backup hook - automatically saves to folder when data changes
   useAutoBackup(salesData, creditData, incomeData, expenseData, fuelSettings);
@@ -3558,253 +3626,74 @@ window.onload = function() {
             {/* Block Layout - visible on all screens */}
             <div className="block">
               {showBalanceBlocks ? (
-                <div key="balance-blocks" className="grid grid-cols-2 gap-3 mb-4">
-                  {/* Reports Block */}
-                  <div 
-                    onClick={() => handleBalanceBlockClick('reports')}
-                    data-testid="balance-block-reports"
-                    className={`p-4 rounded-lg border-2 cursor-pointer transition-all duration-200 transform ${
-                      isDarkMode
-                        ? 'bg-gray-800 border-gray-600 hover:bg-gray-700 hover:border-gray-500 hover:scale-105'
-                        : 'bg-white border-slate-300 hover:bg-slate-50 hover:border-slate-400 hover:scale-105'
-                    }`}
-                    style={{ willChange: 'transform' }}
+                <div key="balance-blocks" className="mb-4">
+                  <DndContext
+                    sensors={dndSensors}
+                    collisionDetection={closestCenter}
+                    onDragEnd={handleBalanceTabDragEnd}
                   >
-                    <div className="flex flex-col items-center text-center space-y-2">
-                      <FileText className={`w-8 h-8 ${
-                        isDarkMode ? 'text-gray-400' : 'text-slate-600'
-                      }`} />
-                      <span className={`text-sm font-medium ${
-                        isDarkMode ? 'text-gray-300' : 'text-slate-700'
-                      }`}>
-                        Reports
-                      </span>
+                    <SortableContext items={balanceTabOrder} strategy={rectSortingStrategy}>
+                      <div className="grid grid-cols-2 gap-3">
+                        {balanceTabOrder.map((id) => {
+                          const cfg = ({
+                            'reports':              { Icon: FileText,    label: 'Reports',          testid: 'balance-block-reports' },
+                            'bank-settlement':      { Icon: Wallet,      label: 'Bank Settlement' },
+                            'outstanding-settings': { Icon: FileText,    label: 'Outstanding' },
+                            'report':               { Icon: Users,       label: 'Customer Ledger' },
+                            'dsr':                  { Icon: FileText,    label: 'DSR',               testid: 'balance-block-dsr' },
+                            'credit-manage':        { Icon: CreditCard,  label: 'Credit Manage' },
+                            'receipt-manage':       { Icon: Receipt,     label: 'Receipt Manage' },
+                            'customer-manage':      { Icon: Users,       label: 'Customer Manage' },
+                            'backup':               { Icon: Wallet,      label: 'Backup',            testid: 'balance-block-backup' },
+                            'cust-initial':         { Icon: Users,       label: 'Initial Balance',   testid: 'balance-block-cust-initial' },
+                            'sales-report':         { Icon: TrendingUp,  label: 'Sales',             testid: 'balance-block-sales-report' },
+                          })[id];
+                          if (!cfg) return null;
+                          const { Icon, label, testid } = cfg;
+                          return (
+                            <SortableTab
+                              key={id}
+                              id={id}
+                              wiggle={wiggleMode}
+                              onLongPress={() => setWiggleMode(true)}
+                            >
+                              <div
+                                onClick={() => {
+                                  if (wiggleMode) return;
+                                  handleBalanceBlockClick(id);
+                                }}
+                                data-testid={testid}
+                                className={`p-4 rounded-lg border-2 cursor-pointer transition-all duration-200 transform ${
+                                  isDarkMode
+                                    ? 'bg-gray-800 border-gray-600 hover:bg-gray-700 hover:border-gray-500 hover:scale-105'
+                                    : 'bg-white border-slate-300 hover:bg-slate-50 hover:border-slate-400 hover:scale-105'
+                                }`}
+                                style={{ willChange: 'transform' }}
+                              >
+                                <div className="flex flex-col items-center text-center space-y-2">
+                                  <Icon className={`w-8 h-8 ${
+                                    isDarkMode ? 'text-gray-400' : 'text-slate-600'
+                                  }`} />
+                                  <span className={`text-sm font-medium ${
+                                    isDarkMode ? 'text-gray-300' : 'text-slate-700'
+                                  }`}>
+                                    {label}
+                                  </span>
+                                </div>
+                              </div>
+                            </SortableTab>
+                          );
+                        })}
+                      </div>
+                    </SortableContext>
+                  </DndContext>
+                  {wiggleMode && (
+                    <div className={`mt-3 text-xs text-center px-2 py-1 rounded ${
+                      isDarkMode ? 'bg-gray-700 text-gray-200' : 'bg-slate-100 text-slate-700'
+                    }`}>
+                      Drag to reorder. Tap Balance/Total Summary or press Back to finish.
                     </div>
-                  </div>
-
-                  {/* Bank Settlement Block */}
-                  <div 
-                    onClick={() => handleBalanceBlockClick('bank-settlement')}
-                    className={`p-4 rounded-lg border-2 cursor-pointer transition-all duration-200 transform ${
-                      isDarkMode
-                        ? 'bg-gray-800 border-gray-600 hover:bg-gray-700 hover:border-gray-500 hover:scale-105'
-                        : 'bg-white border-slate-300 hover:bg-slate-50 hover:border-slate-400 hover:scale-105'
-                    }`}
-                    style={{ willChange: 'transform' }}
-                  >
-                    <div className="flex flex-col items-center text-center space-y-2">
-                      <Wallet className={`w-8 h-8 ${
-                        isDarkMode ? 'text-gray-400' : 'text-slate-600'
-                      }`} />
-                      <span className={`text-sm font-medium ${
-                        isDarkMode ? 'text-gray-300' : 'text-slate-700'
-                      }`}>
-                        Bank Settlement
-                      </span>
-                    </div>
-                  </div>
-
-                  {/* Outstanding Block */}
-                  <div 
-                    onClick={() => handleBalanceBlockClick('outstanding-settings')}
-                    className={`p-4 rounded-lg border-2 cursor-pointer transition-all duration-200 transform ${
-                      isDarkMode
-                        ? 'bg-gray-800 border-gray-600 hover:bg-gray-700 hover:border-gray-500 hover:scale-105'
-                        : 'bg-white border-slate-300 hover:bg-slate-50 hover:border-slate-400 hover:scale-105'
-                    }`}
-                    style={{ willChange: 'transform' }}
-                  >
-                    <div className="flex flex-col items-center text-center space-y-2">
-                      <FileText className={`w-8 h-8 ${
-                        isDarkMode ? 'text-gray-400' : 'text-slate-600'
-                      }`} />
-                      <span className={`text-sm font-medium ${
-                        isDarkMode ? 'text-gray-300' : 'text-slate-700'
-                      }`}>
-                        Outstanding
-                      </span>
-                    </div>
-                  </div>
-
-                  {/* Customer Ledger Block */}
-                  <div 
-                    onClick={() => handleBalanceBlockClick('report')}
-                    className={`p-4 rounded-lg border-2 cursor-pointer transition-all duration-200 transform ${
-                      isDarkMode
-                        ? 'bg-gray-800 border-gray-600 hover:bg-gray-700 hover:border-gray-500 hover:scale-105'
-                        : 'bg-white border-slate-300 hover:bg-slate-50 hover:border-slate-400 hover:scale-105'
-                    }`}
-                    style={{ willChange: 'transform' }}
-                  >
-                    <div className="flex flex-col items-center text-center space-y-2">
-                      <Users className={`w-8 h-8 ${
-                        isDarkMode ? 'text-gray-400' : 'text-slate-600'
-                      }`} />
-                      <span className={`text-sm font-medium ${
-                        isDarkMode ? 'text-gray-300' : 'text-slate-700'
-                      }`}>
-                        Customer Ledger
-                      </span>
-                    </div>
-                  </div>
-
-                  {/* DSR Block */}
-                  <div 
-                    onClick={() => handleBalanceBlockClick('dsr')}
-                    data-testid="balance-block-dsr"
-                    className={`p-4 rounded-lg border-2 cursor-pointer transition-all duration-200 transform ${
-                      isDarkMode
-                        ? 'bg-gray-800 border-gray-600 hover:bg-gray-700 hover:border-gray-500 hover:scale-105'
-                        : 'bg-white border-slate-300 hover:bg-slate-50 hover:border-slate-400 hover:scale-105'
-                    }`}
-                    style={{ willChange: 'transform' }}
-                  >
-                    <div className="flex flex-col items-center text-center space-y-2">
-                      <FileText className={`w-8 h-8 ${
-                        isDarkMode ? 'text-gray-400' : 'text-slate-600'
-                      }`} />
-                      <span className={`text-sm font-medium ${
-                        isDarkMode ? 'text-gray-300' : 'text-slate-700'
-                      }`}>
-                        DSR
-                      </span>
-                    </div>
-                  </div>
-
-                  {/* Credit Manage Block */}
-                  <div 
-                    onClick={() => handleBalanceBlockClick('credit-manage')}
-                    className={`p-4 rounded-lg border-2 cursor-pointer transition-all duration-200 transform ${
-                      isDarkMode
-                        ? 'bg-gray-800 border-gray-600 hover:bg-gray-700 hover:border-gray-500 hover:scale-105'
-                        : 'bg-white border-slate-300 hover:bg-slate-50 hover:border-slate-400 hover:scale-105'
-                    }`}
-                    style={{ willChange: 'transform' }}
-                  >
-                    <div className="flex flex-col items-center text-center space-y-2">
-                      <CreditCard className={`w-8 h-8 ${
-                        isDarkMode ? 'text-gray-400' : 'text-slate-600'
-                      }`} />
-                      <span className={`text-sm font-medium ${
-                        isDarkMode ? 'text-gray-300' : 'text-slate-700'
-                      }`}>
-                        Credit Manage
-                      </span>
-                    </div>
-                  </div>
-
-                  {/* Receipt Manage Block */}
-                  <div 
-                    onClick={() => handleBalanceBlockClick('receipt-manage')}
-                    className={`p-4 rounded-lg border-2 cursor-pointer transition-all duration-200 transform ${
-                      isDarkMode
-                        ? 'bg-gray-800 border-gray-600 hover:bg-gray-700 hover:border-gray-500 hover:scale-105'
-                        : 'bg-white border-slate-300 hover:bg-slate-50 hover:border-slate-400 hover:scale-105'
-                    }`}
-                    style={{ willChange: 'transform' }}
-                  >
-                    <div className="flex flex-col items-center text-center space-y-2">
-                      <Receipt className={`w-8 h-8 ${
-                        isDarkMode ? 'text-gray-400' : 'text-slate-600'
-                      }`} />
-                      <span className={`text-sm font-medium ${
-                        isDarkMode ? 'text-gray-300' : 'text-slate-700'
-                      }`}>
-                        Receipt Manage
-                      </span>
-                    </div>
-                  </div>
-
-                  {/* Customer Manage Block */}
-                  <div 
-                    onClick={() => handleBalanceBlockClick('customer-manage')}
-                    className={`p-4 rounded-lg border-2 cursor-pointer transition-all duration-200 transform ${
-                      isDarkMode
-                        ? 'bg-gray-800 border-gray-600 hover:bg-gray-700 hover:border-gray-500 hover:scale-105'
-                        : 'bg-white border-slate-300 hover:bg-slate-50 hover:border-slate-400 hover:scale-105'
-                    }`}
-                    style={{ willChange: 'transform' }}
-                  >
-                    <div className="flex flex-col items-center text-center space-y-2">
-                      <Users className={`w-8 h-8 ${
-                        isDarkMode ? 'text-gray-400' : 'text-slate-600'
-                      }`} />
-                      <span className={`text-sm font-medium ${
-                        isDarkMode ? 'text-gray-300' : 'text-slate-700'
-                      }`}>
-                        Customer Manage
-                      </span>
-                    </div>
-                  </div>
-
-                  {/* Backup Block */}
-                  <div 
-                    onClick={() => handleBalanceBlockClick('backup')}
-                    data-testid="balance-block-backup"
-                    className={`p-4 rounded-lg border-2 cursor-pointer transition-all duration-200 transform ${
-                      isDarkMode
-                        ? 'bg-gray-800 border-gray-600 hover:bg-gray-700 hover:border-gray-500 hover:scale-105'
-                        : 'bg-white border-slate-300 hover:bg-slate-50 hover:border-slate-400 hover:scale-105'
-                    }`}
-                    style={{ willChange: 'transform' }}
-                  >
-                    <div className="flex flex-col items-center text-center space-y-2">
-                      <Wallet className={`w-8 h-8 ${
-                        isDarkMode ? 'text-gray-400' : 'text-slate-600'
-                      }`} />
-                      <span className={`text-sm font-medium ${
-                        isDarkMode ? 'text-gray-300' : 'text-slate-700'
-                      }`}>
-                        Backup
-                      </span>
-                    </div>
-                  </div>
-
-                  {/* Customer Initial Balance Block */}
-                  <div
-                    onClick={() => handleBalanceBlockClick('cust-initial')}
-                    data-testid="balance-block-cust-initial"
-                    className={`p-4 rounded-lg border-2 cursor-pointer transition-all duration-200 transform ${
-                      isDarkMode
-                        ? 'bg-gray-800 border-gray-600 hover:bg-gray-700 hover:border-gray-500 hover:scale-105'
-                        : 'bg-white border-slate-300 hover:bg-slate-50 hover:border-slate-400 hover:scale-105'
-                    }`}
-                    style={{ willChange: 'transform' }}
-                  >
-                    <div className="flex flex-col items-center text-center space-y-2">
-                      <Users className={`w-8 h-8 ${
-                        isDarkMode ? 'text-gray-400' : 'text-slate-600'
-                      }`} />
-                      <span className={`text-sm font-medium ${
-                        isDarkMode ? 'text-gray-300' : 'text-slate-700'
-                      }`}>
-                        Initial Balance
-                      </span>
-                    </div>
-                  </div>
-
-                  {/* Sales Block */}
-                  <div
-                    onClick={() => handleBalanceBlockClick('sales-report')}
-                    data-testid="balance-block-sales-report"
-                    className={`p-4 rounded-lg border-2 cursor-pointer transition-all duration-200 transform ${
-                      isDarkMode
-                        ? 'bg-gray-800 border-gray-600 hover:bg-gray-700 hover:border-gray-500 hover:scale-105'
-                        : 'bg-white border-slate-300 hover:bg-slate-50 hover:border-slate-400 hover:scale-105'
-                    }`}
-                    style={{ willChange: 'transform' }}
-                  >
-                    <div className="flex flex-col items-center text-center space-y-2">
-                      <TrendingUp className={`w-8 h-8 ${
-                        isDarkMode ? 'text-gray-400' : 'text-slate-600'
-                      }`} />
-                      <span className={`text-sm font-medium ${
-                        isDarkMode ? 'text-gray-300' : 'text-slate-700'
-                      }`}>
-                        Sales
-                      </span>
-                    </div>
-                  </div>
+                  )}
                 </div>
               ) : (
                 <div key="balance-content" className="mb-4">
@@ -3816,53 +3705,54 @@ window.onload = function() {
             {/* Desktop Tab Layout for screens >= 768px */}
             <div className="hidden md:block">
               <Tabs value={outstandingSubTab} onValueChange={(v) => {
+                if (wiggleMode) return; // ignore tab clicks while in edit mode
                 if (v === 'backup') { setBackupDialogOpen(true); return; }
                 setOutstandingSubTab(v);
               }} className="w-full">
-                <TabsList className={`flex w-full mb-4 ${
-                  isDarkMode ? 'bg-gray-800' : 'bg-slate-100'
-                }`}>
-                  <TabsTrigger value="reports" className="flex items-center justify-center gap-1 text-xs w-[10%]" data-testid="tab-reports">
-                    <FileText className="w-3 h-3" />
-                    <span className="hidden lg:inline">Reports</span>
-                  </TabsTrigger>
-                  <TabsTrigger value="bank-settlement" className="flex items-center justify-center gap-1 text-xs w-[10%]">
-                    <Wallet className="w-3 h-3" />
-                    <span className="hidden lg:inline">Bank</span>
-                  </TabsTrigger>
-                  <TabsTrigger value="outstanding-settings" className="flex items-center justify-center gap-1 text-xs w-[10%]">
-                    <FileText className="w-3 h-3" />
-                    <span className="hidden lg:inline">Outstanding</span>
-                  </TabsTrigger>
-                  <TabsTrigger value="report" className="flex items-center justify-center gap-1 text-xs w-[10%]">
-                    <Users className="w-3 h-3" />
-                    <span className="hidden lg:inline">Ledger</span>
-                  </TabsTrigger>
-                  <TabsTrigger value="dsr" className="flex items-center justify-center gap-1 text-xs w-[10%]" data-testid="tab-dsr">
-                    <FileText className="w-3 h-3" />
-                    <span className="hidden lg:inline">DSR</span>
-                  </TabsTrigger>
-                  <TabsTrigger value="credit-manage" className="flex items-center justify-center gap-1 text-xs w-[10%]">
-                    <CreditCard className="w-3 h-3" />
-                    <span className="hidden lg:inline">Credit</span>
-                  </TabsTrigger>
-                  <TabsTrigger value="receipt-manage" className="flex items-center justify-center gap-1 text-xs w-[10%]">
-                    <Receipt className="w-3 h-3" />
-                    <span className="hidden lg:inline">Receipt</span>
-                  </TabsTrigger>
-                  <TabsTrigger value="backup" className="flex items-center justify-center gap-1 text-xs w-[10%]" data-testid="tab-backup">
-                    <Wallet className="w-3 h-3" />
-                    <span className="hidden lg:inline">Backup</span>
-                  </TabsTrigger>
-                  <TabsTrigger value="cust-initial" className="flex items-center justify-center gap-1 text-xs w-[10%]" data-testid="tab-cust-initial">
-                    <Users className="w-3 h-3" />
-                    <span className="hidden lg:inline">Initial Bal.</span>
-                  </TabsTrigger>
-                  <TabsTrigger value="sales-report" className="flex items-center justify-center gap-1 text-xs w-[10%]" data-testid="tab-sales-report">
-                    <TrendingUp className="w-3 h-3" />
-                    <span className="hidden lg:inline">Sales</span>
-                  </TabsTrigger>
-                </TabsList>
+                <DndContext
+                  sensors={dndSensors}
+                  collisionDetection={closestCenter}
+                  onDragEnd={handleBalanceTabDragEnd}
+                >
+                  <SortableContext items={balanceTabOrder} strategy={horizontalListSortingStrategy}>
+                    <TabsList className={`flex w-full mb-4 ${isDarkMode ? 'bg-gray-800' : 'bg-slate-100'}`}>
+                      {balanceTabOrder.map((id) => {
+                        const cfg = ({
+                          'reports':              { Icon: FileText,    label: 'Reports',     testid: 'tab-reports' },
+                          'bank-settlement':      { Icon: Wallet,      label: 'Bank' },
+                          'outstanding-settings': { Icon: FileText,    label: 'Outstanding' },
+                          'report':               { Icon: Users,       label: 'Ledger' },
+                          'dsr':                  { Icon: FileText,    label: 'DSR',          testid: 'tab-dsr' },
+                          'credit-manage':        { Icon: CreditCard,  label: 'Credit' },
+                          'receipt-manage':       { Icon: Receipt,     label: 'Receipt' },
+                          'backup':               { Icon: Wallet,      label: 'Backup',       testid: 'tab-backup' },
+                          'cust-initial':         { Icon: Users,       label: 'Initial Bal.', testid: 'tab-cust-initial' },
+                          'sales-report':         { Icon: TrendingUp,  label: 'Sales',        testid: 'tab-sales-report' },
+                        })[id];
+                        if (!cfg) return null;
+                        const { Icon, label, testid } = cfg;
+                        return (
+                          <SortableTab
+                            key={id}
+                            id={id}
+                            wiggle={wiggleMode}
+                            onLongPress={() => setWiggleMode(true)}
+                          >
+                            <TabsTrigger
+                              value={id}
+                              data-testid={testid}
+                              className="flex items-center justify-center gap-1 text-xs w-full"
+                              style={{ width: '100%' }}
+                            >
+                              <Icon className="w-3 h-3" />
+                              <span className="hidden lg:inline">{label}</span>
+                            </TabsTrigger>
+                          </SortableTab>
+                        );
+                      })}
+                    </TabsList>
+                  </SortableContext>
+                </DndContext>
               </Tabs>
             </div>
 

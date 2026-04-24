@@ -1636,7 +1636,7 @@ const ZAPTRStyleCalculator = () => {
           sectionGap();
           const salesBody = todaySales.map((s, i) => [i+1, s.nozzle + ' - ' + s.fuelType, s.startReading, s.endReading, s.testing || 0, s.rate, s.liters.toFixed(2), s.amount.toFixed(2)]);
           salesBody.push([{content: 'Total', colSpan: 6, styles: {fontStyle: 'bold'}}, stats.totalLiters.toFixed(2), stats.totalFuelAmount.toFixed(2)]);
-          doc.autoTable({ startY: y, ...tbl, head: [['#', 'Description', 'Start', 'End', 'Test', 'Rate', 'Litres', 'Amount']], body: salesBody, columnStyles: { 0: {halign:'center', cellWidth: 8}, 2: {halign:'right'}, 3: {halign:'right'}, 4: {halign:'right'}, 5: {halign:'right'}, 6: {halign:'right'}, 7: {halign:'right'} } });
+          doc.autoTable({ startY: y, ...tbl, head: [['#', 'Description', 'Start', 'End', 'Test', 'Rate', 'Litres', 'Amount']], body: salesBody, columnStyles: { 0: {halign:'center', cellWidth: 12, overflow: 'visible'}, 2: {halign:'right'}, 3: {halign:'right'}, 4: {halign:'right'}, 5: {halign:'right'}, 6: {halign:'right'}, 7: {halign:'right'} } });
           y = doc.lastAutoTable.finalY + sp(6);
         }
 
@@ -1645,7 +1645,7 @@ const ZAPTRStyleCalculator = () => {
           sectionGap();
           const creditBody = todayCredits.map((c, i) => [i+1, c.customerName, c.rate || '-', c.liters ? c.liters.toFixed(2) : '-', c.amount.toFixed(2)]);
           creditBody.push([{content: 'Total', colSpan: 3, styles: {fontStyle: 'bold'}}, stats.creditLiters.toFixed(2), stats.creditAmount.toFixed(2)]);
-          doc.autoTable({ startY: y, ...tbl, head: [['#', 'Credit', 'Rate', 'Litres', 'Amount']], body: creditBody, columnStyles: { 0: {halign:'center', cellWidth: 8}, 2: {halign:'right'}, 3: {halign:'right'}, 4: {halign:'right'} } });
+          doc.autoTable({ startY: y, ...tbl, head: [['#', 'Credit', 'Rate', 'Litres', 'Amount']], body: creditBody, columnStyles: { 0: {halign:'center', cellWidth: 12, overflow: 'visible'}, 2: {halign:'right'}, 3: {halign:'right'}, 4: {halign:'right'} } });
           y = doc.lastAutoTable.finalY + sp(6);
         }
 
@@ -1654,7 +1654,7 @@ const ZAPTRStyleCalculator = () => {
           sectionHeading('Settlement Records');
           const settBody = todaySettlements.map((s, i) => [i+1, s.description || 'Settlement', s.amount.toFixed(2)]);
           settBody.push([{content: 'Total', colSpan: 2, styles: {fontStyle: 'bold'}}, todaySettlements.reduce((sum, s) => sum + s.amount, 0).toFixed(2)]);
-          doc.autoTable({ startY: y, ...tbl, body: settBody, columnStyles: { 0: {halign:'center', cellWidth: 8}, 2: {halign:'right'} } });
+          doc.autoTable({ startY: y, ...tbl, body: settBody, columnStyles: { 0: {halign:'center', cellWidth: 12, overflow: 'visible'}, 2: {halign:'right'} } });
           y = doc.lastAutoTable.finalY + sp(6);
         }
 
@@ -1663,7 +1663,7 @@ const ZAPTRStyleCalculator = () => {
           sectionHeading('Income Records');
           const incBody = todayIncome.map((inc, i) => [i+1, inc.description, inc.amount.toFixed(2)]);
           incBody.push([{content: 'Total', colSpan: 2, styles: {fontStyle: 'bold'}}, todayIncome.reduce((sum, i) => sum + i.amount, 0).toFixed(2)]);
-          doc.autoTable({ startY: y, ...tbl, body: incBody, columnStyles: { 0: {halign:'center', cellWidth: 8}, 2: {halign:'right'} } });
+          doc.autoTable({ startY: y, ...tbl, body: incBody, columnStyles: { 0: {halign:'center', cellWidth: 12, overflow: 'visible'}, 2: {halign:'right'} } });
           y = doc.lastAutoTable.finalY + sp(6);
         }
 
@@ -1672,7 +1672,7 @@ const ZAPTRStyleCalculator = () => {
           sectionHeading('Expense Records');
           const expBody = todayExpenses.map((exp, i) => [i+1, exp.description, exp.amount.toFixed(2)]);
           expBody.push([{content: 'Total', colSpan: 2, styles: {fontStyle: 'bold'}}, todayExpenses.reduce((sum, e) => sum + e.amount, 0).toFixed(2)]);
-          doc.autoTable({ startY: y, ...tbl, body: expBody, columnStyles: { 0: {halign:'center', cellWidth: 8}, 2: {halign:'right'} } });
+          doc.autoTable({ startY: y, ...tbl, body: expBody, columnStyles: { 0: {halign:'center', cellWidth: 12, overflow: 'visible'}, 2: {halign:'right'} } });
           y = doc.lastAutoTable.finalY + sp(6);
         }
 
@@ -1681,7 +1681,7 @@ const ZAPTRStyleCalculator = () => {
           sectionHeading('Receipt Records');
           const recBody = todayReceipts.map((p, i) => [i+1, p.customerName || 'Unknown', p.paymentType || p.mode || '-', p.amount.toFixed(2)]);
           recBody.push([{content: 'Total', colSpan: 3, styles: {fontStyle: 'bold'}}, todayReceipts.reduce((sum, p) => sum + p.amount, 0).toFixed(2)]);
-          doc.autoTable({ startY: y, ...tbl, body: recBody, columnStyles: { 0: {halign:'center', cellWidth: 8}, 3: {halign:'right'} } });
+          doc.autoTable({ startY: y, ...tbl, body: recBody, columnStyles: { 0: {halign:'center', cellWidth: 12, overflow: 'visible'}, 3: {halign:'right'} } });
           y = doc.lastAutoTable.finalY + sp(6);
         }
 

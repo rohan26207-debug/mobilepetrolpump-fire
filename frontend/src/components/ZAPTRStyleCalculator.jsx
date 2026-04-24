@@ -268,9 +268,6 @@ const ReportPreviewTab = ({
           <>
             <div className={`text-sm font-bold mb-1 ${isDarkMode ? 'text-white' : 'text-slate-800'}`}>Settlement Records</div>
             <table className="w-full border-collapse mb-3">
-              <thead><tr>
-                <th className={thBase}>#</th><th className={thBase}>Description</th><th className={`${thBase} text-right`}>Amount</th>
-              </tr></thead>
               <tbody>
                 {daySettlements.map((s, i) => (
                   <tr key={s.id || `st-${i}`}>
@@ -290,7 +287,6 @@ const ReportPreviewTab = ({
           <>
             <div className={`text-sm font-bold mb-1 ${isDarkMode ? 'text-white' : 'text-slate-800'}`}>Income Records</div>
             <table className="w-full border-collapse mb-3">
-              <thead><tr><th className={thBase}>#</th><th className={thBase}>Description</th><th className={`${thBase} text-right`}>Amount</th></tr></thead>
               <tbody>
                 {dayIncome.map((r, i) => (
                   <tr key={r.id || `in-${i}`}>
@@ -308,7 +304,6 @@ const ReportPreviewTab = ({
           <>
             <div className={`text-sm font-bold mb-1 ${isDarkMode ? 'text-white' : 'text-slate-800'}`}>Expense Records</div>
             <table className="w-full border-collapse mb-3">
-              <thead><tr><th className={thBase}>#</th><th className={thBase}>Description</th><th className={`${thBase} text-right`}>Amount</th></tr></thead>
               <tbody>
                 {dayExpenses.map((r, i) => (
                   <tr key={r.id || `ex-${i}`}>
@@ -326,7 +321,6 @@ const ReportPreviewTab = ({
           <>
             <div className={`text-sm font-bold mb-1 ${isDarkMode ? 'text-white' : 'text-slate-800'}`}>Receipt Records</div>
             <table className="w-full border-collapse mb-3">
-              <thead><tr><th className={thBase}>#</th><th className={thBase}>Customer</th><th className={thBase}>Payment Type</th><th className={`${thBase} text-right`}>Amount</th></tr></thead>
               <tbody>
                 {dayReceipts.map((p, i) => (
                   <tr key={p.id || `rc-${i}`}>
@@ -343,7 +337,6 @@ const ReportPreviewTab = ({
         {/* Bank Settlement */}
         <div className={`text-sm font-bold mb-1 ${isDarkMode ? 'text-white' : 'text-slate-800'}`}>Bank Settlement Report</div>
         <table className="w-full border-collapse">
-          <thead><tr><th className={thBase}>Payment Mode</th><th className={`${thBase} text-right`}>Amount</th></tr></thead>
           <tbody>
             <tr><td className={tdBase}>Cash</td><td className={tdRight}>{cashT.toFixed(2)}</td></tr>
             <tr><td className={tdBase}>Card</td><td className={tdRight}>{cardT.toFixed(2)}</td></tr>
@@ -1661,7 +1654,7 @@ const ZAPTRStyleCalculator = () => {
           sectionHeading('Settlement Records');
           const settBody = todaySettlements.map((s, i) => [i+1, s.description || 'Settlement', s.amount.toFixed(2)]);
           settBody.push([{content: 'Total', colSpan: 2, styles: {fontStyle: 'bold'}}, todaySettlements.reduce((sum, s) => sum + s.amount, 0).toFixed(2)]);
-          doc.autoTable({ startY: y, ...tbl, head: [['#', 'Description', 'Amount']], body: settBody, columnStyles: { 0: {halign:'center', cellWidth: 8}, 2: {halign:'right'} } });
+          doc.autoTable({ startY: y, ...tbl, body: settBody, columnStyles: { 0: {halign:'center', cellWidth: 8}, 2: {halign:'right'} } });
           y = doc.lastAutoTable.finalY + sp(6);
         }
 
@@ -1670,7 +1663,7 @@ const ZAPTRStyleCalculator = () => {
           sectionHeading('Income Records');
           const incBody = todayIncome.map((inc, i) => [i+1, inc.description, inc.amount.toFixed(2)]);
           incBody.push([{content: 'Total', colSpan: 2, styles: {fontStyle: 'bold'}}, todayIncome.reduce((sum, i) => sum + i.amount, 0).toFixed(2)]);
-          doc.autoTable({ startY: y, ...tbl, head: [['#', 'Description', 'Amount']], body: incBody, columnStyles: { 0: {halign:'center', cellWidth: 8}, 2: {halign:'right'} } });
+          doc.autoTable({ startY: y, ...tbl, body: incBody, columnStyles: { 0: {halign:'center', cellWidth: 8}, 2: {halign:'right'} } });
           y = doc.lastAutoTable.finalY + sp(6);
         }
 
@@ -1679,7 +1672,7 @@ const ZAPTRStyleCalculator = () => {
           sectionHeading('Expense Records');
           const expBody = todayExpenses.map((exp, i) => [i+1, exp.description, exp.amount.toFixed(2)]);
           expBody.push([{content: 'Total', colSpan: 2, styles: {fontStyle: 'bold'}}, todayExpenses.reduce((sum, e) => sum + e.amount, 0).toFixed(2)]);
-          doc.autoTable({ startY: y, ...tbl, head: [['#', 'Description', 'Amount']], body: expBody, columnStyles: { 0: {halign:'center', cellWidth: 8}, 2: {halign:'right'} } });
+          doc.autoTable({ startY: y, ...tbl, body: expBody, columnStyles: { 0: {halign:'center', cellWidth: 8}, 2: {halign:'right'} } });
           y = doc.lastAutoTable.finalY + sp(6);
         }
 
@@ -1688,7 +1681,7 @@ const ZAPTRStyleCalculator = () => {
           sectionHeading('Receipt Records');
           const recBody = todayReceipts.map((p, i) => [i+1, p.customerName || 'Unknown', p.paymentType || p.mode || '-', p.amount.toFixed(2)]);
           recBody.push([{content: 'Total', colSpan: 3, styles: {fontStyle: 'bold'}}, todayReceipts.reduce((sum, p) => sum + p.amount, 0).toFixed(2)]);
-          doc.autoTable({ startY: y, ...tbl, head: [['#', 'Customer', 'Payment Type', 'Amount']], body: recBody, columnStyles: { 0: {halign:'center', cellWidth: 8}, 3: {halign:'right'} } });
+          doc.autoTable({ startY: y, ...tbl, body: recBody, columnStyles: { 0: {halign:'center', cellWidth: 8}, 3: {halign:'right'} } });
           y = doc.lastAutoTable.finalY + sp(6);
         }
 
@@ -1701,7 +1694,7 @@ const ZAPTRStyleCalculator = () => {
         const phonepeT = todaySettlements.filter(s=>s.description&&s.description.toLowerCase().includes('phonepe')).reduce((s,v)=>s+v.amount,0) + todayReceipts.filter(p=>matchR(p,'phonepe')).reduce((s,p)=>s+p.amount,0);
         const dtpT = todaySettlements.filter(s=>s.description&&s.description.toLowerCase().includes('dtp')).reduce((s,v)=>s+v.amount,0) + todayReceipts.filter(p=>matchR(p,'dtp')).reduce((s,p)=>s+p.amount,0);
         const gt = cashT+cardT+paytmT+phonepeT+dtpT;
-        doc.autoTable({ startY: y, ...tbl, head: [['Payment Mode', 'Amount']], body: [['Cash', cashT.toFixed(2)],['Card', cardT.toFixed(2)],['Paytm', paytmT.toFixed(2)],['PhonePe', phonepeT.toFixed(2)],['DTP', dtpT.toFixed(2)],['Total', gt.toFixed(2)]], columnStyles: { 1: {halign:'right'} } });
+        doc.autoTable({ startY: y, ...tbl, body: [['Cash', cashT.toFixed(2)],['Card', cardT.toFixed(2)],['Paytm', paytmT.toFixed(2)],['PhonePe', phonepeT.toFixed(2)],['DTP', dtpT.toFixed(2)],['Total', gt.toFixed(2)]], columnStyles: { 1: {halign:'right'} } });
 
         // Footer on all pages
         const pc = doc.internal.getNumberOfPages();

@@ -94,6 +94,29 @@ public class MainActivity extends AppCompatActivity {
 
         webView.setWebChromeClient(new WebChromeClient() {
             @Override
+            public boolean onJsAlert(WebView view, String url, String message, android.webkit.JsResult result) {
+                // Enable JS alert() in WebView (disabled by default)
+                new androidx.appcompat.app.AlertDialog.Builder(MainActivity.this)
+                    .setMessage(message)
+                    .setPositiveButton(android.R.string.ok, (d, w) -> result.confirm())
+                    .setCancelable(false)
+                    .show();
+                return true;
+            }
+
+            @Override
+            public boolean onJsConfirm(WebView view, String url, String message, android.webkit.JsResult result) {
+                // Enable JS confirm() in WebView (disabled by default in Android)
+                new androidx.appcompat.app.AlertDialog.Builder(MainActivity.this)
+                    .setMessage(message)
+                    .setPositiveButton(android.R.string.ok, (d, w) -> result.confirm())
+                    .setNegativeButton(android.R.string.cancel, (d, w) -> result.cancel())
+                    .setOnCancelListener(d -> result.cancel())
+                    .show();
+                return true;
+            }
+
+            @Override
             public boolean onShowFileChooser(WebView webView, ValueCallback<Uri[]> filePathCallback, FileChooserParams fileChooserParams) {
                 if (fileUploadCallback != null) {
                     fileUploadCallback.onReceiveValue(null);

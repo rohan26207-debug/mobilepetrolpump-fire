@@ -957,32 +957,18 @@ const HeaderSettings = ({ isDarkMode, fuelSettings, setFuelSettings, customers, 
                           
                           <Button
                             variant="outline"
+                            data-testid="delete-saved-url-btn"
                             className="w-full mt-3 bg-red-600 hover:bg-red-700 text-white border-red-600"
                             onClick={() => {
-                              // Check if Pro Mode is enabled
-                              if (localStorageService.isProModeEnabled()) {
-                                // Skip confirmation dialog, delete directly
-                                localStorage.removeItem('mpump_online_url');
-                                setSavedOnlineUrl('');
-                                setOnlineUrl('');
-                                
-                                toast({
-                                  title: "URL Deleted",
-                                  description: "Saved URL has been removed successfully"
-                                });
-                              } else {
-                                // Show confirmation dialog
-                                if (window.confirm('Are you sure you want to delete the saved URL?')) {
-                                  localStorage.removeItem('mpump_online_url');
-                                  setSavedOnlineUrl('');
-                                  setOnlineUrl('');
-                                  
-                                  toast({
-                                    title: "URL Deleted",
-                                    description: "Saved URL has been removed successfully"
-                                  });
-                                }
-                              }
+                              // Delete directly — window.confirm is blocked in Android WebView
+                              // so using it would cause this button to silently do nothing.
+                              localStorage.removeItem('mpump_online_url');
+                              setSavedOnlineUrl('');
+                              setOnlineUrl('');
+                              toast({
+                                title: "URL Deleted",
+                                description: "Saved URL has been removed successfully"
+                              });
                             }}
                           >
                             <Trash2 className="w-4 h-4 mr-2" />

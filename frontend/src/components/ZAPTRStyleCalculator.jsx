@@ -55,6 +55,23 @@ import MPPStock from './MPPStock';
 import DSRReport from './DSRReport';
 import localStorageService from '../services/localStorage';
 
+// Helpers used by the live Reports preview AND the generated PDFs / HTML print
+// so the Credit table's "Income/Expense" column shows a consistent value.
+// Returns a signed total (income − expense) of all attached entries.
+const creditNetIncomeExpense = (credit) => {
+  const inc = (credit?.incomeEntries || []).reduce((s, e) => s + (parseFloat(e.amount) || 0), 0);
+  const exp = (credit?.expenseEntries || []).reduce((s, e) => s + (parseFloat(e.amount) || 0), 0);
+  return inc - exp;
+};
+
+// Pretty format for the column: "+300.00" / "-100.00" / "0.00".
+const formatCreditIE = (credit) => {
+  const net = creditNetIncomeExpense(credit);
+  if (net === 0) return '0.00';
+  const sign = net > 0 ? '+' : '-';
+  return `${sign}${Math.abs(net).toFixed(2)}`;
+};
+
 // Inline Reports tab — date picker with Share/PDF/Copy + live HTML preview of the PDF
 const ReportPreviewTab = ({
   isDarkMode, selectedDate, setSelectedDate, formatDisplayDate,
@@ -250,7 +267,9 @@ const ReportPreviewTab = ({
           <table className="w-full border-collapse mb-3">
             <thead><tr>
               <th className={thBase}>#</th><th className={thBase}>Credit</th>
-              <th className={`${thBase} text-right`}>Rate</th><th className={`${thBase} text-right`}>Litres</th><th className={`${thBase} text-right`}>Amount</th>
+              <th className={`${thBase} text-right`}>Rate</th><th className={`${thBase} text-right`}>Litres</th>
+              <th className={`${thBase} text-right`}>Inc/Exp</th>
+              <th className={`${thBase} text-right`}>Amount</th>
             </tr></thead>
             <tbody>
               {dayCredits.map((c, i) => (
@@ -259,10 +278,22 @@ const ReportPreviewTab = ({
                   <td className={tdBase}>{c.customerName}</td>
                   <td className={tdRight}>{c.rate || '-'}</td>
                   <td className={tdRight}>{c.liters ? c.liters.toFixed(2) : '-'}</td>
+                  <td className={tdRight}>{formatCreditIE(c)}</td>
                   <td className={tdRight}>{c.amount.toFixed(2)}</td>
                 </tr>
               ))}
-              <tr><td colSpan={3} className={`${tdBase} font-bold`}>Total</td><td className={`${tdRight} font-bold`}>{stats.creditLiters.toFixed(2)}</td><td className={`${tdRight} font-bold`}>{stats.creditAmount.toFixed(2)}</td></tr>
+              <tr>
+                <td colSpan={3} className={`${tdBase} font-bold`}>Total</td>
+                <td className={`${tdRight} font-bold`}>{stats.creditLiters.toFixed(2)}</td>
+                <td className={`${tdRight} font-bold`}>
+                  {(() => {
+                    const net = dayCredits.reduce((a, c) => a + creditNetIncomeExpense(c), 0);
+                    if (net === 0) return '0.00';
+                    return `${net > 0 ? '+' : '-'}${Math.abs(net).toFixed(2)}`;
+                  })()}
+                </td>
+                <td className={`${tdRight} font-bold`}>{stats.creditAmount.toFixed(2)}</td>
+              </tr>
             </tbody>
           </table>
         )}
@@ -1607,9 +1638,35 @@ const ZAPTRStyleCalculator = () => {
         // Credit Records (heading removed for space; 'Customer' column relabelled to 'Credit')
         if (todayCredits.length > 0) {
           sectionGap();
-          const creditBody = todayCredits.map((c, i) => [i+1, c.customerName, c.rate || '-', c.liters ? c.liters.toFixed(2) : '-', c.amount.toFixed(2)]);
-          creditBody.push([{content: 'Total', colSpan: 3, styles: {fontStyle: 'bold'}}, stats.creditLiters.toFixed(2), stats.creditAmount.toFixed(2)]);
-          doc.autoTable({ startY: y, ...tbl, head: [['#', 'Credit', 'Rate', 'Litres', 'Amount']], body: stripe(creditBody), columnStyles: { 0: {halign:'center', cellWidth: 12, overflow: 'visible'}, 2: {halign:'right'}, 3: {halign:'right'}, 4: {halign:'right'} } });
+          const creditBody = todayCredits.map((c, i) => [
+            i + 1,
+            c.customerName,
+            c.rate || '-',
+            c.liters ? c.liters.toFixed(2) : '-',
+            formatCreditIE(c),
+            c.amount.toFixed(2),
+          ]);
+          const totalIE = todayCredits.reduce((a, c) => a + creditNetIncomeExpense(c), 0);
+          const totalIEStr = totalIE === 0 ? '0.00' : `${totalIE > 0 ? '+' : '-'}${Math.abs(totalIE).toFixed(2)}`;
+          creditBody.push([
+            { content: 'Total', colSpan: 3, styles: { fontStyle: 'bold' } },
+            stats.creditLiters.toFixed(2),
+            totalIEStr,
+            stats.creditAmount.toFixed(2),
+          ]);
+          doc.autoTable({
+            startY: y,
+            ...tbl,
+            head: [['#', 'Credit', 'Rate', 'Litres', 'Inc/Exp', 'Amount']],
+            body: stripe(creditBody),
+            columnStyles: {
+              0: { halign: 'center', cellWidth: 12, overflow: 'visible' },
+              2: { halign: 'right' },
+              3: { halign: 'right' },
+              4: { halign: 'right' },
+              5: { halign: 'right' },
+            },
+          });
           y = doc.lastAutoTable.finalY + sp(1.5);
         }
 
@@ -1887,11 +1944,15 @@ ${todaySales.map((sale, index) =>
 ${todayCredits.length > 0 ? `
 <div class="s">CREDIT RECORDS</div>
 <table>
-<tr><th width="8%">Sr.No<th width="40%">Customer<th width="15%">Rate<th width="15%">Litres<th width="22%">Amount</tr>
+<tr><th width="6%">Sr.No<th width="34%">Customer<th width="13%">Rate<th width="13%">Litres<th width="14%">Inc/Exp<th width="20%">Amount</tr>
 ${todayCredits.map((credit, index) => 
-  `<tr><td class="c">${index + 1}<td>${credit.customerName}<td class="r">${credit.rate}<td class="r">${credit.liters}<td class="r">${credit.amount.toFixed(2)}</tr>`
+  `<tr><td class="c">${index + 1}<td>${credit.customerName}<td class="r">${credit.rate}<td class="r">${credit.liters}<td class="r">${formatCreditIE(credit)}<td class="r">${credit.amount.toFixed(2)}</tr>`
 ).join('')}
-<tr class="t"><td colspan="3" class="r">Total:<td class="r">${todayCredits.reduce((sum, credit) => sum + parseFloat(credit.liters), 0).toFixed(2)}<td class="r">${todayCredits.reduce((sum, credit) => sum + parseFloat(credit.amount), 0).toFixed(2)}</tr>
+${(() => {
+  const net = todayCredits.reduce((a, c) => a + creditNetIncomeExpense(c), 0);
+  const netStr = net === 0 ? '0.00' : `${net > 0 ? '+' : '-'}${Math.abs(net).toFixed(2)}`;
+  return `<tr class="t"><td colspan="3" class="r">Total:<td class="r">${todayCredits.reduce((sum, credit) => sum + parseFloat(credit.liters), 0).toFixed(2)}<td class="r">${netStr}<td class="r">${todayCredits.reduce((sum, credit) => sum + parseFloat(credit.amount), 0).toFixed(2)}</tr>`;
+})()}
 </table>` : ''}
 
 ${settlementData.filter(s => s.date === selectedDate).length > 0 ? `
@@ -2218,12 +2279,13 @@ window.onload = function() {
           credit.vehicleNumber || 'N/A',
           credit.rate,
           credit.liters,
+          formatCreditIE(credit),
           credit.amount.toFixed(2)
         ]);
 
         doc.autoTable({
           startY: yPos,
-          head: [['#', 'Customer', 'Vehicle', 'Rate', 'Litres', 'Amount']],
+          head: [['#', 'Customer', 'Vehicle', 'Rate', 'Litres', 'Inc/Exp', 'Amount']],
           body: creditTableData,
           theme: 'grid',
           headStyles: { fillColor: false, textColor: [0, 0, 0] },

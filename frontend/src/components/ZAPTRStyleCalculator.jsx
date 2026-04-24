@@ -52,6 +52,312 @@ import BankSettlement from './BankSettlement';
 import MPPStock from './MPPStock';
 import localStorageService from '../services/localStorage';
 
+// Inline Reports tab — date picker with Share/PDF/Copy + live HTML preview of the PDF
+const ReportPreviewTab = ({
+  isDarkMode, selectedDate, setSelectedDate, formatDisplayDate,
+  goToPreviousDay, goToNextDay, generateDirectPDF, copyToClipboard,
+  stats, salesData, creditData, settlementData, incomeData, expenseData, payments, fuelSettings
+}) => {
+  const daySales = salesData.filter(s => s.date === selectedDate);
+  const dayCredits = creditData.filter(c => c.date === selectedDate);
+  const daySettlements = settlementData.filter(s => s.date === selectedDate);
+  const dayIncome = incomeData.filter(i => i.date === selectedDate);
+  const dayExpenses = expenseData.filter(e => e.date === selectedDate);
+  const dayReceipts = payments.filter(p => p.date === selectedDate);
+
+  const matchR = (p, kw) => {
+    const st = (p.settlementType || '').toLowerCase();
+    const m = (p.mode || '').toLowerCase();
+    const pt = (p.paymentType || '').toLowerCase();
+    return st.includes(kw) || m.includes(kw) || pt === kw;
+  };
+  const sumSett = (kw) => daySettlements
+    .filter(s => s.description && s.description.toLowerCase().includes(kw))
+    .reduce((s, v) => s + v.amount, 0);
+  const sumRec = (kw) => dayReceipts.filter(p => matchR(p, kw)).reduce((s, p) => s + p.amount, 0);
+  const cashT = sumSett('cash') + sumRec('cash');
+  const cardT = sumSett('card') + sumRec('card');
+  const paytmT = sumSett('paytm') + sumRec('paytm');
+  const phonepeT = sumSett('phonepe') + sumRec('phonepe');
+  const dtpT = sumSett('dtp') + sumRec('dtp');
+  const bankTotal = cashT + cardT + paytmT + phonepeT + dtpT;
+
+  const cellBase = 'px-2 py-1 border text-xs';
+  const thBase = `${cellBase} font-bold ${isDarkMode ? 'border-gray-600 bg-gray-800 text-white' : 'border-slate-300 bg-slate-100 text-slate-800'}`;
+  const tdBase = `${cellBase} ${isDarkMode ? 'border-gray-600 text-gray-200' : 'border-slate-300 text-slate-800'}`;
+  const tdRight = `${tdBase} text-right`;
+  const tdCenter = `${tdBase} text-center`;
+
+  const cardCls = `rounded-lg border p-3 mb-3 ${isDarkMode ? 'bg-gray-800 border-gray-600' : 'bg-white border-slate-200'}`;
+
+  return (
+    <div data-testid="reports-view">
+      {/* Operating Date header (identical layout to main summary) */}
+      <div className={cardCls}>
+        <div className="flex items-center justify-between gap-2">
+          <div className="flex items-center gap-2 min-w-0 flex-1">
+            <Calendar className={`w-5 h-5 sm:w-6 sm:h-6 ${isDarkMode ? 'text-blue-400' : 'text-blue-600'}`} />
+            <div className="flex-1 min-w-0">
+              <Label className={`text-xs sm:text-sm font-medium ${isDarkMode ? 'text-gray-300' : 'text-slate-600'}`}>
+                Operating Date
+              </Label>
+              <div className={`text-sm sm:text-xl font-bold truncate ${isDarkMode ? 'text-white' : 'text-slate-800'}`}>
+                {formatDisplayDate(selectedDate)}
+              </div>
+            </div>
+          </div>
+          <div className="flex items-center gap-1 flex-shrink-0">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => generateDirectPDF('share')}
+              data-testid="reports-share-btn"
+              className={`text-xs h-7 w-7 p-0 ${isDarkMode ? 'border-gray-600 text-gray-300 hover:bg-gray-700' : 'border-slate-300 text-slate-700 hover:bg-slate-50'}`}
+              title="Share PDF"
+              aria-label="Share PDF"
+            >
+              <Share2 className="w-3.5 h-3.5" />
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => generateDirectPDF('open')}
+              data-testid="reports-pdf-btn"
+              className={`text-xs h-7 px-2 ${isDarkMode ? 'border-gray-600 text-gray-300 hover:bg-gray-700' : 'border-slate-300 text-slate-700 hover:bg-slate-50'}`}
+            >
+              PDF
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={copyToClipboard}
+              data-testid="reports-copy-btn"
+              className={`text-xs h-7 px-2 ${isDarkMode ? 'border-gray-600 text-gray-300 hover:bg-gray-700' : 'border-slate-300 text-slate-700 hover:bg-slate-50'}`}
+            >
+              Copy
+            </Button>
+          </div>
+        </div>
+
+        <div className="flex items-center gap-1 sm:gap-2 w-full mt-3">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={goToPreviousDay}
+            className={`h-8 w-8 sm:h-10 sm:w-10 p-0 flex-shrink-0 ${isDarkMode ? 'border-gray-600 hover:bg-gray-700' : ''}`}
+            aria-label="Previous day"
+          >
+            <ChevronLeft className="w-4 h-4" />
+          </Button>
+          <Input
+            type="date"
+            value={selectedDate}
+            onChange={(e) => setSelectedDate(e.target.value)}
+            data-testid="reports-date-input"
+            className={`flex-1 ${isDarkMode ? 'bg-gray-700 border-gray-600 text-white' : ''}`}
+          />
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={goToNextDay}
+            className={`h-8 w-8 sm:h-10 sm:w-10 p-0 flex-shrink-0 ${isDarkMode ? 'border-gray-600 hover:bg-gray-700' : ''}`}
+            aria-label="Next day"
+          >
+            <ChevronRight className="w-4 h-4" />
+          </Button>
+        </div>
+      </div>
+
+      {/* Report preview (mirrors PDF layout) */}
+      <div className={cardCls}>
+        <div className={`flex items-center justify-between px-3 py-2 mb-3 rounded ${isDarkMode ? 'bg-gray-900' : 'bg-slate-700'} text-white`}>
+          <div className="font-bold text-sm">Manager Pump</div>
+          <div className="text-xs">Date: {selectedDate}</div>
+        </div>
+
+        {fuelSettings && (
+          <div className={`text-xs mb-2 ${isDarkMode ? 'text-gray-300' : 'text-slate-700'}`}>
+            <span className="font-semibold">STOCK: </span>
+            {Object.keys(fuelSettings).map(ft => {
+              const sd = localStorageService.getItem(ft.toLowerCase() + 'StockData');
+              const ss = (sd && sd[selectedDate]) ? (sd[selectedDate].startStock || 0) : 0;
+              return `${ft}-${ss.toFixed(0)} L`;
+            }).join(', ')}
+          </div>
+        )}
+        {fuelSettings && (
+          <div className={`text-xs mb-3 ${isDarkMode ? 'text-gray-300' : 'text-slate-700'}`}>
+            <span className="font-semibold">FUEL SALES: </span>
+            {Object.keys(fuelSettings).map(ft => {
+              const fd = stats.fuelSalesByType[ft] || { liters: 0 };
+              return `${ft}-${fd.liters.toFixed(0)} L`;
+            }).join(', ')}
+          </div>
+        )}
+
+        {/* Summary table */}
+        <table className="w-full border-collapse mb-3">
+          <thead>
+            <tr>
+              <th className={thBase}>Category</th>
+              <th className={`${thBase} text-right`}>Litres</th>
+              <th className={`${thBase} text-right`}>Amount</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr><td className={tdBase}>Fuel Sales</td><td className={tdRight}>{stats.totalLiters.toFixed(2)}</td><td className={tdRight}>{stats.totalFuelAmount.toFixed(2)}</td></tr>
+            <tr><td className={tdBase}>Credit Sales</td><td className={tdRight}>{stats.creditLiters.toFixed(2)}</td><td className={tdRight}>{stats.creditAmount.toFixed(2)}</td></tr>
+            <tr><td className={tdBase}>Settlement</td><td className={tdRight}>-</td><td className={tdRight}>{stats.totalSettlement.toFixed(2)}</td></tr>
+            <tr><td className={tdBase}>Income</td><td className={tdRight}>-</td><td className={tdRight}>{stats.otherIncome.toFixed(2)}</td></tr>
+            <tr><td className={tdBase}>Expenses</td><td className={tdRight}>-</td><td className={tdRight}>{stats.totalExpenses.toFixed(2)}</td></tr>
+            <tr><td className={tdBase}>Cash in Hand</td><td className={tdRight}>-</td><td className={tdRight}>{stats.cashInHand.toFixed(2)}</td></tr>
+          </tbody>
+        </table>
+
+        {/* Sales Records */}
+        {daySales.length > 0 && (
+          <table className="w-full border-collapse mb-3">
+            <thead><tr>
+              <th className={thBase}>#</th><th className={thBase}>Description</th>
+              <th className={`${thBase} text-right`}>Start</th><th className={`${thBase} text-right`}>End</th>
+              <th className={`${thBase} text-right`}>Test</th><th className={`${thBase} text-right`}>Rate</th>
+              <th className={`${thBase} text-right`}>Litres</th><th className={`${thBase} text-right`}>Amount</th>
+            </tr></thead>
+            <tbody>
+              {daySales.map((s, i) => (
+                <tr key={s.id || `s-${i}`}>
+                  <td className={tdCenter}>{i + 1}</td>
+                  <td className={tdBase}>{s.nozzle} - {s.fuelType}</td>
+                  <td className={tdRight}>{s.startReading}</td>
+                  <td className={tdRight}>{s.endReading}</td>
+                  <td className={tdRight}>{s.testing || 0}</td>
+                  <td className={tdRight}>{s.rate}</td>
+                  <td className={tdRight}>{s.liters.toFixed(2)}</td>
+                  <td className={tdRight}>{s.amount.toFixed(2)}</td>
+                </tr>
+              ))}
+              <tr><td colSpan={6} className={`${tdBase} font-bold`}>Total</td><td className={`${tdRight} font-bold`}>{stats.totalLiters.toFixed(2)}</td><td className={`${tdRight} font-bold`}>{stats.totalFuelAmount.toFixed(2)}</td></tr>
+            </tbody>
+          </table>
+        )}
+
+        {/* Credit Records */}
+        {dayCredits.length > 0 && (
+          <table className="w-full border-collapse mb-3">
+            <thead><tr>
+              <th className={thBase}>#</th><th className={thBase}>Credit</th>
+              <th className={`${thBase} text-right`}>Rate</th><th className={`${thBase} text-right`}>Litres</th><th className={`${thBase} text-right`}>Amount</th>
+            </tr></thead>
+            <tbody>
+              {dayCredits.map((c, i) => (
+                <tr key={c.id || `c-${i}`}>
+                  <td className={tdCenter}>{i + 1}</td>
+                  <td className={tdBase}>{c.customerName}</td>
+                  <td className={tdRight}>{c.rate || '-'}</td>
+                  <td className={tdRight}>{c.liters ? c.liters.toFixed(2) : '-'}</td>
+                  <td className={tdRight}>{c.amount.toFixed(2)}</td>
+                </tr>
+              ))}
+              <tr><td colSpan={3} className={`${tdBase} font-bold`}>Total</td><td className={`${tdRight} font-bold`}>{stats.creditLiters.toFixed(2)}</td><td className={`${tdRight} font-bold`}>{stats.creditAmount.toFixed(2)}</td></tr>
+            </tbody>
+          </table>
+        )}
+
+        {/* Settlement Records */}
+        {daySettlements.length > 0 && (
+          <>
+            <div className={`text-sm font-bold mb-1 ${isDarkMode ? 'text-white' : 'text-slate-800'}`}>Settlement Records</div>
+            <table className="w-full border-collapse mb-3">
+              <thead><tr>
+                <th className={thBase}>#</th><th className={thBase}>Description</th><th className={`${thBase} text-right`}>Amount</th>
+              </tr></thead>
+              <tbody>
+                {daySettlements.map((s, i) => (
+                  <tr key={s.id || `st-${i}`}>
+                    <td className={tdCenter}>{i + 1}</td>
+                    <td className={tdBase}>{s.description || 'Settlement'}</td>
+                    <td className={tdRight}>{s.amount.toFixed(2)}</td>
+                  </tr>
+                ))}
+                <tr><td colSpan={2} className={`${tdBase} font-bold`}>Total</td><td className={`${tdRight} font-bold`}>{daySettlements.reduce((a, s) => a + s.amount, 0).toFixed(2)}</td></tr>
+              </tbody>
+            </table>
+          </>
+        )}
+
+        {/* Income Records */}
+        {dayIncome.length > 0 && (
+          <>
+            <div className={`text-sm font-bold mb-1 ${isDarkMode ? 'text-white' : 'text-slate-800'}`}>Income Records</div>
+            <table className="w-full border-collapse mb-3">
+              <thead><tr><th className={thBase}>#</th><th className={thBase}>Description</th><th className={`${thBase} text-right`}>Amount</th></tr></thead>
+              <tbody>
+                {dayIncome.map((r, i) => (
+                  <tr key={r.id || `in-${i}`}>
+                    <td className={tdCenter}>{i + 1}</td><td className={tdBase}>{r.description}</td><td className={tdRight}>{r.amount.toFixed(2)}</td>
+                  </tr>
+                ))}
+                <tr><td colSpan={2} className={`${tdBase} font-bold`}>Total</td><td className={`${tdRight} font-bold`}>{dayIncome.reduce((a, v) => a + v.amount, 0).toFixed(2)}</td></tr>
+              </tbody>
+            </table>
+          </>
+        )}
+
+        {/* Expense Records */}
+        {dayExpenses.length > 0 && (
+          <>
+            <div className={`text-sm font-bold mb-1 ${isDarkMode ? 'text-white' : 'text-slate-800'}`}>Expense Records</div>
+            <table className="w-full border-collapse mb-3">
+              <thead><tr><th className={thBase}>#</th><th className={thBase}>Description</th><th className={`${thBase} text-right`}>Amount</th></tr></thead>
+              <tbody>
+                {dayExpenses.map((r, i) => (
+                  <tr key={r.id || `ex-${i}`}>
+                    <td className={tdCenter}>{i + 1}</td><td className={tdBase}>{r.description}</td><td className={tdRight}>{r.amount.toFixed(2)}</td>
+                  </tr>
+                ))}
+                <tr><td colSpan={2} className={`${tdBase} font-bold`}>Total</td><td className={`${tdRight} font-bold`}>{dayExpenses.reduce((a, v) => a + v.amount, 0).toFixed(2)}</td></tr>
+              </tbody>
+            </table>
+          </>
+        )}
+
+        {/* Receipt Records */}
+        {dayReceipts.length > 0 && (
+          <>
+            <div className={`text-sm font-bold mb-1 ${isDarkMode ? 'text-white' : 'text-slate-800'}`}>Receipt Records</div>
+            <table className="w-full border-collapse mb-3">
+              <thead><tr><th className={thBase}>#</th><th className={thBase}>Customer</th><th className={thBase}>Payment Type</th><th className={`${thBase} text-right`}>Amount</th></tr></thead>
+              <tbody>
+                {dayReceipts.map((p, i) => (
+                  <tr key={p.id || `rc-${i}`}>
+                    <td className={tdCenter}>{i + 1}</td><td className={tdBase}>{p.customerName || 'Unknown'}</td>
+                    <td className={tdBase}>{p.paymentType || p.mode || '-'}</td><td className={tdRight}>{p.amount.toFixed(2)}</td>
+                  </tr>
+                ))}
+                <tr><td colSpan={3} className={`${tdBase} font-bold`}>Total</td><td className={`${tdRight} font-bold`}>{dayReceipts.reduce((a, v) => a + v.amount, 0).toFixed(2)}</td></tr>
+              </tbody>
+            </table>
+          </>
+        )}
+
+        {/* Bank Settlement */}
+        <div className={`text-sm font-bold mb-1 ${isDarkMode ? 'text-white' : 'text-slate-800'}`}>Bank Settlement Report</div>
+        <table className="w-full border-collapse">
+          <thead><tr><th className={thBase}>Payment Mode</th><th className={`${thBase} text-right`}>Amount</th></tr></thead>
+          <tbody>
+            <tr><td className={tdBase}>Cash</td><td className={tdRight}>{cashT.toFixed(2)}</td></tr>
+            <tr><td className={tdBase}>Card</td><td className={tdRight}>{cardT.toFixed(2)}</td></tr>
+            <tr><td className={tdBase}>Paytm</td><td className={tdRight}>{paytmT.toFixed(2)}</td></tr>
+            <tr><td className={tdBase}>PhonePe</td><td className={tdRight}>{phonepeT.toFixed(2)}</td></tr>
+            <tr><td className={tdBase}>DTP</td><td className={tdRight}>{dtpT.toFixed(2)}</td></tr>
+            <tr><td className={`${tdBase} font-bold`}>Total</td><td className={`${tdRight} font-bold`}>{bankTotal.toFixed(2)}</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
+};
+
 const ZAPTRStyleCalculator = () => {
   const [isDarkMode, setIsDarkMode] = useState(false);
   const [textSize, setTextSize] = useState(100); // Default 100% (normal size)
@@ -3176,6 +3482,29 @@ window.onload = function() {
             <div className="block">
               {showBalanceBlocks ? (
                 <div key="balance-blocks" className="grid grid-cols-2 gap-3 mb-4">
+                  {/* Reports Block */}
+                  <div 
+                    onClick={() => handleBalanceBlockClick('reports')}
+                    data-testid="balance-block-reports"
+                    className={`p-4 rounded-lg border-2 cursor-pointer transition-all duration-200 transform ${
+                      isDarkMode
+                        ? 'bg-gray-800 border-gray-600 hover:bg-gray-700 hover:border-gray-500 hover:scale-105'
+                        : 'bg-white border-slate-300 hover:bg-slate-50 hover:border-slate-400 hover:scale-105'
+                    }`}
+                    style={{ willChange: 'transform' }}
+                  >
+                    <div className="flex flex-col items-center text-center space-y-2">
+                      <FileText className={`w-8 h-8 ${
+                        isDarkMode ? 'text-gray-400' : 'text-slate-600'
+                      }`} />
+                      <span className={`text-sm font-medium ${
+                        isDarkMode ? 'text-gray-300' : 'text-slate-700'
+                      }`}>
+                        Reports
+                      </span>
+                    </div>
+                  </div>
+
                   {/* Bank Settlement Block */}
                   <div 
                     onClick={() => handleBalanceBlockClick('bank-settlement')}
@@ -3321,23 +3650,27 @@ window.onload = function() {
                 <TabsList className={`flex w-full mb-4 ${
                   isDarkMode ? 'bg-gray-800' : 'bg-slate-100'
                 }`}>
-                  <TabsTrigger value="bank-settlement" className="flex items-center justify-center gap-1 text-xs w-[20%]">
+                  <TabsTrigger value="reports" className="flex items-center justify-center gap-1 text-xs w-[16.66%]" data-testid="tab-reports">
+                    <FileText className="w-3 h-3" />
+                    <span className="hidden lg:inline">Reports</span>
+                  </TabsTrigger>
+                  <TabsTrigger value="bank-settlement" className="flex items-center justify-center gap-1 text-xs w-[16.66%]">
                     <Wallet className="w-3 h-3" />
                     <span className="hidden lg:inline">Bank</span>
                   </TabsTrigger>
-                  <TabsTrigger value="outstanding-settings" className="flex items-center justify-center gap-1 text-xs w-[20%]">
+                  <TabsTrigger value="outstanding-settings" className="flex items-center justify-center gap-1 text-xs w-[16.66%]">
                     <FileText className="w-3 h-3" />
                     <span className="hidden lg:inline">Outstanding</span>
                   </TabsTrigger>
-                  <TabsTrigger value="report" className="flex items-center justify-center gap-1 text-xs w-[20%]">
+                  <TabsTrigger value="report" className="flex items-center justify-center gap-1 text-xs w-[16.66%]">
                     <Users className="w-3 h-3" />
                     <span className="hidden lg:inline">Ledger</span>
                   </TabsTrigger>
-                  <TabsTrigger value="credit-manage" className="flex items-center justify-center gap-1 text-xs w-[20%]">
+                  <TabsTrigger value="credit-manage" className="flex items-center justify-center gap-1 text-xs w-[16.66%]">
                     <CreditCard className="w-3 h-3" />
                     <span className="hidden lg:inline">Credit</span>
                   </TabsTrigger>
-                  <TabsTrigger value="receipt-manage" className="flex items-center justify-center gap-1 text-xs w-[20%]">
+                  <TabsTrigger value="receipt-manage" className="flex items-center justify-center gap-1 text-xs w-[16.66%]">
                     <Receipt className="w-3 h-3" />
                     <span className="hidden lg:inline">Receipt</span>
                   </TabsTrigger>
@@ -3350,6 +3683,27 @@ window.onload = function() {
               {/* Show content when blocks are hidden */}
               {!showBalanceBlocks && (
                 <>
+                  {outstandingSubTab === 'reports' && (
+                    <ReportPreviewTab
+                      isDarkMode={isDarkMode}
+                      selectedDate={selectedDate}
+                      setSelectedDate={setSelectedDate}
+                      formatDisplayDate={formatDisplayDate}
+                      goToPreviousDay={goToPreviousDay}
+                      goToNextDay={goToNextDay}
+                      generateDirectPDF={generateDirectPDF}
+                      copyToClipboard={copyToClipboard}
+                      stats={stats}
+                      salesData={salesData}
+                      creditData={creditData}
+                      settlementData={settlementData}
+                      incomeData={incomeData}
+                      expenseData={expenseData}
+                      payments={payments}
+                      fuelSettings={fuelSettings}
+                    />
+                  )}
+
                   {outstandingSubTab === 'bank-settlement' && (
                     <BankSettlement
                       isDarkMode={isDarkMode}

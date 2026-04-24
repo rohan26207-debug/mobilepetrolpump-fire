@@ -690,82 +690,91 @@ window.onload = function() {
                   <div className="overflow-x-auto">
                     <table className="w-full border-collapse">
                       <thead>
-                        <tr className={`border-b-2 ${isDarkMode ? 'border-gray-600' : 'border-slate-300'}`}>
-                          <th className={`text-left p-3 ${isDarkMode ? 'text-gray-300' : 'text-slate-700'}`}>
-                            Date
+                        <tr>
+                          <th className={`px-2 py-1 border text-xs font-bold text-left ${
+                            isDarkMode ? 'border-gray-600 bg-gray-900 text-white' : 'border-slate-400 bg-slate-200 text-slate-900'
+                          }`} colSpan={5}>
+                            Customer Ledger
                           </th>
-                          <th className={`text-left p-3 ${isDarkMode ? 'text-gray-300' : 'text-slate-700'}`}>
-                            Description
-                          </th>
-                          <th className={`text-right p-3 ${isDarkMode ? 'text-gray-300' : 'text-slate-700'}`}>
-                            Credit
-                          </th>
-                          <th className={`text-right p-3 ${isDarkMode ? 'text-gray-300' : 'text-slate-700'}`}>
-                            Received
-                          </th>
-                          <th className={`text-right p-3 ${isDarkMode ? 'text-gray-300' : 'text-slate-700'}`}>
-                            Outstanding
-                          </th>
+                        </tr>
+                        <tr>
+                          <th className={`px-2 py-1 border text-xs font-bold text-left ${
+                            isDarkMode ? 'border-gray-600 bg-gray-800 text-white' : 'border-slate-400 bg-slate-100 text-slate-800'
+                          }`}>Date</th>
+                          <th className={`px-2 py-1 border text-xs font-bold text-left ${
+                            isDarkMode ? 'border-gray-600 bg-gray-800 text-white' : 'border-slate-400 bg-slate-100 text-slate-800'
+                          }`}>Description</th>
+                          <th className={`px-2 py-1 border text-xs font-bold text-right ${
+                            isDarkMode ? 'border-gray-600 bg-gray-800 text-white' : 'border-slate-400 bg-slate-100 text-slate-800'
+                          }`}>Credit (₹)</th>
+                          <th className={`px-2 py-1 border text-xs font-bold text-right ${
+                            isDarkMode ? 'border-gray-600 bg-gray-800 text-white' : 'border-slate-400 bg-slate-100 text-slate-800'
+                          }`}>Received (₹)</th>
+                          <th className={`px-2 py-1 border text-xs font-bold text-right ${
+                            isDarkMode ? 'border-gray-600 bg-gray-800 text-white' : 'border-slate-400 bg-slate-100 text-slate-800'
+                          }`}>Outstanding (₹)</th>
                         </tr>
                       </thead>
                       <tbody>
                         {ledgerData.map((row, index) => (
                           <tr
                             key={row.id || `ledger-${index}`}
-                            className={`border-b ${isDarkMode ? 'border-gray-700' : 'border-slate-200'}`}
+                            className={index % 2 === 1
+                              ? (isDarkMode ? 'bg-gray-800' : 'bg-slate-50')
+                              : (isDarkMode ? 'bg-gray-700' : 'bg-white')}
                           >
-                            <td className={`p-3 ${isDarkMode ? 'text-white' : 'text-slate-800'}`}>
+                            <td className={`px-2 py-1 border text-xs ${
+                              isDarkMode ? 'border-gray-600 text-gray-200' : 'border-slate-400 text-slate-800'
+                            }`}>
                               {new Date(row.date).toLocaleDateString('en-IN', { 
                                 day: '2-digit', 
                                 month: 'short', 
                                 year: 'numeric' 
                               })}
                             </td>
-                            <td className={`p-3 ${isDarkMode ? 'text-gray-300' : 'text-slate-600'}`}>
+                            <td className={`px-2 py-1 border text-xs ${
+                              isDarkMode ? 'border-gray-600 text-gray-200' : 'border-slate-400 text-slate-800'
+                            }`}>
                               {row.description}
                             </td>
-                            <td className={`p-3 text-right ${
-                              row.credit > 0 
-                                ? isDarkMode ? 'text-orange-400' : 'text-orange-600' 
-                                : isDarkMode ? 'text-gray-500' : 'text-slate-400'
+                            <td className={`px-2 py-1 border text-xs text-right font-mono ${
+                              isDarkMode ? 'border-gray-600 text-gray-200' : 'border-slate-400 text-slate-800'
                             }`}>
-                              {row.credit > 0 ? `₹${row.credit.toFixed(2)}` : '-'}
+                              {row.credit > 0 ? row.credit.toFixed(2) : '-'}
                             </td>
-                            <td className={`p-3 text-right ${
-                              row.received > 0 
-                                ? isDarkMode ? 'text-green-400' : 'text-green-600' 
-                                : isDarkMode ? 'text-gray-500' : 'text-slate-400'
+                            <td className={`px-2 py-1 border text-xs text-right font-mono ${
+                              isDarkMode ? 'border-gray-600 text-gray-200' : 'border-slate-400 text-slate-800'
                             }`}>
-                              {row.received > 0 ? `₹${row.received.toFixed(2)}` : '-'}
+                              {row.received > 0 ? row.received.toFixed(2) : '-'}
                             </td>
-                            <td className={`p-3 text-right font-bold ${
-                              row.outstanding > 0
-                                ? isDarkMode ? 'text-orange-400' : 'text-orange-600'
-                                : isDarkMode ? 'text-green-400' : 'text-green-600'
+                            <td className={`px-2 py-1 border text-xs text-right font-mono font-semibold ${
+                              isDarkMode ? 'border-gray-600 text-gray-200' : 'border-slate-400 text-slate-800'
                             }`}>
-                              ₹{row.outstanding.toFixed(2)}
+                              {row.outstanding.toFixed(2)}
                             </td>
                           </tr>
                         ))}
                         {/* Summary Row */}
-                        <tr className={`font-bold border-t-2 ${
-                          isDarkMode ? 'bg-gray-700 border-gray-600' : 'bg-slate-50 border-slate-300'
-                        }`}>
-                          <td colSpan="2" className={`p-3 ${isDarkMode ? 'text-white' : 'text-slate-800'}`}>
+                        <tr className={isDarkMode ? 'bg-gray-900' : 'bg-slate-200'}>
+                          <td colSpan="2" className={`px-2 py-1 border text-xs font-bold ${
+                            isDarkMode ? 'border-gray-600 text-white' : 'border-slate-400 text-slate-900'
+                          }`}>
                             TOTAL
                           </td>
-                          <td className={`p-3 text-right ${isDarkMode ? 'text-orange-400' : 'text-orange-600'}`}>
-                            ₹{ledgerTotals.totalCreditStr}
-                          </td>
-                          <td className={`p-3 text-right ${isDarkMode ? 'text-green-400' : 'text-green-600'}`}>
-                            ₹{ledgerTotals.totalReceivedStr}
-                          </td>
-                          <td className={`p-3 text-right ${
-                            ledgerData[ledgerData.length - 1]?.outstanding > 0
-                              ? isDarkMode ? 'text-orange-400' : 'text-orange-600'
-                              : isDarkMode ? 'text-green-400' : 'text-green-600'
+                          <td className={`px-2 py-1 border text-xs font-bold text-right font-mono ${
+                            isDarkMode ? 'border-gray-600 text-white' : 'border-slate-400 text-slate-900'
                           }`}>
-                            ₹{ledgerTotals.finalOutstandingStr}
+                            {ledgerTotals.totalCreditStr}
+                          </td>
+                          <td className={`px-2 py-1 border text-xs font-bold text-right font-mono ${
+                            isDarkMode ? 'border-gray-600 text-white' : 'border-slate-400 text-slate-900'
+                          }`}>
+                            {ledgerTotals.totalReceivedStr}
+                          </td>
+                          <td className={`px-2 py-1 border text-xs font-bold text-right font-mono ${
+                            isDarkMode ? 'border-gray-600 text-white' : 'border-slate-400 text-slate-900'
+                          }`}>
+                            {ledgerTotals.finalOutstandingStr}
                           </td>
                         </tr>
                       </tbody>

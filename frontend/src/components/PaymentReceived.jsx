@@ -52,6 +52,7 @@ const PaymentReceived = ({
   
   // Delete confirmation state
   const [deleteConfirm, setDeleteConfirm] = useState({ show: false, payment: null });
+  const [bulkDeleteConfirm, setBulkDeleteConfirm] = useState({ show: false, count: 0 });
   
   // Edit dialog state
   const [editDialogOpen, setEditDialogOpen] = useState(false);
@@ -266,9 +267,7 @@ const PaymentReceived = ({
   // Delete selected payments
   const handleDeleteSelected = () => {
     if (selectedPayments.size === 0) return;
-    
-    const message = `Are you sure you want to delete ${selectedPayments.size} selected receipt(s)?`;
-    
+
     // Check if Pro Mode is enabled
     if (localStorageService.isProModeEnabled()) {
       // Skip confirmation dialog, delete directly
@@ -280,17 +279,24 @@ const PaymentReceived = ({
       setSelectedPayments(new Set());
       setSelectAll(false);
     } else {
-      // Show confirmation dialog
-      if (window.confirm(message)) {
-        selectedPayments.forEach(id => {
-          if (onDeletePayment) {
-            onDeletePayment(id);
-          }
-        });
-        setSelectedPayments(new Set());
-        setSelectAll(false);
-      }
+      // Show in-app confirmation dialog (window.confirm is blocked in Android WebView)
+      setBulkDeleteConfirm({ show: true, count: selectedPayments.size });
     }
+  };
+
+  const confirmBulkDelete = () => {
+    selectedPayments.forEach(id => {
+      if (onDeletePayment) {
+        onDeletePayment(id);
+      }
+    });
+    setSelectedPayments(new Set());
+    setSelectAll(false);
+    setBulkDeleteConfirm({ show: false, count: 0 });
+  };
+
+  const cancelBulkDelete = () => {
+    setBulkDeleteConfirm({ show: false, count: 0 });
   };
 
   // Excel Export functionality
@@ -1241,6 +1247,64 @@ const PaymentReceived = ({
                 </Button>
                 <Button
                   onClick={confirmDelete}
+                  className="bg-red-600 hover:bg-red-700 text-white"
+                >
+                  Yes, Delete
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      )}
+
+      {/* Bulk Delete Confirmation Dialog */}
+      {bulkDeleteConfirm.show && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4" data-testid="bulk-delete-confirm-modal">
+          <Card className={`w-full max-w-md ${
+            isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-slate-200'
+          }`}>
+            <CardContent className="p-6">
+              <div className="flex items-start gap-4 mb-4">
+                <div className={`p-2 rounded-full ${
+                  isDarkMode ? 'bg-red-900 text-red-400' : 'bg-red-100 text-red-600'
+                }`}>
+                  <AlertTriangle className="w-6 h-6" />
+                </div>
+                <div className="flex-1">
+                  <h3 className={`text-lg font-semibold mb-2 ${
+                    isDarkMode ? 'text-white' : 'text-slate-800'
+                  }`}>
+                    Delete {bulkDeleteConfirm.count} Receipt{bulkDeleteConfirm.count === 1 ? '' : 's'}?
+                  </h3>
+                  <p className={`text-sm mb-1 ${
+                    isDarkMode ? 'text-gray-300' : 'text-slate-600'
+                  }`}>
+                    Are you sure you want to delete the <span className="font-semibold">{bulkDeleteConfirm.count}</span> selected receipt{bulkDeleteConfirm.count === 1 ? '' : 's'}?
+                  </p>
+                  <p className={`text-sm ${
+                    isDarkMode ? 'text-gray-400' : 'text-slate-500'
+                  }`}>
+                    This action cannot be undone.
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex gap-3 justify-end">
+                <Button
+                  variant="outline"
+                  onClick={cancelBulkDelete}
+                  data-testid="bulk-delete-cancel-btn"
+                  className={`${
+                    isDarkMode
+                      ? 'border-gray-600 text-gray-300 hover:bg-gray-700'
+                      : 'border-slate-300 text-slate-700 hover:bg-slate-100'
+                  }`}
+                >
+                  No, Cancel
+                </Button>
+                <Button
+                  onClick={confirmBulkDelete}
+                  data-testid="bulk-delete-confirm-btn"
                   className="bg-red-600 hover:bg-red-700 text-white"
                 >
                   Yes, Delete

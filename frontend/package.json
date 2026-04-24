@@ -41,7 +41,6 @@
     "date-fns": "^4.1.0",
     "embla-carousel-react": "^8.6.0",
     "fast-png": "^7.0.1",
-    "firebase": "^12.5.0",
     "gapi-script": "^1.2.0",
     "html5-qrcode": "^2.3.8",
     "input-otp": "^1.4.2",

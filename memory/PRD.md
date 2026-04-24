@@ -36,6 +36,14 @@ React-based petrol pump management application. 100% offline with localStorage o
 - **Android wrapper with auto-download + auto-open (Feb 2026)**: `MPumpCalcAndroid.openPdfWithViewer` now saves to public `Downloads/MPumpCalc/` via MediaStore (API 29+) or `Environment.DIRECTORY_DOWNLOADS` (older), and then fires `Intent.ACTION_VIEW` via FileProvider to open the file. Toast confirms "Downloaded: Downloads/MPumpCalc/<filename>".
 
 ## Pending/Future Tasks
-- Clean up old deprecated files (DeviceLinking.jsx, firebase.js, firebaseSync.js, SyncStatus.jsx, LoginScreen.jsx, AuthContext.js, SyncDebugPanel.jsx) — dead code, not imported anywhere, safe to delete.
 - Refactor `ZAPTRStyleCalculator.jsx` (>3,500 lines) into smaller logical components.
 - Add app icon for Android build.
+
+## Code Review Cleanup (Feb 2026)
+- **Deleted dead Firebase/Auth files** (~1500 lines): `services/firebase.js`, `services/firebaseSync.js`, `contexts/AuthContext.js`, `components/{LoginScreen,SyncStatus,DeviceLinking,SyncDebugPanel}.jsx`. Removed `firebase` npm dep (`yarn remove firebase`). Verified no live imports remain.
+- **Slimmed backend to stub** (442 → 35 lines): Replaced `server.py` with minimal FastAPI stub serving `/api/status`. Deleted unused `auth_models.py`, `auth_utils.py`, `token_utils.py`, `sync_models.py`. Supervisor-safe; frontend unaffected (app is offline).
+- **Empty catch hardened**: `HeaderSettings.jsx:270` now logs `console.warn` for corrupt contact-info parse instead of silent swallow.
+- **Perf**: Added `useMemo` for ledger totals in `CustomerLedger.jsx` (two `.reduce()` calls previously running on every render) — totals now computed once per `ledgerData` change.
+- **Hook deps audited** (`use-auto-backup.js`, `use-auto-backup-weekly.js`, `ZAPTRStyleCalculator.jsx`): No genuine bugs. Existing dep arrays correctly exclude stable refs (imports, module-level constants, `useRef`, state setters). ESLint (`react-hooks/exhaustive-deps`) reports 0 issues.
+- **Security note**: localStorage "sensitive data" findings rejected — this app by design stores non-sensitive business data entirely on-device for offline use; encryption adds no security since an attacker with device access also has the decryption code.
+- Synced fresh `yarn build` to `/app/android/app/src/main/assets/www/` — ready for APK rebuild.

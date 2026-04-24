@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { Card, CardContent } from './ui/card';
 import { Button } from './ui/button';
 import { Label } from './ui/label';
@@ -18,6 +18,19 @@ const CustomerLedger = ({ customers, creditData, payments, salesData, settlement
   const [customerSearch, setCustomerSearch] = useState('');
   const [showCustomerDropdown, setShowCustomerDropdown] = useState(false);
   const customerDropdownRef = useRef(null);
+
+  // Memoize ledger summary so we don't re-reduce the array on every render
+  const ledgerTotals = useMemo(() => {
+    const totalCredit = ledgerData.reduce((sum, row) => sum + row.credit, 0);
+    const totalReceived = ledgerData.reduce((sum, row) => sum + row.received, 0);
+    const finalOutstanding = ledgerData[ledgerData.length - 1]?.outstanding ?? 0;
+    return {
+      totalCreditStr: totalCredit.toFixed(2),
+      totalReceivedStr: totalReceived.toFixed(2),
+      finalOutstanding,
+      finalOutstandingStr: finalOutstanding.toFixed(2),
+    };
+  }, [ledgerData]);
 
   // Close dropdown when clicking outside
   useEffect(() => {
@@ -742,17 +755,17 @@ window.onload = function() {
                             TOTAL
                           </td>
                           <td className={`p-3 text-right ${isDarkMode ? 'text-orange-400' : 'text-orange-600'}`}>
-                            ₹{ledgerData.reduce((sum, row) => sum + row.credit, 0).toFixed(2)}
+                            ₹{ledgerTotals.totalCreditStr}
                           </td>
                           <td className={`p-3 text-right ${isDarkMode ? 'text-green-400' : 'text-green-600'}`}>
-                            ₹{ledgerData.reduce((sum, row) => sum + row.received, 0).toFixed(2)}
+                            ₹{ledgerTotals.totalReceivedStr}
                           </td>
                           <td className={`p-3 text-right ${
                             ledgerData[ledgerData.length - 1]?.outstanding > 0
                               ? isDarkMode ? 'text-orange-400' : 'text-orange-600'
                               : isDarkMode ? 'text-green-400' : 'text-green-600'
                           }`}>
-                            ₹{ledgerData[ledgerData.length - 1]?.outstanding.toFixed(2) || '0.00'}
+                            ₹{ledgerTotals.finalOutstandingStr}
                           </td>
                         </tr>
                       </tbody>

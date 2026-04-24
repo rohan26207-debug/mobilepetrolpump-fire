@@ -268,7 +268,7 @@ const HeaderSettings = ({ isDarkMode, fuelSettings, setFuelSettings, customers, 
         if (!parsed.website) parsed.website = 'https://managerpetrolpump.vercel.app/';
         setContactInfo(parsed);
       } catch (e) {
-        // ignore corrupt value
+        console.warn('Corrupt contact info in localStorage, using defaults:', e);
       }
     }
   }, []);

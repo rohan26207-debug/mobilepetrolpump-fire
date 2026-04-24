@@ -642,7 +642,7 @@ const PaymentReceived = ({
               <h3 className={`text-lg font-semibold ${isDarkMode ? 'text-white' : 'text-slate-800'}`}>
                 Receipt {formatDisplayDate(fromDate)} to {formatDisplayDate(toDate)}
               </h3>
-              <div className={`text-lg font-bold ${isDarkMode ? 'text-green-400' : 'text-green-600'}`}>
+              <div className={`text-lg font-bold font-mono ${isDarkMode ? 'text-white' : 'text-slate-900'}`}>
                 ₹{totalReceived.toFixed(2)}
               </div>
             </div>
@@ -696,11 +696,11 @@ const PaymentReceived = ({
                 </div>
                 
                 <Button
-                  variant="destructive"
+                  variant="outline"
                   size="sm"
                   onClick={handleDeleteSelected}
                   disabled={selectedPayments.size === 0}
-                  className="bg-red-600 hover:bg-red-700 text-white"
+                  className={isDarkMode ? 'border-gray-500 text-gray-200 hover:bg-gray-700 disabled:opacity-50' : 'border-slate-400 text-slate-800 hover:bg-slate-100 disabled:opacity-50'}
                 >
                   <Trash2 className="w-4 h-4 mr-2" />
                   Delete ({selectedPayments.size})
@@ -734,8 +734,9 @@ const PaymentReceived = ({
             
             <Button 
               onClick={() => setRecordReceiptOpen(true)}
-              className="bg-green-600 hover:bg-green-700 text-white"
+              variant="outline"
               size="sm"
+              className={isDarkMode ? 'border-gray-500 text-gray-200 hover:bg-gray-700' : 'border-slate-400 text-slate-800 hover:bg-slate-100'}
             >
               <Plus className="w-4 h-4 mr-2" />
               Add Receipt
@@ -748,60 +749,101 @@ const PaymentReceived = ({
               <p>No receipts in selected date range</p>
             </div>
           ) : (
-            <div className="space-y-2">
-              {filteredPayments.map((payment) => (
-                <div
-                  key={payment.id}
-                  className={`flex items-center gap-2 p-3 rounded-lg border ${
-                    isDarkMode 
-                      ? 'bg-gray-700 border-gray-600' 
-                      : 'bg-slate-50 border-slate-200'
-                  } ${selectedPayments.has(payment.id) ? (isDarkMode ? 'ring-2 ring-blue-500' : 'ring-2 ring-blue-400') : ''}`}
-                >
-                  {/* Checkbox */}
-                  <Checkbox
-                    checked={selectedPayments.has(payment.id)}
-                    onCheckedChange={(checked) => handleSelectPayment(payment.id, checked)}
-                    className={isDarkMode ? 'border-gray-500' : ''}
-                  />
-                  
-                  <div className="flex items-center justify-between flex-1">
-                    <div className="flex-1">
-                      <div className={`font-medium ${isDarkMode ? 'text-white' : 'text-slate-800'}`}>
-                        {payment.customerName}
-                      </div>
-                      <div className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-slate-500'}`}>
-                        {new Date(payment.date).toLocaleDateString()} • {payment.paymentType || payment.mode || 'N/A'}{payment.paymentType === 'Settlement' && payment.settlementType ? ` (${payment.settlementType})` : ''}
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-3">
-                      <span className={`font-bold ${isDarkMode ? 'text-green-400' : 'text-green-600'}`}>
-                        ₹{payment.amount.toFixed(2)}
-                      </span>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => handleEditPayment(payment)}
-                        className={`hover:bg-blue-100 hover:text-blue-600 ${
-                          isDarkMode ? 'text-gray-400 hover:bg-blue-900 hover:text-blue-400' : ''
-                        }`}
-                      >
-                        <Edit className="w-4 h-4" />
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => handleDeleteClick(payment)}
-                        className={`hover:bg-red-100 hover:text-red-600 ${
-                          isDarkMode ? 'text-gray-400 hover:bg-red-900 hover:text-red-400' : ''
-                        }`}
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </Button>
-                    </div>
-                  </div>
-                </div>
-              ))}
+            <div className="overflow-x-auto">
+              <table className="w-full border-collapse">
+                <thead>
+                  <tr>
+                    <th className={`px-2 py-1 border text-xs font-bold text-left ${
+                      isDarkMode ? 'border-gray-600 bg-gray-900 text-white' : 'border-slate-400 bg-slate-200 text-slate-900'
+                    }`} colSpan={6}>
+                      Receipts
+                    </th>
+                  </tr>
+                  <tr>
+                    <th className={`px-2 py-1 border text-xs font-bold text-center ${
+                      isDarkMode ? 'border-gray-600 bg-gray-800 text-white' : 'border-slate-400 bg-slate-100 text-slate-800'
+                    }`} style={{ width: '30px' }}></th>
+                    <th className={`px-2 py-1 border text-xs font-bold text-left ${
+                      isDarkMode ? 'border-gray-600 bg-gray-800 text-white' : 'border-slate-400 bg-slate-100 text-slate-800'
+                    }`}>Date</th>
+                    <th className={`px-2 py-1 border text-xs font-bold text-left ${
+                      isDarkMode ? 'border-gray-600 bg-gray-800 text-white' : 'border-slate-400 bg-slate-100 text-slate-800'
+                    }`}>Customer</th>
+                    <th className={`px-2 py-1 border text-xs font-bold text-left ${
+                      isDarkMode ? 'border-gray-600 bg-gray-800 text-white' : 'border-slate-400 bg-slate-100 text-slate-800'
+                    }`}>Mode</th>
+                    <th className={`px-2 py-1 border text-xs font-bold text-right ${
+                      isDarkMode ? 'border-gray-600 bg-gray-800 text-white' : 'border-slate-400 bg-slate-100 text-slate-800'
+                    }`}>Amount (₹)</th>
+                    <th className={`px-2 py-1 border text-xs font-bold text-center ${
+                      isDarkMode ? 'border-gray-600 bg-gray-800 text-white' : 'border-slate-400 bg-slate-100 text-slate-800'
+                    }`} style={{ width: '90px' }}>Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {filteredPayments.map((payment, i) => {
+                    const isSelected = selectedPayments.has(payment.id);
+                    const baseRow = i % 2 === 1
+                      ? (isDarkMode ? 'bg-gray-800' : 'bg-slate-50')
+                      : (isDarkMode ? 'bg-gray-700' : 'bg-white');
+                    const cellCls = `px-2 py-1 border text-xs ${
+                      isDarkMode ? 'border-gray-600 text-gray-200' : 'border-slate-400 text-slate-800'
+                    }`;
+                    const modeText = payment.paymentType || payment.mode || 'N/A';
+                    const modeFull = payment.paymentType === 'Settlement' && payment.settlementType
+                      ? `${modeText} (${payment.settlementType})`
+                      : modeText;
+                    return (
+                      <tr key={payment.id} className={`${baseRow} ${isSelected ? (isDarkMode ? 'outline outline-1 outline-white' : 'outline outline-1 outline-slate-900') : ''}`}>
+                        <td className={`${cellCls} text-center`}>
+                          <Checkbox
+                            checked={isSelected}
+                            onCheckedChange={(checked) => handleSelectPayment(payment.id, checked)}
+                            className={isDarkMode ? 'border-gray-500' : ''}
+                          />
+                        </td>
+                        <td className={cellCls}>{new Date(payment.date).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: '2-digit' })}</td>
+                        <td className={`${cellCls} font-medium`}>{payment.customerName}</td>
+                        <td className={cellCls}>{modeFull}</td>
+                        <td className={`${cellCls} text-right font-mono font-semibold`}>{payment.amount.toFixed(2)}</td>
+                        <td className={`${cellCls} text-center`}>
+                          <div className="inline-flex gap-1">
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => handleEditPayment(payment)}
+                              className="h-6 w-6 p-0"
+                              aria-label={`Edit receipt for ${payment.customerName}`}
+                            >
+                              <Edit className="w-3.5 h-3.5" />
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => handleDeleteClick(payment)}
+                              className="h-6 w-6 p-0"
+                              aria-label={`Delete receipt for ${payment.customerName}`}
+                            >
+                              <Trash2 className="w-3.5 h-3.5" />
+                            </Button>
+                          </div>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                  <tr className={isDarkMode ? 'bg-gray-900' : 'bg-slate-200'}>
+                    <td colSpan="4" className={`px-2 py-1 border text-xs font-bold ${
+                      isDarkMode ? 'border-gray-600 text-white' : 'border-slate-400 text-slate-900'
+                    }`}>TOTAL ({filteredPayments.length} receipt{filteredPayments.length === 1 ? '' : 's'})</td>
+                    <td className={`px-2 py-1 border text-xs font-bold text-right font-mono ${
+                      isDarkMode ? 'border-gray-600 text-white' : 'border-slate-400 text-slate-900'
+                    }`}>{totalReceived.toFixed(2)}</td>
+                    <td className={`px-2 py-1 border text-xs ${
+                      isDarkMode ? 'border-gray-600' : 'border-slate-400'
+                    }`}></td>
+                  </tr>
+                </tbody>
+              </table>
             </div>
           )}
         </CardContent>

@@ -623,11 +623,11 @@ const CreditSalesManagement = ({
                 </div>
                 
                 <Button
-                  variant="destructive"
+                  variant="outline"
                   size="sm"
                   onClick={handleDeleteSelected}
                   disabled={selectedCredits.size === 0}
-                  className="bg-red-600 hover:bg-red-700 text-white"
+                  className={isDarkMode ? 'border-gray-500 text-gray-200 hover:bg-gray-700 disabled:opacity-50' : 'border-slate-400 text-slate-800 hover:bg-slate-100 disabled:opacity-50'}
                 >
                   <Trash2 className="w-4 h-4 mr-2" />
                   Delete ({selectedCredits.size})
@@ -661,8 +661,9 @@ const CreditSalesManagement = ({
             
             <Button 
               onClick={onAddCredit}
-              className="bg-green-600 hover:bg-green-700 text-white"
+              variant="outline"
               size="sm"
+              className={isDarkMode ? 'border-gray-500 text-gray-200 hover:bg-gray-700' : 'border-slate-400 text-slate-800 hover:bg-slate-100'}
             >
               <Plus className="w-4 h-4 mr-2" />
               Add Credit
@@ -674,143 +675,133 @@ const CreditSalesManagement = ({
             <h3 className={`text-lg font-semibold ${isDarkMode ? 'text-white' : 'text-slate-800'}`}>
               Credit Sales {formatDisplayDate(fromDate)} to {formatDisplayDate(toDate)}
             </h3>
-            <div className={`text-lg font-bold ${isDarkMode ? 'text-orange-400' : 'text-orange-600'}`}>
+            <div className={`text-lg font-bold font-mono ${isDarkMode ? 'text-white' : 'text-slate-900'}`}>
               ₹{totalAmount.toFixed(2)}
             </div>
           </div>
 
-          {/* Credit Sales List */}
+          {/* Credit Sales Table */}
           {filteredCreditData.length === 0 ? (
             <div className={`text-center py-8 ${isDarkMode ? 'text-gray-400' : 'text-slate-500'}`}>
               <CreditCard className="w-12 h-12 mx-auto mb-2 opacity-50" />
               <p>No credit sales in selected date range</p>
             </div>
           ) : (
-            <div className="space-y-2">
-              {filteredCreditData.map((credit) => (
-                <div
-                  key={credit.id}
-                  className={`border rounded-lg p-2 sm:p-3 ${
-                    isDarkMode 
-                      ? 'border-gray-600 bg-gray-700' 
-                      : 'border-slate-200 bg-slate-50'
-                  } ${selectedCredits.has(credit.id) ? (isDarkMode ? 'ring-2 ring-blue-500' : 'ring-2 ring-blue-400') : ''}`}
-                >
-                  <div className="flex items-center gap-2 mb-2">
-                    {/* Checkbox */}
-                    <Checkbox
-                      checked={selectedCredits.has(credit.id)}
-                      onCheckedChange={(checked) => handleSelectCredit(credit.id, checked)}
-                      className={isDarkMode ? 'border-gray-500' : ''}
-                    />
-                    
-                    <div className="flex items-center justify-between gap-2 flex-1">
-                      <div className="flex items-center gap-2 flex-wrap flex-1 min-w-0">
-                        <Badge className="bg-orange-100 text-orange-800 border-0 text-xs">
-                          Credit
-                        </Badge>
-                        <div className="flex items-center gap-1 text-orange-600 font-bold">
-                          <IndianRupee className="w-4 h-4" />
-                          <span className="text-base sm:text-lg">{calculateCreditAmount(credit).toFixed(2)}</span>
-                        </div>
-                      </div>
-                      <div className="flex items-center gap-1 flex-shrink-0">
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => onEditCredit(credit)}
-                          className="h-7 w-7 p-0"
-                        >
-                          <Edit className="w-3.5 h-3.5" />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => handleDeleteClick(credit)}
-                          className="h-7 w-7 p-0"
-                        >
-                          <Trash2 className="w-3.5 h-3.5" />
-                        </Button>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Customer Name */}
-                  <div className="mb-2">
-                    <span className="font-semibold text-base break-words">{credit.customerName}</span>
-                  </div>
-
-                  {/* Fuel Entries */}
-                  {credit.fuelEntries && credit.fuelEntries.length > 0 && (
-                    <div className="space-y-2 mb-2">
-                      {credit.fuelEntries.map((entry, index) => (
-                        <div
-                          key={entry.id || `fuel-${index}`}
-                          className={`p-2 rounded border ${
-                            isDarkMode ? 'bg-gray-600 border-gray-500' : 'bg-purple-50 border-purple-200'
-                          }`}
-                        >
-                          <div className="flex items-center justify-between mb-1">
-                            <Badge className="bg-purple-100 text-purple-800 border-0 text-xs">
-                              {entry.fuelType}
-                            </Badge>
-                            <span className="text-xs font-medium text-purple-600">
-                              ₹{(entry.amount || 0).toFixed(2)}
-                            </span>
-                          </div>
-                          <div className="grid grid-cols-2 gap-2 text-xs mt-1">
-                            <div>
-                              <span className={isDarkMode ? 'text-gray-400' : 'text-slate-600'}>Litres: </span>
-                              <span className="font-medium">{entry.liters}L</span>
+            <div className="overflow-x-auto">
+              <table className="w-full border-collapse">
+                <thead>
+                  <tr>
+                    <th className={`px-2 py-1 border text-xs font-bold text-left ${
+                      isDarkMode ? 'border-gray-600 bg-gray-900 text-white' : 'border-slate-400 bg-slate-200 text-slate-900'
+                    }`} colSpan={6}>
+                      Credit Sales
+                    </th>
+                  </tr>
+                  <tr>
+                    <th className={`px-2 py-1 border text-xs font-bold text-center ${
+                      isDarkMode ? 'border-gray-600 bg-gray-800 text-white' : 'border-slate-400 bg-slate-100 text-slate-800'
+                    }`} style={{ width: '30px' }}></th>
+                    <th className={`px-2 py-1 border text-xs font-bold text-left ${
+                      isDarkMode ? 'border-gray-600 bg-gray-800 text-white' : 'border-slate-400 bg-slate-100 text-slate-800'
+                    }`}>Date</th>
+                    <th className={`px-2 py-1 border text-xs font-bold text-left ${
+                      isDarkMode ? 'border-gray-600 bg-gray-800 text-white' : 'border-slate-400 bg-slate-100 text-slate-800'
+                    }`}>Customer</th>
+                    <th className={`px-2 py-1 border text-xs font-bold text-left ${
+                      isDarkMode ? 'border-gray-600 bg-gray-800 text-white' : 'border-slate-400 bg-slate-100 text-slate-800'
+                    }`}>Details</th>
+                    <th className={`px-2 py-1 border text-xs font-bold text-right ${
+                      isDarkMode ? 'border-gray-600 bg-gray-800 text-white' : 'border-slate-400 bg-slate-100 text-slate-800'
+                    }`}>Amount (₹)</th>
+                    <th className={`px-2 py-1 border text-xs font-bold text-center ${
+                      isDarkMode ? 'border-gray-600 bg-gray-800 text-white' : 'border-slate-400 bg-slate-100 text-slate-800'
+                    }`} style={{ width: '90px' }}>Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {filteredCreditData.map((credit, i) => {
+                    const isSelected = selectedCredits.has(credit.id);
+                    const baseRow = i % 2 === 1
+                      ? (isDarkMode ? 'bg-gray-800' : 'bg-slate-50')
+                      : (isDarkMode ? 'bg-gray-700' : 'bg-white');
+                    const cellCls = `px-2 py-1 border text-xs align-top ${
+                      isDarkMode ? 'border-gray-600 text-gray-200' : 'border-slate-400 text-slate-800'
+                    }`;
+                    const detailParts = [];
+                    (credit.fuelEntries || []).forEach((e) => {
+                      detailParts.push(`${e.fuelType}: ${e.liters}L @ ₹${e.rate}`);
+                    });
+                    (credit.incomeEntries || []).forEach((e) => {
+                      detailParts.push(`+ ${e.description} ₹${(e.amount || 0).toFixed(2)}`);
+                    });
+                    (credit.expenseEntries || []).forEach((e) => {
+                      detailParts.push(`- ${e.description} ₹${(e.amount || 0).toFixed(2)}`);
+                    });
+                    return (
+                      <tr key={credit.id} className={`${baseRow} ${isSelected ? (isDarkMode ? 'outline outline-1 outline-white' : 'outline outline-1 outline-slate-900') : ''}`}>
+                        <td className={`${cellCls} text-center`}>
+                          <Checkbox
+                            checked={isSelected}
+                            onCheckedChange={(checked) => handleSelectCredit(credit.id, checked)}
+                            className={isDarkMode ? 'border-gray-500' : ''}
+                          />
+                        </td>
+                        <td className={cellCls}>
+                          {new Date(credit.date).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: '2-digit' })}
+                        </td>
+                        <td className={`${cellCls} font-medium`}>{credit.customerName}</td>
+                        <td className={cellCls}>
+                          {detailParts.length === 0 ? (
+                            <span className={isDarkMode ? 'text-gray-400' : 'text-slate-500'}>—</span>
+                          ) : (
+                            <div className="space-y-0.5">
+                              {detailParts.map((p, idx) => (
+                                <div key={idx} className="whitespace-nowrap">{p}</div>
+                              ))}
                             </div>
-                            <div>
-                              <span className={isDarkMode ? 'text-gray-400' : 'text-slate-600'}>Rate: </span>
-                              <span className="font-medium">₹{entry.rate}/L</span>
-                            </div>
+                          )}
+                        </td>
+                        <td className={`${cellCls} text-right font-mono font-semibold`}>
+                          {calculateCreditAmount(credit).toFixed(2)}
+                        </td>
+                        <td className={`${cellCls} text-center`}>
+                          <div className="inline-flex gap-1">
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => onEditCredit(credit)}
+                              className="h-6 w-6 p-0"
+                              aria-label={`Edit credit for ${credit.customerName}`}
+                            >
+                              <Edit className="w-3.5 h-3.5" />
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => handleDeleteClick(credit)}
+                              className="h-6 w-6 p-0"
+                              aria-label={`Delete credit for ${credit.customerName}`}
+                            >
+                              <Trash2 className="w-3.5 h-3.5" />
+                            </Button>
                           </div>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-
-                  {/* Income/Expense Entries */}
-                  {((credit.incomeEntries && credit.incomeEntries.length > 0) || 
-                    (credit.expenseEntries && credit.expenseEntries.length > 0)) && (
-                    <div className="space-y-1">
-                      {credit.incomeEntries?.map((entry, index) => (
-                        <div
-                          key={`income-${index}`}
-                          className={`flex items-center justify-between text-xs p-1.5 rounded ${
-                            isDarkMode ? 'bg-green-900 bg-opacity-30' : 'bg-green-50'
-                          }`}
-                        >
-                          <span className={isDarkMode ? 'text-gray-300' : 'text-slate-600'}>
-                            + {entry.description}
-                          </span>
-                          <span className={`font-semibold ${isDarkMode ? 'text-green-400' : 'text-green-600'}`}>
-                            +₹{(entry.amount || 0).toFixed(2)}
-                          </span>
-                        </div>
-                      ))}
-                      {credit.expenseEntries?.map((entry, index) => (
-                        <div
-                          key={`expense-${index}`}
-                          className={`flex items-center justify-between text-xs p-1.5 rounded ${
-                            isDarkMode ? 'bg-red-900 bg-opacity-30' : 'bg-red-50'
-                          }`}
-                        >
-                          <span className={isDarkMode ? 'text-gray-300' : 'text-slate-600'}>
-                            - {entry.description}
-                          </span>
-                          <span className={`font-semibold ${isDarkMode ? 'text-red-400' : 'text-red-600'}`}>
-                            -₹{(entry.amount || 0).toFixed(2)}
-                          </span>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              ))}
+                        </td>
+                      </tr>
+                    );
+                  })}
+                  <tr className={isDarkMode ? 'bg-gray-900' : 'bg-slate-200'}>
+                    <td colSpan="4" className={`px-2 py-1 border text-xs font-bold ${
+                      isDarkMode ? 'border-gray-600 text-white' : 'border-slate-400 text-slate-900'
+                    }`}>TOTAL ({filteredCreditData.length} sale{filteredCreditData.length === 1 ? '' : 's'})</td>
+                    <td className={`px-2 py-1 border text-xs font-bold text-right font-mono ${
+                      isDarkMode ? 'border-gray-600 text-white' : 'border-slate-400 text-slate-900'
+                    }`}>{totalAmount.toFixed(2)}</td>
+                    <td className={`px-2 py-1 border text-xs ${
+                      isDarkMode ? 'border-gray-600' : 'border-slate-400'
+                    }`}></td>
+                  </tr>
+                </tbody>
+              </table>
             </div>
           )}
         </CardContent>

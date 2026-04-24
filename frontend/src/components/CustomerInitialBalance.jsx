@@ -147,7 +147,7 @@ const CustomerInitialBalance = ({ isDarkMode, customers, onCustomerChanged }) =>
                 <tr>
                   <th className={`${thBase} text-center`} style={{ width: '40px' }}>#</th>
                   <th className={`${thBase} text-left`}>Customer Name</th>
-                  <th className={`${thBase} text-right`}>Amount on 1 April {fyStart} (₹)</th>
+                  <th className={`${thBase} text-right`}>Amount on 1 April (₹)</th>
                   <th className={`${thBase} text-center`} style={{ width: '90px' }}>Action</th>
                 </tr>
               </thead>
@@ -155,7 +155,7 @@ const CustomerInitialBalance = ({ isDarkMode, customers, onCustomerChanged }) =>
                 {filteredSorted.map((c, i) => {
                   const draft = drafts[c.id];
                   const current = c.startingBalance || 0;
-                  const editingValue = draft !== undefined ? draft : current.toFixed(2);
+                  const editingValue = draft !== undefined ? draft : (current === 0 ? '' : current.toFixed(2));
                   const isDirty = draft !== undefined && parseFloat(draft || '0') !== current;
                   return (
                     <tr key={c.id} className={rowZebra(i)} data-testid={`cib-row-${c.id}`}>

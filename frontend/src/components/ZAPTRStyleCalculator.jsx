@@ -47,6 +47,7 @@ import CreditSalesManagement from './CreditSalesManagement';
 import OutstandingReport from './OutstandingReport';
 import OutstandingPDFReport from './OutstandingPDFReport';
 import CustomerInitialBalance from './CustomerInitialBalance';
+import SalesReport from './SalesReport';
 import CustomerLedger from './CustomerLedger';
 import BankSettlement from './BankSettlement';
 // Anonymous mode: LoginScreen removed
@@ -3719,6 +3720,29 @@ window.onload = function() {
                       </span>
                     </div>
                   </div>
+
+                  {/* Sales Block */}
+                  <div
+                    onClick={() => handleBalanceBlockClick('sales-report')}
+                    data-testid="balance-block-sales-report"
+                    className={`p-4 rounded-lg border-2 cursor-pointer transition-all duration-200 transform ${
+                      isDarkMode
+                        ? 'bg-gray-800 border-gray-600 hover:bg-gray-700 hover:border-gray-500 hover:scale-105'
+                        : 'bg-white border-slate-300 hover:bg-slate-50 hover:border-slate-400 hover:scale-105'
+                    }`}
+                    style={{ willChange: 'transform' }}
+                  >
+                    <div className="flex flex-col items-center text-center space-y-2">
+                      <TrendingUp className={`w-8 h-8 ${
+                        isDarkMode ? 'text-gray-400' : 'text-slate-600'
+                      }`} />
+                      <span className={`text-sm font-medium ${
+                        isDarkMode ? 'text-gray-300' : 'text-slate-700'
+                      }`}>
+                        Sales
+                      </span>
+                    </div>
+                  </div>
                 </div>
               ) : (
                 <div key="balance-content" className="mb-4">
@@ -3736,41 +3760,45 @@ window.onload = function() {
                 <TabsList className={`flex w-full mb-4 ${
                   isDarkMode ? 'bg-gray-800' : 'bg-slate-100'
                 }`}>
-                  <TabsTrigger value="reports" className="flex items-center justify-center gap-1 text-xs w-[11.11%]" data-testid="tab-reports">
+                  <TabsTrigger value="reports" className="flex items-center justify-center gap-1 text-xs w-[10%]" data-testid="tab-reports">
                     <FileText className="w-3 h-3" />
                     <span className="hidden lg:inline">Reports</span>
                   </TabsTrigger>
-                  <TabsTrigger value="bank-settlement" className="flex items-center justify-center gap-1 text-xs w-[11.11%]">
+                  <TabsTrigger value="bank-settlement" className="flex items-center justify-center gap-1 text-xs w-[10%]">
                     <Wallet className="w-3 h-3" />
                     <span className="hidden lg:inline">Bank</span>
                   </TabsTrigger>
-                  <TabsTrigger value="outstanding-settings" className="flex items-center justify-center gap-1 text-xs w-[11.11%]">
+                  <TabsTrigger value="outstanding-settings" className="flex items-center justify-center gap-1 text-xs w-[10%]">
                     <FileText className="w-3 h-3" />
                     <span className="hidden lg:inline">Outstanding</span>
                   </TabsTrigger>
-                  <TabsTrigger value="report" className="flex items-center justify-center gap-1 text-xs w-[11.11%]">
+                  <TabsTrigger value="report" className="flex items-center justify-center gap-1 text-xs w-[10%]">
                     <Users className="w-3 h-3" />
                     <span className="hidden lg:inline">Ledger</span>
                   </TabsTrigger>
-                  <TabsTrigger value="dsr" className="flex items-center justify-center gap-1 text-xs w-[11.11%]" data-testid="tab-dsr">
+                  <TabsTrigger value="dsr" className="flex items-center justify-center gap-1 text-xs w-[10%]" data-testid="tab-dsr">
                     <FileText className="w-3 h-3" />
                     <span className="hidden lg:inline">DSR</span>
                   </TabsTrigger>
-                  <TabsTrigger value="credit-manage" className="flex items-center justify-center gap-1 text-xs w-[11.11%]">
+                  <TabsTrigger value="credit-manage" className="flex items-center justify-center gap-1 text-xs w-[10%]">
                     <CreditCard className="w-3 h-3" />
                     <span className="hidden lg:inline">Credit</span>
                   </TabsTrigger>
-                  <TabsTrigger value="receipt-manage" className="flex items-center justify-center gap-1 text-xs w-[11.11%]">
+                  <TabsTrigger value="receipt-manage" className="flex items-center justify-center gap-1 text-xs w-[10%]">
                     <Receipt className="w-3 h-3" />
                     <span className="hidden lg:inline">Receipt</span>
                   </TabsTrigger>
-                  <TabsTrigger value="backup" className="flex items-center justify-center gap-1 text-xs w-[11.11%]" data-testid="tab-backup">
+                  <TabsTrigger value="backup" className="flex items-center justify-center gap-1 text-xs w-[10%]" data-testid="tab-backup">
                     <Wallet className="w-3 h-3" />
                     <span className="hidden lg:inline">Backup</span>
                   </TabsTrigger>
-                  <TabsTrigger value="cust-initial" className="flex items-center justify-center gap-1 text-xs w-[11.11%]" data-testid="tab-cust-initial">
+                  <TabsTrigger value="cust-initial" className="flex items-center justify-center gap-1 text-xs w-[10%]" data-testid="tab-cust-initial">
                     <Users className="w-3 h-3" />
                     <span className="hidden lg:inline">Initial Bal.</span>
+                  </TabsTrigger>
+                  <TabsTrigger value="sales-report" className="flex items-center justify-center gap-1 text-xs w-[10%]" data-testid="tab-sales-report">
+                    <TrendingUp className="w-3 h-3" />
+                    <span className="hidden lg:inline">Sales</span>
                   </TabsTrigger>
                 </TabsList>
               </Tabs>
@@ -3891,6 +3919,15 @@ window.onload = function() {
                       isDarkMode={isDarkMode}
                       customers={customers}
                       onCustomerChanged={loadData}
+                    />
+                  )}
+
+                  {outstandingSubTab === 'sales-report' && (
+                    <SalesReport
+                      salesData={salesData}
+                      creditData={creditData}
+                      fuelSettings={fuelSettings}
+                      isDarkMode={isDarkMode}
                     />
                   )}
                 </>

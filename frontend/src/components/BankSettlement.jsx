@@ -270,14 +270,15 @@ window.onload = function() {
             </div>
           </div>
           
-          {/* Print and Excel Buttons */}
+          {/* Print and Excel Buttons — black & white */}
           <div className="grid grid-cols-2 gap-2">
             <Button
               onClick={handlePrint}
+              variant="outline"
               className={`text-xs sm:text-sm ${
-                isDarkMode 
-                  ? 'bg-green-700 hover:bg-green-600 text-white' 
-                  : 'bg-green-600 hover:bg-green-700 text-white'
+                isDarkMode
+                  ? 'border-gray-500 text-gray-200 hover:bg-gray-700'
+                  : 'border-slate-400 text-slate-800 hover:bg-slate-100'
               }`}
             >
               <Printer className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" />
@@ -285,10 +286,11 @@ window.onload = function() {
             </Button>
             <Button
               onClick={handleExcelExport}
+              variant="outline"
               className={`text-xs sm:text-sm ${
-                isDarkMode 
-                  ? 'bg-blue-700 hover:bg-blue-600 text-white' 
-                  : 'bg-blue-600 hover:bg-blue-700 text-white'
+                isDarkMode
+                  ? 'border-gray-500 text-gray-200 hover:bg-gray-700'
+                  : 'border-slate-400 text-slate-800 hover:bg-slate-100'
               }`}
             >
               <FileSpreadsheet className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" />
@@ -297,144 +299,169 @@ window.onload = function() {
           </div>
         </div>
 
-        {/* Summary Cards - Matching Today Summary styling */}
-        <div className="grid grid-cols-2 sm:grid-cols-5 gap-2">
-          <div className={`py-1.5 px-2 sm:py-2 sm:px-3 rounded-lg ${isDarkMode ? 'bg-gray-700' : 'bg-orange-50'}`}>
-            <div className={`text-xs sm:text-base font-medium ${isDarkMode ? 'text-gray-300' : 'text-slate-800'}`}>Cash</div>
-            <div className={`text-xs sm:text-lg font-bold ${isDarkMode ? 'text-white' : 'text-slate-800'}`}>
-              ₹{totals.cashAmount.toFixed(2)}
-            </div>
-          </div>
-          <div className={`py-1.5 px-2 sm:py-2 sm:px-3 rounded-lg ${isDarkMode ? 'bg-gray-700' : 'bg-blue-50'}`}>
-            <div className={`text-xs sm:text-base font-medium ${isDarkMode ? 'text-gray-300' : 'text-slate-800'}`}>Card</div>
-            <div className={`text-xs sm:text-lg font-bold ${isDarkMode ? 'text-white' : 'text-slate-800'}`}>
-              ₹{totals.cardAmount.toFixed(2)}
-            </div>
-          </div>
-          <div className={`py-1.5 px-2 sm:py-2 sm:px-3 rounded-lg ${isDarkMode ? 'bg-gray-700' : 'bg-purple-50'}`}>
-            <div className={`text-xs sm:text-base font-medium ${isDarkMode ? 'text-gray-300' : 'text-slate-800'}`}>Paytm</div>
-            <div className={`text-xs sm:text-lg font-bold ${isDarkMode ? 'text-white' : 'text-slate-800'}`}>
-              ₹{totals.paytmAmount.toFixed(2)}
-            </div>
-          </div>
-          <div className={`py-1.5 px-2 sm:py-2 sm:px-3 rounded-lg ${isDarkMode ? 'bg-gray-700' : 'bg-indigo-50'}`}>
-            <div className={`text-xs sm:text-base font-medium ${isDarkMode ? 'text-gray-300' : 'text-slate-800'}`}>PhonePe</div>
-            <div className={`text-xs sm:text-lg font-bold ${isDarkMode ? 'text-white' : 'text-slate-800'}`}>
-              ₹{totals.phonepeAmount.toFixed(2)}
-            </div>
-          </div>
-          <div className={`py-1.5 px-2 sm:py-2 sm:px-3 rounded-lg ${isDarkMode ? 'bg-gray-700' : 'bg-green-50'}`}>
-            <div className={`text-xs sm:text-base font-medium ${isDarkMode ? 'text-gray-300' : 'text-slate-800'}`}>DTP</div>
-            <div className={`text-xs sm:text-lg font-bold ${isDarkMode ? 'text-white' : 'text-slate-800'}`}>
-              ₹{totals.dtpAmount.toFixed(2)}
-            </div>
-          </div>
-        </div>
-
-        {/* Data Table */}
-        <div className={`rounded-lg border overflow-hidden ${
-          isDarkMode ? 'border-gray-600' : 'border-slate-200'
-        }`}>
-          <div className="overflow-x-auto">
-            <table className="w-full text-xs sm:text-sm">
-              <thead className={`${
-                isDarkMode ? 'bg-gray-700 text-gray-300' : 'bg-slate-100 text-slate-700'
+        {/* Summary Table (B&W, Reports-style) */}
+        <table className="w-full border-collapse">
+          <thead>
+            <tr>
+              <th className={`px-2 py-1 border text-xs font-bold text-left ${
+                isDarkMode ? 'border-gray-600 bg-gray-900 text-white' : 'border-slate-400 bg-slate-200 text-slate-900'
+              }`} colSpan={2}>
+                Summary
+              </th>
+            </tr>
+            <tr>
+              <th className={`px-2 py-1 border text-xs font-bold text-left ${
+                isDarkMode ? 'border-gray-600 bg-gray-800 text-white' : 'border-slate-400 bg-slate-100 text-slate-800'
+              }`}>Payment Mode</th>
+              <th className={`px-2 py-1 border text-xs font-bold text-right ${
+                isDarkMode ? 'border-gray-600 bg-gray-800 text-white' : 'border-slate-400 bg-slate-100 text-slate-800'
+              }`}>Total (₹)</th>
+            </tr>
+          </thead>
+          <tbody>
+            {[
+              { label: 'Cash', value: totals.cashAmount },
+              { label: 'Card', value: totals.cardAmount },
+              { label: 'Paytm', value: totals.paytmAmount },
+              { label: 'PhonePe', value: totals.phonepeAmount },
+              { label: 'DTP', value: totals.dtpAmount },
+            ].map((row, i) => (
+              <tr
+                key={row.label}
+                className={i % 2 === 1
+                  ? (isDarkMode ? 'bg-gray-800' : 'bg-slate-50')
+                  : (isDarkMode ? 'bg-gray-700' : 'bg-white')}
+              >
+                <td className={`px-2 py-1 border text-xs ${
+                  isDarkMode ? 'border-gray-600 text-gray-200' : 'border-slate-400 text-slate-800'
+                }`}>{row.label}</td>
+                <td className={`px-2 py-1 border text-xs text-right font-mono ${
+                  isDarkMode ? 'border-gray-600 text-gray-200' : 'border-slate-400 text-slate-800'
+                }`}>{row.value.toFixed(2)}</td>
+              </tr>
+            ))}
+            <tr className={isDarkMode ? 'bg-gray-900' : 'bg-slate-200'}>
+              <td className={`px-2 py-1 border text-xs font-bold ${
+                isDarkMode ? 'border-gray-600 text-white' : 'border-slate-400 text-slate-900'
+              }`}>Grand Total</td>
+              <td className={`px-2 py-1 border text-xs font-bold text-right font-mono ${
+                isDarkMode ? 'border-gray-600 text-white' : 'border-slate-400 text-slate-900'
               }`}>
+                {(totals.cashAmount + totals.cardAmount + totals.paytmAmount + totals.phonepeAmount + totals.dtpAmount).toFixed(2)}
+              </td>
+            </tr>
+          </tbody>
+        </table>
+
+        {/* Daily Breakdown Table (B&W, Reports-style) */}
+        <div className="overflow-x-auto">
+          <table className="w-full border-collapse">
+            <thead>
+              <tr>
+                <th className={`px-2 py-1 border text-xs font-bold text-left ${
+                  isDarkMode ? 'border-gray-600 bg-gray-900 text-white' : 'border-slate-400 bg-slate-200 text-slate-900'
+                }`} colSpan={7}>
+                  Daily Breakdown
+                </th>
+              </tr>
+              <tr>
+                <th className={`px-2 py-1 border text-xs font-bold text-center ${
+                  isDarkMode ? 'border-gray-600 bg-gray-800 text-white' : 'border-slate-400 bg-slate-100 text-slate-800'
+                }`}>#</th>
+                <th className={`px-2 py-1 border text-xs font-bold text-left ${
+                  isDarkMode ? 'border-gray-600 bg-gray-800 text-white' : 'border-slate-400 bg-slate-100 text-slate-800'
+                }`}>Date</th>
+                <th className={`px-2 py-1 border text-xs font-bold text-right ${
+                  isDarkMode ? 'border-gray-600 bg-gray-800 text-white' : 'border-slate-400 bg-slate-100 text-slate-800'
+                }`}>Cash</th>
+                <th className={`px-2 py-1 border text-xs font-bold text-right ${
+                  isDarkMode ? 'border-gray-600 bg-gray-800 text-white' : 'border-slate-400 bg-slate-100 text-slate-800'
+                }`}>Card</th>
+                <th className={`px-2 py-1 border text-xs font-bold text-right ${
+                  isDarkMode ? 'border-gray-600 bg-gray-800 text-white' : 'border-slate-400 bg-slate-100 text-slate-800'
+                }`}>Paytm</th>
+                <th className={`px-2 py-1 border text-xs font-bold text-right ${
+                  isDarkMode ? 'border-gray-600 bg-gray-800 text-white' : 'border-slate-400 bg-slate-100 text-slate-800'
+                }`}>PhonePe</th>
+                <th className={`px-2 py-1 border text-xs font-bold text-right ${
+                  isDarkMode ? 'border-gray-600 bg-gray-800 text-white' : 'border-slate-400 bg-slate-100 text-slate-800'
+                }`}>DTP</th>
+              </tr>
+            </thead>
+            <tbody>
+              {bankSettlementData.length === 0 ? (
                 <tr>
-                  <th className="px-2 sm:px-3 py-1.5 sm:py-2 text-left font-semibold">Sr. No</th>
-                  <th className="px-2 sm:px-3 py-1.5 sm:py-2 text-left font-semibold">Date</th>
-                  <th className="px-2 sm:px-3 py-1.5 sm:py-2 text-right font-semibold">Cash (₹)</th>
-                  <th className="px-2 sm:px-3 py-1.5 sm:py-2 text-right font-semibold">Card (₹)</th>
-                  <th className="px-2 sm:px-3 py-1.5 sm:py-2 text-right font-semibold">Paytm (₹)</th>
-                  <th className="px-2 sm:px-3 py-1.5 sm:py-2 text-right font-semibold">PhonePe (₹)</th>
-                  <th className="px-2 sm:px-3 py-1.5 sm:py-2 text-right font-semibold">DTP (₹)</th>
+                  <td colSpan="7" className={`px-2 py-4 border text-center text-xs ${
+                    isDarkMode ? 'border-gray-600 text-gray-400' : 'border-slate-400 text-slate-500'
+                  }`}>
+                    No data available for selected date range
+                  </td>
                 </tr>
-              </thead>
-              <tbody className={isDarkMode ? 'text-gray-300' : 'text-slate-700'}>
-                {bankSettlementData.length === 0 ? (
-                  <tr>
-                    <td colSpan="7" className={`px-2 sm:px-3 py-6 sm:py-8 text-center text-xs sm:text-sm ${
-                      isDarkMode ? 'text-gray-400' : 'text-slate-500'
+              ) : (
+                bankSettlementData.map((row, i) => (
+                  <tr
+                    key={row.date}
+                    className={i % 2 === 1
+                      ? (isDarkMode ? 'bg-gray-800' : 'bg-slate-50')
+                      : (isDarkMode ? 'bg-gray-700' : 'bg-white')}
+                  >
+                    <td className={`px-2 py-1 border text-xs text-center ${
+                      isDarkMode ? 'border-gray-600 text-gray-200' : 'border-slate-400 text-slate-800'
+                    }`}>{row.srNo}</td>
+                    <td className={`px-2 py-1 border text-xs ${
+                      isDarkMode ? 'border-gray-600 text-gray-200' : 'border-slate-400 text-slate-800'
                     }`}>
-                      No data available for selected date range
+                      {new Date(row.date).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })}
                     </td>
+                    <td className={`px-2 py-1 border text-xs text-right font-mono ${
+                      isDarkMode ? 'border-gray-600 text-gray-200' : 'border-slate-400 text-slate-800'
+                    }`}>{row.cashAmount > 0 ? row.cashAmount.toFixed(2) : '-'}</td>
+                    <td className={`px-2 py-1 border text-xs text-right font-mono ${
+                      isDarkMode ? 'border-gray-600 text-gray-200' : 'border-slate-400 text-slate-800'
+                    }`}>{row.cardAmount > 0 ? row.cardAmount.toFixed(2) : '-'}</td>
+                    <td className={`px-2 py-1 border text-xs text-right font-mono ${
+                      isDarkMode ? 'border-gray-600 text-gray-200' : 'border-slate-400 text-slate-800'
+                    }`}>{row.paytmAmount > 0 ? row.paytmAmount.toFixed(2) : '-'}</td>
+                    <td className={`px-2 py-1 border text-xs text-right font-mono ${
+                      isDarkMode ? 'border-gray-600 text-gray-200' : 'border-slate-400 text-slate-800'
+                    }`}>{row.phonepeAmount > 0 ? row.phonepeAmount.toFixed(2) : '-'}</td>
+                    <td className={`px-2 py-1 border text-xs text-right font-mono ${
+                      isDarkMode ? 'border-gray-600 text-gray-200' : 'border-slate-400 text-slate-800'
+                    }`}>{row.dtpAmount > 0 ? row.dtpAmount.toFixed(2) : '-'}</td>
                   </tr>
-                ) : (
-                  bankSettlementData.map((row) => (
-                    <tr key={row.date} className={`border-t ${
-                      isDarkMode ? 'border-gray-700 hover:bg-gray-700/50' : 'border-slate-200 hover:bg-slate-50'
-                    }`}>
-                      <td className="px-2 sm:px-3 py-1.5 sm:py-2">{row.srNo}</td>
-                      <td className="px-2 sm:px-3 py-1.5 sm:py-2 font-medium">
-                        {new Date(row.date).toLocaleDateString('en-IN', { 
-                          day: '2-digit', 
-                          month: 'short', 
-                          year: 'numeric' 
-                        })}
-                      </td>
-                      <td className="px-2 sm:px-3 py-1.5 sm:py-2 text-right font-mono">
-                        {row.cashAmount > 0 ? row.cashAmount.toFixed(2) : '-'}
-                      </td>
-                      <td className="px-2 sm:px-3 py-1.5 sm:py-2 text-right font-mono">
-                        {row.cardAmount > 0 ? row.cardAmount.toFixed(2) : '-'}
-                      </td>
-                      <td className="px-2 sm:px-3 py-1.5 sm:py-2 text-right font-mono">
-                        {row.paytmAmount > 0 ? row.paytmAmount.toFixed(2) : '-'}
-                      </td>
-                      <td className="px-2 sm:px-3 py-1.5 sm:py-2 text-right font-mono">
-                        {row.phonepeAmount > 0 ? row.phonepeAmount.toFixed(2) : '-'}
-                      </td>
-                      <td className="px-2 sm:px-3 py-1.5 sm:py-2 text-right font-mono">
-                        {row.dtpAmount > 0 ? row.dtpAmount.toFixed(2) : '-'}
-                      </td>
-                    </tr>
-                  ))
-                )}
-              </tbody>
-              {bankSettlementData.length > 0 && (
-                <tfoot className={`border-t-2 ${
-                  isDarkMode ? 'border-gray-600 bg-gray-700' : 'border-slate-300 bg-slate-50'
-                }`}>
-                  <tr className="font-bold">
-                    <td colSpan="2" className="px-2 sm:px-3 py-1.5 sm:py-2 text-xs sm:text-sm">Total</td>
-                    <td className={`px-2 sm:px-3 py-1.5 sm:py-2 text-right font-mono ${
-                      isDarkMode ? 'text-orange-400' : 'text-orange-600'
-                    }`}>
-                      {totals.cashAmount.toFixed(2)}
-                    </td>
-                    <td className={`px-2 sm:px-3 py-1.5 sm:py-2 text-right font-mono ${
-                      isDarkMode ? 'text-blue-400' : 'text-blue-600'
-                    }`}>
-                      {totals.cardAmount.toFixed(2)}
-                    </td>
-                    <td className={`px-2 sm:px-3 py-1.5 sm:py-2 text-right font-mono ${
-                      isDarkMode ? 'text-purple-400' : 'text-purple-600'
-                    }`}>
-                      {totals.paytmAmount.toFixed(2)}
-                    </td>
-                    <td className={`px-2 sm:px-3 py-1.5 sm:py-2 text-right font-mono ${
-                      isDarkMode ? 'text-indigo-400' : 'text-indigo-600'
-                    }`}>
-                      {totals.phonepeAmount.toFixed(2)}
-                    </td>
-                    <td className={`px-2 sm:px-3 py-1.5 sm:py-2 text-right font-mono ${
-                      isDarkMode ? 'text-green-400' : 'text-green-600'
-                    }`}>
-                      {totals.dtpAmount.toFixed(2)}
-                    </td>
-                  </tr>
-                </tfoot>
+                ))
               )}
-            </table>
-          </div>
+              {bankSettlementData.length > 0 && (
+                <tr className={isDarkMode ? 'bg-gray-900' : 'bg-slate-200'}>
+                  <td colSpan="2" className={`px-2 py-1 border text-xs font-bold ${
+                    isDarkMode ? 'border-gray-600 text-white' : 'border-slate-400 text-slate-900'
+                  }`}>Total</td>
+                  <td className={`px-2 py-1 border text-xs font-bold text-right font-mono ${
+                    isDarkMode ? 'border-gray-600 text-white' : 'border-slate-400 text-slate-900'
+                  }`}>{totals.cashAmount.toFixed(2)}</td>
+                  <td className={`px-2 py-1 border text-xs font-bold text-right font-mono ${
+                    isDarkMode ? 'border-gray-600 text-white' : 'border-slate-400 text-slate-900'
+                  }`}>{totals.cardAmount.toFixed(2)}</td>
+                  <td className={`px-2 py-1 border text-xs font-bold text-right font-mono ${
+                    isDarkMode ? 'border-gray-600 text-white' : 'border-slate-400 text-slate-900'
+                  }`}>{totals.paytmAmount.toFixed(2)}</td>
+                  <td className={`px-2 py-1 border text-xs font-bold text-right font-mono ${
+                    isDarkMode ? 'border-gray-600 text-white' : 'border-slate-400 text-slate-900'
+                  }`}>{totals.phonepeAmount.toFixed(2)}</td>
+                  <td className={`px-2 py-1 border text-xs font-bold text-right font-mono ${
+                    isDarkMode ? 'border-gray-600 text-white' : 'border-slate-400 text-slate-900'
+                  }`}>{totals.dtpAmount.toFixed(2)}</td>
+                </tr>
+              )}
+            </tbody>
+          </table>
         </div>
 
         {/* Info Note */}
-        <div className={`text-xs sm:text-sm p-2 sm:p-3 rounded-lg ${
-          isDarkMode ? 'bg-gray-700 text-gray-300' : 'bg-blue-50 text-slate-700'
+        <div className={`text-xs p-2 rounded border ${
+          isDarkMode ? 'border-gray-600 bg-gray-700 text-gray-300' : 'border-slate-300 bg-slate-50 text-slate-700'
         }`}>
           <strong className={isDarkMode ? 'text-white' : 'text-slate-800'}>Note:</strong> Amounts include settlements and customer receipts for each payment mode.
-          This report helps verify digital payment settlements with bank deposits.
         </div>
       </CardContent>
     </Card>

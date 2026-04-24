@@ -1613,7 +1613,17 @@ const ZAPTRStyleCalculator = () => {
           y += sp(7);
         }
 
-        const tbl = { theme: 'grid', styles: { font: 'helvetica', fontSize: fs(11), cellPadding: sp(2.2), minCellHeight: sp(4), lineWidth: 0.1, lineColor: [0,0,0], textColor: [0,0,0] }, headStyles: { fillColor: false, textColor: [0,0,0], fontStyle: 'bold', fontSize: fs(11), minCellHeight: sp(4) }, alternateRowStyles: { fillColor: [245, 245, 245] }, margin: { top: 10, bottom: 6, left: 14, right: 14 } };
+        const tbl = { theme: 'grid', styles: { font: 'helvetica', fontSize: fs(11), cellPadding: sp(2.2), minCellHeight: sp(4), lineWidth: 0.1, lineColor: [0,0,0], textColor: [0,0,0], fillColor: [255,255,255] }, headStyles: { fillColor: [255,255,255], textColor: [0,0,0], fontStyle: 'bold', fontSize: fs(11), minCellHeight: sp(4) }, margin: { top: 10, bottom: 6, left: 14, right: 14 } };
+        // Wrap each row so Sr 1 is white, Sr 2 grey, Sr 3 white, etc. Per-cell style survives all autoTable overrides.
+        const stripe = (rows) => rows.map((row, idx) => {
+          const fillColor = idx % 2 === 0 ? [255, 255, 255] : [245, 245, 245];
+          return row.map((cell) => {
+            if (cell !== null && typeof cell === 'object' && !Array.isArray(cell)) {
+              return { ...cell, styles: { ...(cell.styles || {}), fillColor } };
+            }
+            return { content: String(cell), styles: { fillColor } };
+          });
+        });
         const sectionHeading = (label) => {
           if (y > ph - 20) { doc.addPage(); y = 15; }
           doc.setFont('helvetica', 'bold');
@@ -1628,14 +1638,14 @@ const ZAPTRStyleCalculator = () => {
 
         // Summary (heading removed for space)
         sectionGap();
-        doc.autoTable({ startY: y, ...tbl, head: [['Category', 'Litres', 'Amount']], body: [
+        doc.autoTable({ startY: y, ...tbl, head: [['Category', 'Litres', 'Amount']], body: stripe([
           ['Fuel Sales', stats.totalLiters.toFixed(2), stats.totalFuelAmount.toFixed(2)],
           ['Credit Sales', stats.creditLiters.toFixed(2), stats.creditAmount.toFixed(2)],
           ['Settlement', '-', stats.totalSettlement.toFixed(2)],
           ['Income', '-', stats.otherIncome.toFixed(2)],
           ['Expenses', '-', stats.totalExpenses.toFixed(2)],
           ['Cash in Hand', '-', stats.cashInHand.toFixed(2)]
-        ], columnStyles: { 1: { halign: 'right' }, 2: { halign: 'right' } } });
+        ]), columnStyles: { 1: { halign: 'right' }, 2: { halign: 'right' } } });
         y = doc.lastAutoTable.finalY + sp(6);
 
         // Sales Records (heading removed for space)
@@ -1643,7 +1653,7 @@ const ZAPTRStyleCalculator = () => {
           sectionGap();
           const salesBody = todaySales.map((s, i) => [i+1, s.nozzle + ' - ' + s.fuelType, s.startReading, s.endReading, s.testing || 0, s.rate, s.liters.toFixed(2), s.amount.toFixed(2)]);
           salesBody.push([{content: 'Total', colSpan: 6, styles: {fontStyle: 'bold'}}, stats.totalLiters.toFixed(2), stats.totalFuelAmount.toFixed(2)]);
-          doc.autoTable({ startY: y, ...tbl, head: [['#', 'Description', 'Start', 'End', 'Test', 'Rate', 'Litres', 'Amount']], body: salesBody, columnStyles: { 0: {halign:'center', cellWidth: 12, overflow: 'visible'}, 2: {halign:'right'}, 3: {halign:'right'}, 4: {halign:'right'}, 5: {halign:'right'}, 6: {halign:'right'}, 7: {halign:'right'} } });
+          doc.autoTable({ startY: y, ...tbl, head: [['#', 'Description', 'Start', 'End', 'Test', 'Rate', 'Litres', 'Amount']], body: stripe(salesBody), columnStyles: { 0: {halign:'center', cellWidth: 12, overflow: 'visible'}, 2: {halign:'right'}, 3: {halign:'right'}, 4: {halign:'right'}, 5: {halign:'right'}, 6: {halign:'right'}, 7: {halign:'right'} } });
           y = doc.lastAutoTable.finalY + sp(6);
         }
 
@@ -1652,7 +1662,7 @@ const ZAPTRStyleCalculator = () => {
           sectionGap();
           const creditBody = todayCredits.map((c, i) => [i+1, c.customerName, c.rate || '-', c.liters ? c.liters.toFixed(2) : '-', c.amount.toFixed(2)]);
           creditBody.push([{content: 'Total', colSpan: 3, styles: {fontStyle: 'bold'}}, stats.creditLiters.toFixed(2), stats.creditAmount.toFixed(2)]);
-          doc.autoTable({ startY: y, ...tbl, head: [['#', 'Credit', 'Rate', 'Litres', 'Amount']], body: creditBody, columnStyles: { 0: {halign:'center', cellWidth: 12, overflow: 'visible'}, 2: {halign:'right'}, 3: {halign:'right'}, 4: {halign:'right'} } });
+          doc.autoTable({ startY: y, ...tbl, head: [['#', 'Credit', 'Rate', 'Litres', 'Amount']], body: stripe(creditBody), columnStyles: { 0: {halign:'center', cellWidth: 12, overflow: 'visible'}, 2: {halign:'right'}, 3: {halign:'right'}, 4: {halign:'right'} } });
           y = doc.lastAutoTable.finalY + sp(6);
         }
 
@@ -1661,7 +1671,7 @@ const ZAPTRStyleCalculator = () => {
           sectionHeading('Settlement Records');
           const settBody = todaySettlements.map((s, i) => [i+1, s.description || 'Settlement', s.amount.toFixed(2)]);
           settBody.push([{content: 'Total', colSpan: 2, styles: {fontStyle: 'bold'}}, todaySettlements.reduce((sum, s) => sum + s.amount, 0).toFixed(2)]);
-          doc.autoTable({ startY: y, ...tbl, body: settBody, columnStyles: { 0: {halign:'center', cellWidth: 12, overflow: 'visible'}, 2: {halign:'right'} } });
+          doc.autoTable({ startY: y, ...tbl, body: stripe(settBody), columnStyles: { 0: {halign:'center', cellWidth: 12, overflow: 'visible'}, 2: {halign:'right'} } });
           y = doc.lastAutoTable.finalY + sp(6);
         }
 
@@ -1670,7 +1680,7 @@ const ZAPTRStyleCalculator = () => {
           sectionHeading('Income Records');
           const incBody = todayIncome.map((inc, i) => [i+1, inc.description, inc.amount.toFixed(2)]);
           incBody.push([{content: 'Total', colSpan: 2, styles: {fontStyle: 'bold'}}, todayIncome.reduce((sum, i) => sum + i.amount, 0).toFixed(2)]);
-          doc.autoTable({ startY: y, ...tbl, body: incBody, columnStyles: { 0: {halign:'center', cellWidth: 12, overflow: 'visible'}, 2: {halign:'right'} } });
+          doc.autoTable({ startY: y, ...tbl, body: stripe(incBody), columnStyles: { 0: {halign:'center', cellWidth: 12, overflow: 'visible'}, 2: {halign:'right'} } });
           y = doc.lastAutoTable.finalY + sp(6);
         }
 
@@ -1679,7 +1689,7 @@ const ZAPTRStyleCalculator = () => {
           sectionHeading('Expense Records');
           const expBody = todayExpenses.map((exp, i) => [i+1, exp.description, exp.amount.toFixed(2)]);
           expBody.push([{content: 'Total', colSpan: 2, styles: {fontStyle: 'bold'}}, todayExpenses.reduce((sum, e) => sum + e.amount, 0).toFixed(2)]);
-          doc.autoTable({ startY: y, ...tbl, body: expBody, columnStyles: { 0: {halign:'center', cellWidth: 12, overflow: 'visible'}, 2: {halign:'right'} } });
+          doc.autoTable({ startY: y, ...tbl, body: stripe(expBody), columnStyles: { 0: {halign:'center', cellWidth: 12, overflow: 'visible'}, 2: {halign:'right'} } });
           y = doc.lastAutoTable.finalY + sp(6);
         }
 
@@ -1688,7 +1698,7 @@ const ZAPTRStyleCalculator = () => {
           sectionHeading('Receipt Records');
           const recBody = todayReceipts.map((p, i) => [i+1, p.customerName || 'Unknown', p.paymentType || p.mode || '-', p.amount.toFixed(2)]);
           recBody.push([{content: 'Total', colSpan: 3, styles: {fontStyle: 'bold'}}, todayReceipts.reduce((sum, p) => sum + p.amount, 0).toFixed(2)]);
-          doc.autoTable({ startY: y, ...tbl, body: recBody, columnStyles: { 0: {halign:'center', cellWidth: 12, overflow: 'visible'}, 3: {halign:'right'} } });
+          doc.autoTable({ startY: y, ...tbl, body: stripe(recBody), columnStyles: { 0: {halign:'center', cellWidth: 12, overflow: 'visible'}, 3: {halign:'right'} } });
           y = doc.lastAutoTable.finalY + sp(6);
         }
 

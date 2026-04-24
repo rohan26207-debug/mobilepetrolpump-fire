@@ -6,21 +6,23 @@ Android WebView. The frontend makes zero calls to this backend. It exists only t
 satisfy the supervisor program definition (`uvicorn server:app`) in the dev
 environment. Keep this file tiny; do not add business logic here.
 """
-from fastapi import FastAPI, APIRouter
+from typing import Dict
+
+from fastapi import APIRouter, FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-app = FastAPI(title="M.Pump (offline) - idle backend")
+app: FastAPI = FastAPI(title="M.Pump (offline) - idle backend")
 
-api_router = APIRouter(prefix="/api")
+api_router: APIRouter = APIRouter(prefix="/api")
 
 
 @api_router.get("/")
-async def root():
+async def root() -> Dict[str, str]:
     return {"status": "ok", "note": "Offline app - backend is idle."}
 
 
 @api_router.get("/status")
-async def status():
+async def status() -> Dict[str, str]:
     return {"status": "ok"}
 
 

@@ -656,34 +656,6 @@ const ZAPTRStyleCalculator = () => {
     const totalExpensesMPP = directExpensesMPP + creditExpensesMPP;
     const totalExpenses = directExpenses + creditExpenses;
     
-    // Debug logging for income/expenses
-    console.log('=== INCOME/EXPENSE DEBUG ===');
-    console.log('Today Income:', todayIncome.length, todayIncome.map(i => ({ id: i.id, mpp: i.mpp, type: typeof i.mpp, amount: i.amount })));
-    console.log('Today Expenses:', todayExpenses.length, todayExpenses.map(e => ({ id: e.id, mpp: e.mpp, type: typeof e.mpp, amount: e.amount })));
-    console.log('Today Credits:', todayCredits.length, todayCredits.map(c => ({ 
-      id: c.id, 
-      mpp: c.mpp, 
-      incomeEntries: c.incomeEntries?.length || 0,
-      expenseEntries: c.expenseEntries?.length || 0
-    })));
-    console.log('Income Stats:', {
-      directIncomeNoMPP,
-      directIncomeMPP,
-      creditIncomeNoMPP,
-      creditIncomeMPP,
-      otherIncomeNoMPP,
-      otherIncomeMPP
-    });
-    console.log('Expense Stats:', {
-      directExpensesNoMPP,
-      directExpensesMPP,
-      creditExpensesNoMPP,
-      creditExpensesMPP,
-      totalExpensesNoMPP,
-      totalExpensesMPP
-    });
-    console.log('===========================');
-    
     // Calculate credit amount and liters (separated by MPP tag)
     const creditNoMPP = todayCredits.filter(c => !c.mpp && c.mpp !== true && c.mpp !== 'true');
     const creditWithMPP = todayCredits.filter(c => c.mpp === true || c.mpp === 'true');
@@ -724,19 +696,7 @@ const ZAPTRStyleCalculator = () => {
     const todaySettlements = settlementData.filter(s => s.date === selectedDate);
     const settlementNoMPP = todaySettlements.filter(s => !s.mpp).reduce((sum, s) => sum + (s.amount || 0), 0);
     
-    // MPP calculations with debugging
-    console.log('=== getTodayStats - MPP CALCULATIONS ===');
-    console.log('Total today sales:', todaySales.length);
-    console.log('All sales with MPP info:', todaySales.map(s => ({ 
-      id: s.id, 
-      mpp: s.mpp, 
-      type: typeof s.mpp,
-      amount: s.amount,
-      liters: s.liters
-    })));
-    
     const salesWithMPP = todaySales.filter(s => s.mpp === true || s.mpp === 'true');
-    console.log('Sales WITH MPP (filtered):', salesWithMPP.length, salesWithMPP.map(s => ({ id: s.id, amount: s.amount })));
     
     const fuelSalesMPP = salesWithMPP.reduce((sum, sale) => sum + sale.amount, 0);
     const fuelLitersMPP = salesWithMPP.reduce((sum, sale) => sum + sale.liters, 0);
@@ -745,27 +705,11 @@ const ZAPTRStyleCalculator = () => {
     const mppCash = fuelSalesMPP - creditAmountMPP - totalExpensesMPP + otherIncomeMPP - settlementMPP;
     const hasMPPData = fuelSalesMPP > 0 || creditAmountMPP > 0 || settlementMPP > 0 || otherIncomeMPP > 0 || totalExpensesMPP > 0;
     
-    console.log('MPP Stats:', {
-      fuelSalesMPP,
-      fuelLitersMPP,
-      creditAmountMPP,
-      settlementMPP,
-      mppCash,
-      hasMPPData
-    });
-    
     // Fuel sales without MPP (for left column)
     const salesNoMPP = todaySales.filter(sale => sale.type === 'cash' && !sale.mpp && sale.mpp !== true && sale.mpp !== 'true');
-    console.log('Sales NO MPP (filtered):', salesNoMPP.length, salesNoMPP.map(s => ({ id: s.id, amount: s.amount })));
     
     const fuelSalesNoMPP = fuelCashSales;
     const fuelLitersNoMPP = salesNoMPP.reduce((sum, sale) => sum + sale.liters, 0);
-    
-    console.log('Left Column Stats:', {
-      fuelSalesNoMPP,
-      fuelLitersNoMPP
-    });
-    console.log('========================================');
     
     // Total fuel amount and liters (all sales including MPP)
     const totalLiters = todaySales.reduce((sum, sale) => sum + sale.liters, 0);

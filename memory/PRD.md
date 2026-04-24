@@ -40,10 +40,12 @@ React-based petrol pump management application. 100% offline with localStorage o
 - Add app icon for Android build.
 
 ## Code Review Cleanup (Feb 2026)
-- **Deleted dead Firebase/Auth files** (~1500 lines): `services/firebase.js`, `services/firebaseSync.js`, `contexts/AuthContext.js`, `components/{LoginScreen,SyncStatus,DeviceLinking,SyncDebugPanel}.jsx`. Removed `firebase` npm dep (`yarn remove firebase`). Verified no live imports remain.
-- **Slimmed backend to stub** (442 → 35 lines): Replaced `server.py` with minimal FastAPI stub serving `/api/status`. Deleted unused `auth_models.py`, `auth_utils.py`, `token_utils.py`, `sync_models.py`. Supervisor-safe; frontend unaffected (app is offline).
-- **Empty catch hardened**: `HeaderSettings.jsx:270` now logs `console.warn` for corrupt contact-info parse instead of silent swallow.
-- **Perf**: Added `useMemo` for ledger totals in `CustomerLedger.jsx` (two `.reduce()` calls previously running on every render) — totals now computed once per `ledgerData` change.
-- **Hook deps audited** (`use-auto-backup.js`, `use-auto-backup-weekly.js`, `ZAPTRStyleCalculator.jsx`): No genuine bugs. Existing dep arrays correctly exclude stable refs (imports, module-level constants, `useRef`, state setters). ESLint (`react-hooks/exhaustive-deps`) reports 0 issues.
-- **Security note**: localStorage "sensitive data" findings rejected — this app by design stores non-sensitive business data entirely on-device for offline use; encryption adds no security since an attacker with device access also has the decryption code.
-- Synced fresh `yarn build` to `/app/android/app/src/main/assets/www/` — ready for APK rebuild.
+- **Deleted dead Firebase/Auth files** (~1500 lines): `services/firebase.js`, `services/firebaseSync.js`, `contexts/AuthContext.js`, `components/{LoginScreen,SyncStatus,DeviceLinking,SyncDebugPanel,AuthScreen}.jsx`, `services/{authService,syncService}.js`. Removed `firebase` npm dep.
+- **Slimmed backend to stub** (442 → 38 lines): `server.py` is a minimal typed FastAPI stub serving `/api/status`. Deleted unused `auth_models.py`, `auth_utils.py`, `token_utils.py`, `sync_models.py`. 100% type-hint coverage on remaining functions.
+- **Empty catch hardened**: `HeaderSettings.jsx:270` logs via `console.warn`.
+- **Perf**: Added `useMemo` for ledger totals in `CustomerLedger.jsx`.
+- **Perf + privacy (2nd pass)**: Removed two large `=== DEBUG ===` / `=== MPP CALCULATIONS ===` console-log blocks from `ZAPTRStyleCalculator.jsx` that fired on **every render** via the stats memo (dumped customer data to production console).
+- **Hook deps audited** (`use-auto-backup.js`, `use-auto-backup-weekly.js`, `Settlement.jsx`, `ZAPTRStyleCalculator.jsx`): No genuine bugs. All flagged "missing deps" were stable refs (imports, module constants, `useRef`, state setters). ESLint `react-hooks/exhaustive-deps` reports 0 issues. False-positive findings from the review tool.
+- **Rejected (by design)**: localStorage encryption — the app is intentionally offline with on-device business data; encryption provides no security benefit since an attacker with device access also has the decrypt key.
+- **Deferred to P2**: Component refactor of `ZAPTRStyleCalculator`, `HeaderSettings`, `PaymentReceived`, `CreditSales`; blanket console.log removal.
+

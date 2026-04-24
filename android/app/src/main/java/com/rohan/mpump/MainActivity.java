@@ -11,6 +11,9 @@ import android.os.Environment;
 import android.provider.MediaStore;
 import android.util.Base64;
 import android.util.Log;
+import android.view.View;
+import android.view.animation.AlphaAnimation;
+import android.view.animation.Animation;
 import android.webkit.DownloadListener;
 import android.webkit.JavascriptInterface;
 import android.webkit.ValueCallback;
@@ -30,6 +33,7 @@ import java.io.OutputStream;
 public class MainActivity extends AppCompatActivity {
 
     private WebView webView;
+    private View splashView;
     private ValueCallback<Uri[]> fileUploadCallback;
     private static final int FILE_CHOOSER_REQUEST = 100;
     private static final String TAG = "ManagerPump";
@@ -39,8 +43,9 @@ public class MainActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        webView = new WebView(this);
-        setContentView(webView);
+        setContentView(R.layout.activity_main);
+        webView = findViewById(R.id.webview);
+        splashView = findViewById(R.id.splash);
 
         WebSettings settings = webView.getSettings();
         settings.setJavaScriptEnabled(true);
@@ -53,6 +58,14 @@ public class MainActivity extends AppCompatActivity {
         settings.setMixedContentMode(WebSettings.MIXED_CONTENT_ALWAYS_ALLOW);
         settings.setUseWideViewPort(true);
         settings.setLoadWithOverviewMode(true);
+        // --- Startup speed tweaks ---
+        // Cache compiled JS + parsed assets between launches
+        settings.setCacheMode(WebSettings.LOAD_DEFAULT);
+        // Accept both cached resources and network content (WebView can cache file:// assets too)
+        // Note: CACHE_API is a no-op with file:// URLs but still avoids unnecessary re-reads
+        webView.setLayerType(View.LAYER_TYPE_HARDWARE, null);
+        webView.setBackgroundColor(0xFF1F2937); // match splash to prevent white flash
+        webView.setInitialScale(0); // keep full-page zoom level
 
         webView.addJavascriptInterface(new WebAppInterface(), "MPumpCalcAndroid");
 
@@ -97,8 +110,30 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
-        webView.setWebViewClient(new WebViewClient());
+        webView.setWebViewClient(new WebViewClient() {
+            @Override
+            public void onPageFinished(WebView view, String url) {
+                super.onPageFinished(view, url);
+                // Give React one paint tick to mount, then fade out splash
+                view.postDelayed(() -> hideSplash(), 250);
+            }
+        });
+
         webView.loadUrl("file:///android_asset/www/index.html");
+    }
+
+    private void hideSplash() {
+        if (splashView == null || splashView.getVisibility() == View.GONE) return;
+        AlphaAnimation fade = new AlphaAnimation(1f, 0f);
+        fade.setDuration(250);
+        fade.setAnimationListener(new Animation.AnimationListener() {
+            @Override public void onAnimationStart(Animation a) {}
+            @Override public void onAnimationRepeat(Animation a) {}
+            @Override public void onAnimationEnd(Animation a) {
+                splashView.setVisibility(View.GONE);
+            }
+        });
+        splashView.startAnimation(fade);
     }
 
     @Override

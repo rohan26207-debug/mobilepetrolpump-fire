@@ -2622,20 +2622,22 @@ window.onload = function() {
               onUpdateCustomer={handleUpdateCustomer}
             />
 
-            {/* Hidden-trigger Settings dialog, opened by Balance → Backup tab */}
-            <HeaderSettings 
-              isDarkMode={isDarkMode}
-              fuelSettings={fuelSettings}
-              setFuelSettings={setFuelSettings}
-              customers={customers}
-              onAddCustomer={handleAddCustomer}
-              onDeleteCustomer={handleDeleteCustomer}
-              onUpdateCustomer={handleUpdateCustomer}
-              open={backupDialogOpen}
-              onOpenChange={setBackupDialogOpen}
-              defaultTab="backup"
-              hideTrigger={true}
-            />
+            {/* Hidden-trigger Settings dialog, opened by Balance → Backup tab (mount on-demand) */}
+            {backupDialogOpen && (
+              <HeaderSettings 
+                isDarkMode={isDarkMode}
+                fuelSettings={fuelSettings}
+                setFuelSettings={setFuelSettings}
+                customers={customers}
+                onAddCustomer={handleAddCustomer}
+                onDeleteCustomer={handleDeleteCustomer}
+                onUpdateCustomer={handleUpdateCustomer}
+                open={backupDialogOpen}
+                onOpenChange={setBackupDialogOpen}
+                defaultTab="backup"
+                hideTrigger={true}
+              />
+            )}
             
             <div 
               className="flex items-center gap-2 sm:gap-3"

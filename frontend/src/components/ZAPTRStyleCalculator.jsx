@@ -1628,9 +1628,9 @@ const ZAPTRStyleCalculator = () => {
           if (y > ph - 20) { doc.addPage(); y = 15; }
           doc.setFont('helvetica', 'bold');
           doc.setFontSize(11);
-          doc.text(label, 14, y);
-          // Heading sits directly above the table (no empty gap)
-          y += 4.5;
+          doc.text(label, 14, y + 3.5);
+          // Table starts IMMEDIATELY below the heading text (no empty gap)
+          y += 4.2;
         };
         const sectionGap = () => {
           if (y > ph - 20) { doc.addPage(); y = 15; }
@@ -1663,7 +1663,7 @@ const ZAPTRStyleCalculator = () => {
           const creditBody = todayCredits.map((c, i) => [i+1, c.customerName, c.rate || '-', c.liters ? c.liters.toFixed(2) : '-', c.amount.toFixed(2)]);
           creditBody.push([{content: 'Total', colSpan: 3, styles: {fontStyle: 'bold'}}, stats.creditLiters.toFixed(2), stats.creditAmount.toFixed(2)]);
           doc.autoTable({ startY: y, ...tbl, head: [['#', 'Credit', 'Rate', 'Litres', 'Amount']], body: stripe(creditBody), columnStyles: { 0: {halign:'center', cellWidth: 12, overflow: 'visible'}, 2: {halign:'right'}, 3: {halign:'right'}, 4: {halign:'right'} } });
-          y = doc.lastAutoTable.finalY + sp(6);
+          y = doc.lastAutoTable.finalY + sp(1.5);
         }
 
         // Settlement Records
@@ -1672,7 +1672,7 @@ const ZAPTRStyleCalculator = () => {
           const settBody = todaySettlements.map((s, i) => [i+1, s.description || 'Settlement', s.amount.toFixed(2)]);
           settBody.push([{content: 'Total', colSpan: 2, styles: {fontStyle: 'bold'}}, todaySettlements.reduce((sum, s) => sum + s.amount, 0).toFixed(2)]);
           doc.autoTable({ startY: y, ...tbl, body: stripe(settBody), columnStyles: { 0: {halign:'center', cellWidth: 12, overflow: 'visible'}, 2: {halign:'right'} } });
-          y = doc.lastAutoTable.finalY + sp(6);
+          y = doc.lastAutoTable.finalY + sp(1.5);
         }
 
         // Income Records
@@ -1681,7 +1681,7 @@ const ZAPTRStyleCalculator = () => {
           const incBody = todayIncome.map((inc, i) => [i+1, inc.description, inc.amount.toFixed(2)]);
           incBody.push([{content: 'Total', colSpan: 2, styles: {fontStyle: 'bold'}}, todayIncome.reduce((sum, i) => sum + i.amount, 0).toFixed(2)]);
           doc.autoTable({ startY: y, ...tbl, body: stripe(incBody), columnStyles: { 0: {halign:'center', cellWidth: 12, overflow: 'visible'}, 2: {halign:'right'} } });
-          y = doc.lastAutoTable.finalY + sp(6);
+          y = doc.lastAutoTable.finalY + sp(1.5);
         }
 
         // Expense Records
@@ -1690,7 +1690,7 @@ const ZAPTRStyleCalculator = () => {
           const expBody = todayExpenses.map((exp, i) => [i+1, exp.description, exp.amount.toFixed(2)]);
           expBody.push([{content: 'Total', colSpan: 2, styles: {fontStyle: 'bold'}}, todayExpenses.reduce((sum, e) => sum + e.amount, 0).toFixed(2)]);
           doc.autoTable({ startY: y, ...tbl, body: stripe(expBody), columnStyles: { 0: {halign:'center', cellWidth: 12, overflow: 'visible'}, 2: {halign:'right'} } });
-          y = doc.lastAutoTable.finalY + sp(6);
+          y = doc.lastAutoTable.finalY + sp(1.5);
         }
 
         // Receipt Records
@@ -1699,7 +1699,7 @@ const ZAPTRStyleCalculator = () => {
           const recBody = todayReceipts.map((p, i) => [i+1, p.customerName || 'Unknown', p.paymentType || p.mode || '-', p.amount.toFixed(2)]);
           recBody.push([{content: 'Total', colSpan: 3, styles: {fontStyle: 'bold'}}, todayReceipts.reduce((sum, p) => sum + p.amount, 0).toFixed(2)]);
           doc.autoTable({ startY: y, ...tbl, body: stripe(recBody), columnStyles: { 0: {halign:'center', cellWidth: 12, overflow: 'visible'}, 3: {halign:'right'} } });
-          y = doc.lastAutoTable.finalY + sp(6);
+          y = doc.lastAutoTable.finalY + sp(1.5);
         }
 
         // Bank Settlement Report
@@ -1711,7 +1711,7 @@ const ZAPTRStyleCalculator = () => {
         const phonepeT = todaySettlements.filter(s=>s.description&&s.description.toLowerCase().includes('phonepe')).reduce((s,v)=>s+v.amount,0) + todayReceipts.filter(p=>matchR(p,'phonepe')).reduce((s,p)=>s+p.amount,0);
         const dtpT = todaySettlements.filter(s=>s.description&&s.description.toLowerCase().includes('dtp')).reduce((s,v)=>s+v.amount,0) + todayReceipts.filter(p=>matchR(p,'dtp')).reduce((s,p)=>s+p.amount,0);
         const gt = cashT+cardT+paytmT+phonepeT+dtpT;
-        doc.autoTable({ startY: y, ...tbl, body: [['Cash', cashT.toFixed(2)],['Card', cardT.toFixed(2)],['Paytm', paytmT.toFixed(2)],['PhonePe', phonepeT.toFixed(2)],['DTP', dtpT.toFixed(2)],['Total', gt.toFixed(2)]], columnStyles: { 1: {halign:'right'} } });
+        doc.autoTable({ startY: y, ...tbl, body: stripe([['Cash', cashT.toFixed(2)],['Card', cardT.toFixed(2)],['Paytm', paytmT.toFixed(2)],['PhonePe', phonepeT.toFixed(2)],['DTP', dtpT.toFixed(2)],['Total', gt.toFixed(2)]]), columnStyles: { 1: {halign:'right'} } });
 
         return doc;
       };

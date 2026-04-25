@@ -218,11 +218,17 @@ const BankSettlement = ({
   // ---------------- Print / PDF ----------------
   const handlePrint = () => {
     try {
-      // Use jsPDF + native viewer in Android, browser print window on web
+      // Always generate via jsPDF. In Android WebView, hand to native bridge so
+      // the file is saved to Downloads and the viewer opens. On web, trigger a
+      // direct browser download — same UX as the operating-date PDF button.
+      const doc = generatePdfDoc();
+      const fileName = `Bank_Settlement_${fromDate}_to_${toDate}.pdf`;
+
       if (window.MPumpCalcAndroid && typeof window.MPumpCalcAndroid.openPdfWithViewer === 'function') {
-        generatePDFForAndroid();
+        const base64 = doc.output('dataurlstring').split(',')[1];
+        window.MPumpCalcAndroid.openPdfWithViewer(base64, fileName);
       } else {
-        generateHTMLForWeb();
+        doc.save(fileName);
       }
     } catch (error) {
       console.error('Print error:', error);
@@ -230,7 +236,8 @@ const BankSettlement = ({
     }
   };
 
-  const generatePDFForAndroid = () => {
+  // Build the jsPDF document (shared between Android & web flows)
+  const generatePdfDoc = () => {
     const doc = new jsPDF({ orientation: 'landscape' });
     let yPos = 14;
     doc.setFontSize(16);
@@ -264,49 +271,7 @@ const BankSettlement = ({
     const footerY = doc.internal.pageSize.height - 8;
     doc.setFontSize(8);
     doc.text(`Generated on: ${new Date().toLocaleString('en-IN')}`, doc.internal.pageSize.width / 2, footerY, { align: 'center' });
-
-    const base64 = doc.output('dataurlstring').split(',')[1];
-    const fileName = `Bank_Settlement_${fromDate}_to_${toDate}.pdf`;
-    window.MPumpCalcAndroid.openPdfWithViewer(base64, fileName);
-  };
-
-  const generateHTMLForWeb = () => {
-    const headerCells = `<th>Sr.No<th>Date<th>Cash in Hand${dynamicTypes.map((c) => `<th>${c.label}`).join('')}`;
-    const bodyRows = rows.map((r) =>
-      `<tr><td class="c">${r.srNo}<td class="c">${r.date}<td class="r">${fmt(r.cashInHand)}${dynamicTypes.map((c) => `<td class="r">${fmt(r.colSums[c.key])}`).join('')}</tr>`
-    ).join('');
-    const totalCells = `<tr class="t"><td colspan="2" class="r">Total<td class="r">${totals.cashInHand.toFixed(2)}${dynamicTypes.map((c) => `<td class="r">${totals.cols[c.key].toFixed(2)}`).join('')}</tr>`;
-
-    const htmlContent = `
-<!DOCTYPE html>
-<html><head><meta charset="UTF-8"><title>Bank Settlement Report</title>
-<style>
-*{font-family:Helvetica,Arial,sans-serif;font-weight:normal}
-body{margin:10px;line-height:1.2;color:#000;font-size:12px}
-h1{font-size:18px;margin:0;text-align:center;text-transform:uppercase}
-p{font-size:12px;margin:2px 0;text-align:center}
-table{width:100%;border-collapse:collapse;font-size:10px;margin:3px 0}
-th{border:1px solid #000;padding:2px;text-align:center;font-size:10px;text-transform:uppercase}
-td{border:1px solid #000;padding:2px;font-size:10px}
-.r{text-align:right}.c{text-align:center}
-.print-btn{background:#000;color:white;border:none;padding:10px 20px;font-size:16px;cursor:pointer;margin:10px auto;display:block}
-@media print{body{margin:5mm}.no-print{display:none}@page{margin:5mm}}
-</style></head><body>
-<h1>Bank Settlement Report</h1>
-<p>${new Date(fromDate).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })} to ${new Date(toDate).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })}</p>
-<p>Filter: ${[includeDaywise && 'Operating Daywise', includeReceipts && 'Customer Receipt'].filter(Boolean).join(' + ') || '(none)'}</p>
-<table><tr>${headerCells}</tr>${bodyRows}${totalCells}</table>
-<div style="margin-top:10px;text-align:center;font-size:10px;border-top:1px solid #000;padding-top:5px">Generated on: ${new Date().toLocaleString()}</div>
-<div class="no-print" style="text-align:center;margin:20px 0"><button class="print-btn" onclick="window.print()">Print / Save as PDF</button></div>
-<script>window.onload=function(){setTimeout(function(){window.print();},500);};</script>
-</body></html>`;
-
-    const printWindow = window.open('', '_blank', 'width=800,height=600');
-    if (printWindow) {
-      printWindow.document.write(htmlContent);
-      printWindow.document.close();
-      printWindow.focus();
-    }
+    return doc;
   };
 
   // ---------------- UI ----------------

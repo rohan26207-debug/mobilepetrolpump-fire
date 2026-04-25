@@ -360,17 +360,7 @@ const CustomerLedger = ({ customers, creditData, payments, salesData, settlement
     }
 
     try {
-      // Check if running in Android WebView
-      const isAndroid = typeof window.MPumpCalcAndroid !== 'undefined';
-      
-      if (isAndroid) {
-        // Generate PDF using jsPDF for Android
-        generatePDFForAndroid(selectedCustomer);
-        return;
-      }
-      
-      // For web browser - use print dialog
-      generateHTMLForWeb(selectedCustomer);
+      generatePDFForAndroid(selectedCustomer);
     } catch (error) {
       console.error('Print error:', error);
       alert('Error generating report: ' + error.message);
@@ -447,8 +437,8 @@ const CustomerLedger = ({ customers, creditData, payments, salesData, settlement
       if (window.MPumpCalcAndroid && window.MPumpCalcAndroid.openPdfWithViewer) {
         window.MPumpCalcAndroid.openPdfWithViewer(pdfBase64, fileName);
       } else {
-        console.error('Android interface not available');
-        alert('PDF generation is only available in the Android app');
+        // Web: trigger automatic browser download
+        doc.save(fileName);
       }
     } catch (error) {
       console.error('Error generating PDF for Android:', error);

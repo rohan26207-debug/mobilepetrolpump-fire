@@ -402,17 +402,7 @@ const PaymentReceived = ({
   // Print/PDF functionality
   const handlePrint = () => {
     try {
-      // Check if running in Android WebView
-      const isAndroid = typeof window.MPumpCalcAndroid !== 'undefined';
-      
-      if (isAndroid) {
-        // Generate PDF using jsPDF for Android
-        generatePDFForAndroid();
-        return;
-      }
-      
-      // For web browser - use print dialog
-      generateHTMLForWeb();
+      generatePDFForAndroid();
     } catch (error) {
       console.error('Print error:', error);
       alert('Error generating report: ' + error.message);
@@ -481,8 +471,8 @@ const PaymentReceived = ({
       if (window.MPumpCalcAndroid && window.MPumpCalcAndroid.openPdfWithViewer) {
         window.MPumpCalcAndroid.openPdfWithViewer(pdfBase64, fileName);
       } else {
-        console.error('Android interface not available');
-        alert('PDF generation is only available in the Android app');
+        // Web: trigger automatic browser download (same as operating-date PDF button)
+        doc.save(fileName);
       }
     } catch (error) {
       console.error('Error generating PDF for Android:', error);

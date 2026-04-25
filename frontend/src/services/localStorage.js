@@ -223,7 +223,7 @@ class LocalStorageService {
     const existingTypes = this.getItem(this.keys.settlementTypes);
     if (!existingTypes || existingTypes.length === 0) {
       this.setSettlementTypes([
-        { id: 'builtin-cash', name: 'Cash', builtin: true },
+        { id: 'builtin-cash', name: 'CASH', builtin: true },
         { id: 'builtin-neft', name: 'NEFT', builtin: true },
         { id: 'builtin-rtgs', name: 'RTGS', builtin: true },
         { id: 'builtin-cheque', name: 'Cheque', builtin: true },
@@ -233,35 +233,37 @@ class LocalStorageService {
         { id: '4', name: 'PhonePe' }
       ]);
     } else {
-      // Migration: ensure built-in types (Cash/NEFT/RTGS/Cheque) exist exactly once
-      // and are flagged as builtin (non-deletable). Older installs that already
-      // contained user-added Cash/NEFT/RTGS/Cheque rows are deduped here.
-      const builtinNames = ['Cash', 'NEFT', 'RTGS', 'Cheque'];
+      // Migration: ensure built-in types exist exactly once and use the
+      // canonical display label. CASH is shown all-caps, others as below.
+      const builtins = [
+        { name: 'CASH', match: ['cash'] },
+        { name: 'NEFT', match: ['neft'] },
+        { name: 'RTGS', match: ['rtgs'] },
+        { name: 'Cheque', match: ['cheque'] },
+      ];
       const lc = (s) => (s || '').trim().toLowerCase();
       let changed = false;
       const seenBuiltins = new Set();
       const cleaned = existingTypes.filter((t) => {
-        const name = lc(t.name);
-        const isBuiltinName = builtinNames.some((b) => lc(b) === name);
-        if (isBuiltinName) {
-          if (seenBuiltins.has(name)) { changed = true; return false; } // drop dup
-          seenBuiltins.add(name);
-          return true;
+        const tlc = lc(t.name);
+        const matched = builtins.find((b) => b.match.includes(tlc));
+        if (matched) {
+          if (seenBuiltins.has(tlc)) { changed = true; return false; } // drop dup
+          seenBuiltins.add(tlc);
+          // Normalize to canonical label + builtin flag + stable id
+          if (t.name !== matched.name || !t.builtin || t.id !== `builtin-${tlc}`) {
+            t.name = matched.name;
+            t.builtin = true;
+            t.id = `builtin-${tlc}`;
+            changed = true;
+          }
         }
         return true;
       });
       // Add any missing built-ins
-      builtinNames.forEach((b) => {
-        if (!seenBuiltins.has(lc(b))) {
-          cleaned.unshift({ id: `builtin-${lc(b)}`, name: b, builtin: true });
-          changed = true;
-        }
-      });
-      // Mark existing built-in rows as builtin if not flagged
-      cleaned.forEach((t) => {
-        if (builtinNames.some((b) => lc(b) === lc(t.name)) && !t.builtin) {
-          t.builtin = true;
-          t.id = `builtin-${lc(t.name)}`;
+      builtins.forEach((b) => {
+        if (!seenBuiltins.has(lc(b.name))) {
+          cleaned.unshift({ id: `builtin-${lc(b.name)}`, name: b.name, builtin: true });
           changed = true;
         }
       });

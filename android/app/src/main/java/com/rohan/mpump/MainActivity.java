@@ -174,11 +174,17 @@ public class MainActivity extends AppCompatActivity {
 
     @Override
     public void onBackPressed() {
-        if (webView.canGoBack()) {
-            webView.goBack();
-        } else {
-            super.onBackPressed();
+        // The app must NEVER exit on back press. The user can only leave via
+        // the device Home button or by swiping up. Back navigates within the
+        // React app (closes dialogs, pops sub-pages, eventually rests on the
+        // Today Summary home screen).
+        if (webView != null) {
+            webView.evaluateJavascript(
+                "(function(){try{return (typeof window.MPumpAppHandleBack==='function')?(window.MPumpAppHandleBack()?'1':'0'):'no';}catch(e){return 'err';}})();",
+                value -> { /* result intentionally ignored — we never exit the app */ }
+            );
         }
+        // Deliberately do NOT call super.onBackPressed(); back is fully consumed.
     }
 
     @Override

@@ -89,6 +89,19 @@ const HeaderSettings = ({ isDarkMode, fuelSettings, setFuelSettings, customers, 
     setSettlementTypes(localStorageService.getSettlementTypes());
   }, []);
 
+  // Android back-button: if the Settings sheet (or any inline confirm) is open,
+  // close it instead of letting the global handler change tabs / exit the app.
+  useEffect(() => {
+    const onBack = (e) => {
+      if (clearAllConfirm.open) { e.preventDefault(); setClearAllConfirm({ open: false, typed: '' }); return; }
+      if (rangeDeleteConfirm.open) { e.preventDefault(); setRangeDeleteConfirm({ open: false, fromDate: '', toDate: '' }); return; }
+      if (showProPasswordDialog) { e.preventDefault(); setShowProPasswordDialog(false); return; }
+      if (settingsOpen) { e.preventDefault(); setSettingsOpen(false); return; }
+    };
+    window.addEventListener('mpump-back', onBack);
+    return () => window.removeEventListener('mpump-back', onBack);
+  }, [settingsOpen, clearAllConfirm.open, rangeDeleteConfirm.open, showProPasswordDialog]);
+
   // Date-range deletion (after inline confirmation gate)
   const performRangeDelete = (fromDate, toDate) => {
     try {

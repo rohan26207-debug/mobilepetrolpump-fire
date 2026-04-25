@@ -82,6 +82,18 @@ const PaymentReceived = ({
     setSettlementTypes(localStorageService.getSettlementTypes());
   }, []);
 
+  // Android back-button: close any open sheet/dialog within Receipt Manage.
+  useEffect(() => {
+    const onBack = (e) => {
+      if (deleteConfirm.show) { e.preventDefault(); setDeleteConfirm({ show: false, payment: null }); return; }
+      if (bulkDeleteConfirm.show) { e.preventDefault(); setBulkDeleteConfirm({ show: false, count: 0 }); return; }
+      if (editDialogOpen) { e.preventDefault(); setEditDialogOpen(false); return; }
+      if (recordReceiptOpen) { e.preventDefault(); setRecordReceiptOpen(false); return; }
+    };
+    window.addEventListener('mpump-back', onBack);
+    return () => window.removeEventListener('mpump-back', onBack);
+  }, [recordReceiptOpen, editDialogOpen, deleteConfirm.show, bulkDeleteConfirm.show]);
+
   // Close dropdown when clicking outside
   useEffect(() => {
     const handleClickOutside = (event) => {

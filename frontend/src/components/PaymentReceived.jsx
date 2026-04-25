@@ -817,7 +817,7 @@ const PaymentReceived = ({
                 className={`${isDarkMode ? 'bg-gray-700 border-gray-600 text-white hover:bg-gray-600' : ''}`}
               >
                 <Printer className="w-4 h-4 mr-2" />
-                Print
+                PDF
               </Button>
               <Button
                 variant="outline"

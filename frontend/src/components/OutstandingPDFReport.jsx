@@ -443,7 +443,7 @@ window.onload = function() {
               }`}
             >
               <Printer className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" />
-              Print Outs
+              PDF
             </Button>
             <Button
               onClick={handleExcelExport}

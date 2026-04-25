@@ -4,7 +4,7 @@ import { Input } from './ui/input';
 import { Label } from './ui/label';
 import { Button } from './ui/button';
 import { Checkbox } from './ui/checkbox';
-import { Calendar, Printer, FileSpreadsheet } from 'lucide-react';
+import { Calendar, FileText, FileSpreadsheet } from 'lucide-react';
 import * as XLSX from 'xlsx';
 import jsPDF from 'jspdf';
 import 'jspdf-autotable';
@@ -400,8 +400,8 @@ td{border:1px solid #000;padding:2px;font-size:10px}
                   : 'border-slate-400 text-slate-800 hover:bg-slate-100'
               }`}
             >
-              <Printer className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" />
-              Print
+              <FileText className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" />
+              PDF
             </Button>
             <Button
               onClick={handleExcelExport}

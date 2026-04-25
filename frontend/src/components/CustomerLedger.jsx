@@ -547,7 +547,7 @@ window.onload = function() {
           Report
         </TabsTrigger>
         <TabsTrigger value="print" className="flex-1 text-xs sm:text-sm" disabled={!showReport}>
-          Print
+          PDF
         </TabsTrigger>
       </TabsList>
 
@@ -681,7 +681,7 @@ window.onload = function() {
                 className="w-full bg-blue-600 hover:bg-blue-700 text-white"
               >
                 <Printer className="w-4 h-4 mr-2" />
-                Print Report
+                PDF
               </Button>
             </CardContent>
           </Card>

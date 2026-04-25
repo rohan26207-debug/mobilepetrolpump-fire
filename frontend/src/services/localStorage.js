@@ -223,11 +223,49 @@ class LocalStorageService {
     const existingTypes = this.getItem(this.keys.settlementTypes);
     if (!existingTypes || existingTypes.length === 0) {
       this.setSettlementTypes([
+        { id: 'builtin-cash', name: 'Cash', builtin: true },
+        { id: 'builtin-neft', name: 'NEFT', builtin: true },
+        { id: 'builtin-rtgs', name: 'RTGS', builtin: true },
+        { id: 'builtin-cheque', name: 'Cheque', builtin: true },
         { id: '1', name: 'Card' },
         { id: '2', name: 'DTP' },
         { id: '3', name: 'Paytm' },
         { id: '4', name: 'PhonePe' }
       ]);
+    } else {
+      // Migration: ensure built-in types (Cash/NEFT/RTGS/Cheque) exist exactly once
+      // and are flagged as builtin (non-deletable). Older installs that already
+      // contained user-added Cash/NEFT/RTGS/Cheque rows are deduped here.
+      const builtinNames = ['Cash', 'NEFT', 'RTGS', 'Cheque'];
+      const lc = (s) => (s || '').trim().toLowerCase();
+      let changed = false;
+      const seenBuiltins = new Set();
+      const cleaned = existingTypes.filter((t) => {
+        const name = lc(t.name);
+        const isBuiltinName = builtinNames.some((b) => lc(b) === name);
+        if (isBuiltinName) {
+          if (seenBuiltins.has(name)) { changed = true; return false; } // drop dup
+          seenBuiltins.add(name);
+          return true;
+        }
+        return true;
+      });
+      // Add any missing built-ins
+      builtinNames.forEach((b) => {
+        if (!seenBuiltins.has(lc(b))) {
+          cleaned.unshift({ id: `builtin-${lc(b)}`, name: b, builtin: true });
+          changed = true;
+        }
+      });
+      // Mark existing built-in rows as builtin if not flagged
+      cleaned.forEach((t) => {
+        if (builtinNames.some((b) => lc(b) === lc(t.name)) && !t.builtin) {
+          t.builtin = true;
+          t.id = `builtin-${lc(t.name)}`;
+          changed = true;
+        }
+      });
+      if (changed) this.setSettlementTypes(cleaned);
     }
   }
 
@@ -930,7 +968,7 @@ class LocalStorageService {
   getSettlementTypes() { return this.getItem(this.keys.settlementTypes) || []; }
   setSettlementTypes(types) { return this.setItem(this.keys.settlementTypes, types); }
   addSettlementType(name) { const types = this.getSettlementTypes(); const newType = { id: Date.now().toString(), name }; types.push(newType); types.sort((a,b)=>a.name.localeCompare(b.name)); this.setSettlementTypes(types); return newType; }
-  deleteSettlementType(id) { const types = this.getSettlementTypes(); const updated = types.filter(t => t.id !== id); this.setSettlementTypes(updated); return true; }
+  deleteSettlementType(id) { const types = this.getSettlementTypes(); const target = types.find(t => t.id === id); if (target && target.builtin) return false; const updated = types.filter(t => t.id !== id); this.setSettlementTypes(updated); return true; }
   updateSettlementType(id, name) { const types = this.getSettlementTypes(); const updated = types.map(t => t.id === id ? { ...t, name } : t); types.sort((a,b)=>a.name.localeCompare(b.name)); this.setSettlementTypes(updated); return updated.find(t => t.id === id); }
 
   // ===== Description history =====

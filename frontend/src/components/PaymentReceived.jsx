@@ -1069,19 +1069,21 @@ const PaymentReceived = ({
                     </SelectTrigger>
                     <SelectContent className={isDarkMode ? 'bg-gray-700 border-gray-600' : ''}>
                       <SelectGroup>
-                        <SelectItem value="Cash" className={isDarkMode ? 'text-white hover:bg-gray-600' : ''}>Cash</SelectItem>
-                        <SelectItem value="NEFT" className={isDarkMode ? 'text-white hover:bg-gray-600' : ''}>NEFT</SelectItem>
-                        <SelectItem value="RTGS" className={isDarkMode ? 'text-white hover:bg-gray-600' : ''}>RTGS</SelectItem>
-                        <SelectItem value="Cheque" className={isDarkMode ? 'text-white hover:bg-gray-600' : ''}>Cheque</SelectItem>
-                        {settlementTypes.map((type) => (
-                          <SelectItem
-                            key={type.id}
-                            value={type.name}
-                            className={isDarkMode ? 'text-white hover:bg-gray-600' : ''}
-                          >
-                            {type.name}
+                        {settlementTypes.length > 0 ? (
+                          settlementTypes.map((type) => (
+                            <SelectItem
+                              key={type.id}
+                              value={type.name}
+                              className={isDarkMode ? 'text-white hover:bg-gray-600' : ''}
+                            >
+                              {type.name}
+                            </SelectItem>
+                          ))
+                        ) : (
+                          <SelectItem value="no-types" disabled className={isDarkMode ? 'text-gray-400' : 'text-gray-500'}>
+                            No settlement types. Add from Settings.
                           </SelectItem>
-                        ))}
+                        )}
                       </SelectGroup>
                     </SelectContent>
                   </Select>
@@ -1245,19 +1247,21 @@ const PaymentReceived = ({
                   </SelectTrigger>
                   <SelectContent className={isDarkMode ? 'bg-gray-700 border-gray-600' : ''}>
                     <SelectGroup>
-                      <SelectItem value="Cash" className={isDarkMode ? 'text-white hover:bg-gray-600' : ''}>Cash</SelectItem>
-                      <SelectItem value="NEFT" className={isDarkMode ? 'text-white hover:bg-gray-600' : ''}>NEFT</SelectItem>
-                      <SelectItem value="RTGS" className={isDarkMode ? 'text-white hover:bg-gray-600' : ''}>RTGS</SelectItem>
-                      <SelectItem value="Cheque" className={isDarkMode ? 'text-white hover:bg-gray-600' : ''}>Cheque</SelectItem>
-                      {settlementTypes.map((type) => (
-                        <SelectItem
-                          key={type.id}
-                          value={type.name}
-                          className={isDarkMode ? 'text-white hover:bg-gray-600' : ''}
-                        >
-                          {type.name}
+                      {settlementTypes.length > 0 ? (
+                        settlementTypes.map((type) => (
+                          <SelectItem
+                            key={type.id}
+                            value={type.name}
+                            className={isDarkMode ? 'text-white hover:bg-gray-600' : ''}
+                          >
+                            {type.name}
+                          </SelectItem>
+                        ))
+                      ) : (
+                        <SelectItem value="no-types" disabled className={isDarkMode ? 'text-gray-400' : 'text-gray-500'}>
+                          No settlement types. Add from Settings.
                         </SelectItem>
-                      ))}
+                      )}
                     </SelectGroup>
                   </SelectContent>
                 </Select>

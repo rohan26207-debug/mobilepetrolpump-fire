@@ -755,7 +755,7 @@ const CreditSalesManagement = ({
                           ) : (
                             <div className="space-y-0.5">
                               {detailParts.map((p, idx) => (
-                                <div key={idx} className="whitespace-nowrap">{p}</div>
+                                <div key={`${credit.id}-detail-${idx}`} className="whitespace-nowrap">{p}</div>
                               ))}
                             </div>
                           )}

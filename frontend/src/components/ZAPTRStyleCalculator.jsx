@@ -1150,7 +1150,7 @@ const ZAPTRStyleCalculator = () => {
         const evt = new CustomEvent('mpump-back', { cancelable: true });
         window.dispatchEvent(evt);
         if (evt.defaultPrevented) return true;
-      } catch { /* ignore */ }
+      } catch (err) { console.warn('mpump-back dispatch failed:', err); }
 
       const s = backStateRef.current;
 
@@ -1183,7 +1183,7 @@ const ZAPTRStyleCalculator = () => {
       // 6) Already at home — never exit the app
       return false;
     };
-    return () => { try { delete window.MPumpAppHandleBack; } catch { /* noop */ } };
+    return () => { try { delete window.MPumpAppHandleBack; } catch (err) { console.warn('back-handler cleanup failed:', err); } };
   }, []);
   
   // Initialize localStorage namespace (offline mode - no auth)

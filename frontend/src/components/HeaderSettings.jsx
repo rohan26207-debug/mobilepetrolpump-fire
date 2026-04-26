@@ -1512,39 +1512,46 @@ const HeaderSettings = ({ isDarkMode, fuelSettings, setFuelSettings, customers, 
                                 return;
                               }
 
-                              // Web: navigator.share with File when supported, else fallback to download
+                              // Web: try Web Share API; gracefully fall back to download
                               const blob = new Blob([dataStr], { type: 'application/json' });
-                              const file = new File([blob], fileName, { type: 'application/json' });
-                              if (typeof navigator !== 'undefined' && navigator.share &&
-                                  typeof navigator.canShare === 'function' && navigator.canShare({ files: [file] })) {
-                                try {
+                              const triggerDownload = (msgTitle = "Backup Downloaded", msgDesc) => {
+                                const url = URL.createObjectURL(blob);
+                                const link = document.createElement('a');
+                                link.href = url;
+                                link.download = fileName;
+                                document.body.appendChild(link);
+                                link.click();
+                                document.body.removeChild(link);
+                                URL.revokeObjectURL(url);
+                                toast({ title: msgTitle, description: msgDesc || `Saved ${fileName} — attach it manually to share.` });
+                              };
+
+                              let shareSupported = false;
+                              try {
+                                const fileToShare = new File([blob], fileName, { type: 'application/json' });
+                                shareSupported = !!(typeof navigator !== 'undefined' && navigator.share &&
+                                  typeof navigator.canShare === 'function' &&
+                                  navigator.canShare({ files: [fileToShare] }));
+                                if (shareSupported) {
                                   await navigator.share({
-                                    files: [file],
+                                    files: [fileToShare],
                                     title: fileName,
                                     text: 'M.Pump1 data backup',
                                   });
                                   toast({ title: "Shared", description: fileName });
-                                } catch (err) {
-                                  if (err.name !== 'AbortError') {
-                                    toast({ title: "Share cancelled", description: err.message });
-                                  }
+                                  return;
                                 }
-                                return;
+                              } catch (err) {
+                                // AbortError = user dismissed; NotAllowedError / SecurityError = iframe / permission policy blocked
+                                if (err && err.name === 'AbortError') {
+                                  toast({ title: "Share cancelled" });
+                                  return;
+                                }
+                                console.warn('Web Share failed, falling back to download:', err);
                               }
 
-                              // Final fallback: trigger download so user can attach manually
-                              const url = URL.createObjectURL(blob);
-                              const link = document.createElement('a');
-                              link.href = url;
-                              link.download = fileName;
-                              document.body.appendChild(link);
-                              link.click();
-                              document.body.removeChild(link);
-                              URL.revokeObjectURL(url);
-                              toast({
-                                title: "Share not supported",
-                                description: `Downloaded ${fileName} so you can attach it manually.`,
-                              });
+                              triggerDownload("Share not supported here",
+                                `Saved ${fileName} to Downloads. You can attach it manually from your file manager.`);
                             } catch (error) {
                               console.error('Share error:', error);
                               toast({

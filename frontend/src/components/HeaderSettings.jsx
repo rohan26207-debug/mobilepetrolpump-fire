@@ -1435,10 +1435,11 @@ const HeaderSettings = ({ isDarkMode, fuelSettings, setFuelSettings, customers, 
                         Export data manually or copy to clipboard
                       </p>
                       
-                      <div className="grid grid-cols-1 gap-2">
+                      <div className="grid grid-cols-2 gap-2">
                         <Button 
                           variant="outline" 
                           className="w-full"
+                          data-testid="settings-export-data-btn"
                           onClick={async () => {
                             try {
                               const backupData = localStorageService.exportAllData();
@@ -1486,9 +1487,79 @@ const HeaderSettings = ({ isDarkMode, fuelSettings, setFuelSettings, customers, 
                             }
                           }}
                         >
-                          💾 Export Data Backup
+                          Export Data
                         </Button>
-                        
+
+                        <Button
+                          variant="outline"
+                          className="w-full"
+                          data-testid="settings-share-data-btn"
+                          onClick={async () => {
+                            try {
+                              const backupData = localStorageService.exportAllData();
+                              const dataStr = JSON.stringify(backupData, null, 2);
+                              const fileName = `mpump-backup-${new Date().toISOString().split('T')[0]}.json`;
+
+                              // Android WebView: native ACTION_SEND chooser via JS bridge
+                              if (typeof window.MPumpCalcAndroid !== 'undefined' &&
+                                  typeof window.MPumpCalcAndroid.shareFile === 'function') {
+                                const bytes = new TextEncoder().encode(dataStr);
+                                let binary = '';
+                                for (let i = 0; i < bytes.byteLength; i++) binary += String.fromCharCode(bytes[i]);
+                                const base64 = btoa(binary);
+                                window.MPumpCalcAndroid.shareFile(base64, fileName, 'application/json');
+                                toast({ title: "Opening share sheet…", description: fileName });
+                                return;
+                              }
+
+                              // Web: navigator.share with File when supported, else fallback to download
+                              const blob = new Blob([dataStr], { type: 'application/json' });
+                              const file = new File([blob], fileName, { type: 'application/json' });
+                              if (typeof navigator !== 'undefined' && navigator.share &&
+                                  typeof navigator.canShare === 'function' && navigator.canShare({ files: [file] })) {
+                                try {
+                                  await navigator.share({
+                                    files: [file],
+                                    title: fileName,
+                                    text: 'M.Pump1 data backup',
+                                  });
+                                  toast({ title: "Shared", description: fileName });
+                                } catch (err) {
+                                  if (err.name !== 'AbortError') {
+                                    toast({ title: "Share cancelled", description: err.message });
+                                  }
+                                }
+                                return;
+                              }
+
+                              // Final fallback: trigger download so user can attach manually
+                              const url = URL.createObjectURL(blob);
+                              const link = document.createElement('a');
+                              link.href = url;
+                              link.download = fileName;
+                              document.body.appendChild(link);
+                              link.click();
+                              document.body.removeChild(link);
+                              URL.revokeObjectURL(url);
+                              toast({
+                                title: "Share not supported",
+                                description: `Downloaded ${fileName} so you can attach it manually.`,
+                              });
+                            } catch (error) {
+                              console.error('Share error:', error);
+                              toast({
+                                title: "Share Failed",
+                                description: error.message || "Could not share backup file.",
+                                variant: "destructive",
+                              });
+                            }
+                          }}
+                        >
+                          Share Data
+                        </Button>
+                      </div>
+
+                      <div className="grid grid-cols-1 gap-2">
                         {/* Financial Year Backup — inline (no modal) */}
                         <div className={`w-full rounded-lg border p-3 space-y-2 ${
                           isDarkMode ? 'border-gray-600 bg-gray-800' : 'border-slate-300 bg-slate-50'

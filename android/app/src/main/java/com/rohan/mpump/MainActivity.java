@@ -385,18 +385,28 @@ public class MainActivity extends AppCompatActivity {
          */
         @JavascriptInterface
         public void sharePdf(String base64Data, String fileName) {
+            shareFile(base64Data, fileName, "application/pdf");
+        }
+
+        /**
+         * Generic share intent — saves the file to Downloads/MPumpCalc, then launches
+         * an ACTION_SEND chooser. Used for JSON backup share, PDF share, etc.
+         */
+        @JavascriptInterface
+        public void shareFile(String base64Data, String fileName, String mimeType) {
             try {
-                byte[] pdfBytes = Base64.decode(base64Data, Base64.DEFAULT);
+                byte[] bytes = Base64.decode(base64Data, Base64.DEFAULT);
+                String mt = mimeType != null && !mimeType.isEmpty() ? mimeType : "application/octet-stream";
 
                 // Also drop a copy into public Downloads so it's archived
-                savePdfToDownloads(pdfBytes, fileName);
+                saveBytesToDownloads(bytes, fileName, mt);
 
                 // Write to app-private folder for FileProvider share
                 File dir = new File(getExternalFilesDir(null), "MPumpCalc");
                 if (!dir.exists()) dir.mkdirs();
                 File file = new File(dir, fileName);
                 try (FileOutputStream fos = new FileOutputStream(file)) {
-                    fos.write(pdfBytes);
+                    fos.write(bytes);
                 }
 
                 Uri uri = FileProvider.getUriForFile(
@@ -406,17 +416,17 @@ public class MainActivity extends AppCompatActivity {
                 );
 
                 Intent shareIntent = new Intent(Intent.ACTION_SEND);
-                shareIntent.setType("application/pdf");
+                shareIntent.setType(mt);
                 shareIntent.putExtra(Intent.EXTRA_STREAM, uri);
                 shareIntent.putExtra(Intent.EXTRA_SUBJECT, fileName);
-                shareIntent.putExtra(Intent.EXTRA_TEXT, "Daily Report - " + fileName);
+                shareIntent.putExtra(Intent.EXTRA_TEXT, fileName);
                 shareIntent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
 
-                Intent chooser = Intent.createChooser(shareIntent, "Share PDF via");
+                Intent chooser = Intent.createChooser(shareIntent, "Share via");
                 chooser.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
                 startActivity(chooser);
             } catch (Exception e) {
-                Log.e(TAG, "Share PDF error: " + e.getMessage(), e);
+                Log.e(TAG, "Share file error: " + e.getMessage(), e);
                 runOnUiThread(() -> Toast.makeText(MainActivity.this, "Share failed: " + e.getMessage(), Toast.LENGTH_SHORT).show());
             }
         }

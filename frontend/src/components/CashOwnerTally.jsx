@@ -261,12 +261,6 @@ const CashOwnerTally = ({ isDarkMode, settlementData = [], selectedDate }) => {
           </Button>
         </div>
 
-        {/* Net banner */}
-        <div className={`p-2 rounded border text-center ${net >= 0 ? (isDarkMode ? 'border-green-600 bg-green-900/30 text-green-200' : 'border-green-500 bg-green-50 text-green-800') : (isDarkMode ? 'border-red-600 bg-red-900/30 text-red-200' : 'border-red-500 bg-red-50 text-red-800')}`}>
-          <span className="text-xs sm:text-sm font-medium">Net Cash with Owner:</span>{' '}
-          <span className="text-base sm:text-lg font-bold font-mono" data-testid="cash-tally-net">₹{net.toFixed(2)}</span>
-        </div>
-
         {/* Ledger table */}
         <div className="overflow-x-auto">
           <table className="w-full border-collapse">

@@ -27,6 +27,7 @@ import {
   Users,
   Wallet,
   Package,
+  DollarSign,
   ArrowRightLeft
 } from 'lucide-react';
 import { useToast } from '../hooks/use-toast';
@@ -48,6 +49,7 @@ import OutstandingReport from './OutstandingReport';
 import OutstandingPDFReport from './OutstandingPDFReport';
 import CustomerInitialBalance from './CustomerInitialBalance';
 import SalesReport from './SalesReport';
+import CashOwnerTally from './CashOwnerTally';
 import {
   DndContext,
   PointerSensor,
@@ -3711,6 +3713,7 @@ window.onload = function() {
                             'backup':               { Icon: Wallet,      label: 'Backup',            testid: 'balance-block-backup' },
                             'cust-initial':         { Icon: Users,       label: 'Initial Balance',   testid: 'balance-block-cust-initial' },
                             'sales-report':         { Icon: TrendingUp,  label: 'Sales',             testid: 'balance-block-sales-report' },
+                            'cash-tally':           { Icon: DollarSign,  label: 'Cash Tally',        testid: 'balance-block-cash-tally' },
                           })[id];
                           if (!cfg) return null;
                           const { Icon, label, testid } = cfg;
@@ -3792,6 +3795,7 @@ window.onload = function() {
                           'backup':               { Icon: Wallet,      label: 'Backup',       testid: 'tab-backup' },
                           'cust-initial':         { Icon: Users,       label: 'Initial Bal.', testid: 'tab-cust-initial' },
                           'sales-report':         { Icon: TrendingUp,  label: 'Sales',        testid: 'tab-sales-report' },
+                          'cash-tally':           { Icon: DollarSign,  label: 'Cash Tally',   testid: 'tab-cash-tally' },
                         })[id];
                         if (!cfg) return null;
                         const { Icon, label, testid } = cfg;
@@ -3944,6 +3948,14 @@ window.onload = function() {
                       creditData={creditData}
                       fuelSettings={fuelSettings}
                       isDarkMode={isDarkMode}
+                    />
+                  )}
+
+                  {outstandingSubTab === 'cash-tally' && (
+                    <CashOwnerTally
+                      isDarkMode={isDarkMode}
+                      settlementData={settlementData}
+                      selectedDate={selectedDate}
                     />
                   )}
                 </>

@@ -59,7 +59,8 @@ class LocalStorageService {
       settlements: 'mpump_settlements',
       settlementTypes: 'mpump_settlement_types',
       incomeDescHistory: 'mpump_income_desc_history',
-      expenseDescHistory: 'mpump_expense_desc_history'
+      expenseDescHistory: 'mpump_expense_desc_history',
+      cashOwnerEntries: 'mpump_cash_owner_entries'
     };
 
     // Do not initialize defaults until a namespace is set (guest or user)
@@ -576,6 +577,7 @@ class LocalStorageService {
       // History
       incomeDescHistory: this.getItem(this.keys.incomeDescHistory) || [],
       expenseDescHistory: this.getItem(this.keys.expenseDescHistory) || [],
+      cashOwnerEntries: this.getCashOwnerEntries(),
       // Stock
       stockData,
       // App settings
@@ -612,6 +614,7 @@ class LocalStorageService {
       // History
       if (data.incomeDescHistory) this.setItem(this.keys.incomeDescHistory, data.incomeDescHistory);
       if (data.expenseDescHistory) this.setItem(this.keys.expenseDescHistory, data.expenseDescHistory);
+      if (data.cashOwnerEntries) this.setCashOwnerEntries(data.cashOwnerEntries);
       // Stock
       if (data.stockData) { Object.keys(data.stockData).forEach(key => { this.setItem(key, data.stockData[key]); }); }
       // App settings
@@ -972,6 +975,28 @@ class LocalStorageService {
   addSettlementType(name) { const types = this.getSettlementTypes(); const newType = { id: Date.now().toString(), name }; types.push(newType); types.sort((a,b)=>a.name.localeCompare(b.name)); this.setSettlementTypes(types); return newType; }
   deleteSettlementType(id) { const types = this.getSettlementTypes(); const target = types.find(t => t.id === id); if (target && target.builtin) return false; const updated = types.filter(t => t.id !== id); this.setSettlementTypes(updated); return true; }
   updateSettlementType(id, name) { const types = this.getSettlementTypes(); const updated = types.map(t => t.id === id ? { ...t, name } : t); types.sort((a,b)=>a.name.localeCompare(b.name)); this.setSettlementTypes(updated); return updated.find(t => t.id === id); }
+
+  // ===== Cash Owner Tally manual entries (withdrawals from owner cash) =====
+  getCashOwnerEntries() { return this.getItem(this.keys.cashOwnerEntries) || []; }
+  setCashOwnerEntries(entries) { return this.setItem(this.keys.cashOwnerEntries, entries); }
+  addCashOwnerEntry(entry) {
+    const list = this.getCashOwnerEntries();
+    const newEntry = {
+      id: Date.now().toString(),
+      date: entry.date,
+      description: (entry.description || '').trim(),
+      amount: parseFloat(entry.amount) || 0,
+      timestamp: new Date().toISOString(),
+    };
+    list.push(newEntry);
+    this.setCashOwnerEntries(list);
+    return newEntry;
+  }
+  deleteCashOwnerEntry(id) {
+    const list = this.getCashOwnerEntries().filter(e => e.id !== id);
+    this.setCashOwnerEntries(list);
+    return true;
+  }
 
   // ===== Description history =====
   getIncomeDescHistory() { return JSON.parse(localStorage.getItem(nsKey(this.keys.incomeDescHistory)) || '[]'); }
